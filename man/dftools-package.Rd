@@ -16,6 +16,7 @@ Version: \tab 1.0\cr
 Date: \tab 2017-06-11\cr
 License: \tab GPL-3\cr
 }
+}
 \author{
 Danail Obreschkow <danail.obreschkow@icrar.org>
 }
