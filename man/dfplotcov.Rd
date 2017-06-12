@@ -10,7 +10,7 @@ dfplotcov(df, p = NULL, n.points = 500, n.standarddev = 5,
   margins = c(4, 4, 0.5, 0.5), title = "")
 }
 \arguments{
-\item{df}{List produced by \code{\link{fit.df}}}
+\item{df}{List produced by \code{\link{dffit}}}
 
 \item{p}{Reference parameters to be plotted as crosses.}
 
@@ -35,12 +35,12 @@ dfplotcov(df, p = NULL, n.points = 500, n.standarddev = 5,
 \item{title}{Title text}
 }
 \description{
-This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{fit.df}}.
+This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
 }
 \author{
 Danail Obreschkow
 }
 \seealso{
-See examples in \code{\link{fit.df}}.
+See examples in \code{\link{dffit}}.
 }
 

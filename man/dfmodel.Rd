@@ -31,6 +31,6 @@ plot(mass, phi, type='l', log='xy')
 Danail Obreschkow
 }
 \seealso{
-\code{\link{fit.df}}
+\code{\link{dffit}}
 }
 

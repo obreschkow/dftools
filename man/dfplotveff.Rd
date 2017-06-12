@@ -8,19 +8,19 @@ dfplotveff(df, xlab = "Observable x",
   ylab = expression("Distribution function" ~ phi))
 }
 \arguments{
-\item{df}{List produced by \code{\link{fit.df}}}
+\item{df}{List produced by \code{\link{dffit}}}
 
 \item{xlab}{Label on x-axis (logarithmic mass or luminosity scale).}
 
 \item{ylab}{Label on y-axis (volume scale).}
 }
 \description{
-This function plots the function \code{Veff(x)} used for the mass function fit, as stored in the sublist \code{fit} of the output produced by \code{\link{fit.df}}.
+This function plots the function \code{Veff(x)} used for the mass function fit, as stored in the sublist \code{fit} of the output produced by \code{\link{dffit}}.
 }
 \author{
 Danail Obreschkow
 }
 \seealso{
-See examples in \code{\link{fit.df}}.
+See examples in \code{\link{dffit}}.
 }
 

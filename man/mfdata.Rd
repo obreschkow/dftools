@@ -16,13 +16,13 @@ print(data$x.err)
 print(data$selection[[1]])
 
 # These data can then be used to fit a MF, e.g.
-df = dffit(data$x, data$veff, data$x.err)
+df = dffit(data$x, data$selection, data$x.err)
 
 }
 \author{
 Danail Obreschkow
 }
 \seealso{
-\code{\link{fit.df}}
+\code{\link{dffit}}
 }
 

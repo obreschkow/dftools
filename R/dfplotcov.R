@@ -1,11 +1,11 @@
 #' Plot parameter covariance matrix
 #'
-#' This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{fit.df}}.
+#' This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
 #'
 #' @importFrom ellipse ellipse
 #' @importFrom mvtnorm rmvnorm
 #'
-#' @param df List produced by \code{\link{fit.df}}
+#' @param df List produced by \code{\link{dffit}}
 #' @param p Reference parameters to be plotted as crosses.
 #' @param n.points Number of random points drawn from the multivariate Gaussian.
 #' @param n.standarddev Number of standard-deviations shown to the left and right of the mean.
@@ -18,7 +18,7 @@
 #' @param margins Margins (bottom,left,top,right)
 #' @param title Title text
 #'
-#' @seealso See examples in \code{\link{fit.df}}.
+#' @seealso See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

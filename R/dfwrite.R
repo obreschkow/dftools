@@ -1,14 +1,15 @@
 #' Write best fitting parameters
 #'
-#' This function displays the best-fitting model parameters of a mass function previously fitted using \code{\link{fit.df}}.
+#' This function displays the best-fitting model parameters of a mass function previously fitted using \code{\link{dffit}}.
 #'
-#' @param df List produced by \code{\link{fit.df}}
+#' @param df List produced by \code{\link{dffit}}
 #'
 #' @examples
-#' data = df.data()
-#' write.df(df)
+#' data = mfdata()
+#' df = dffit(data$x, data$selection, write.fit = FALSE)
+#' dfwrite(df)
 #'
-#' @seealso See examples in \code{\link{fit.df}}.
+#' @seealso See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

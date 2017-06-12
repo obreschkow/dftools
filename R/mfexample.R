@@ -1,11 +1,11 @@
 #' Example of using mftools
 #'
-#' This function generates n mock galaxies with observing errors, drawn from a predefined mass function and effective observing volume. It then uses \code{\link{fit.df}} to recover the input function
+#' This function generates n mock galaxies with observing errors, drawn from a predefined mass function and effective observing volume. It then uses \code{\link{dffit}} to recover the input function
 #'
 #' @param n Number of gtalaxies
 #'
 #' @examples
-#' example()
+#' mfexample()
 #'
 #' @seealso See examples in \code{\link{dffit}}.
 #'

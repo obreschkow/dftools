@@ -7,7 +7,7 @@
 dfposteriors(df)
 }
 \arguments{
-\item{df}{List produced by \code{\link{fit.df}}}
+\item{df}{List produced by \code{\link{dffit}}}
 }
 \value{
 Returns a structured list, which, in addition to the input argument, also contains the sublist \code{posteriors}. Note that the posteriors can be visualized using \code{\link{dfplot}} with the argument \code{bin.use.posteriors = TRUE}.
@@ -19,6 +19,6 @@ Given a fitted df, this function computes posterior masses.
 Danail Obreschkow
 }
 \seealso{
-See examples in \code{\link{fit.df}}.
+See examples in \code{\link{dffit}}.
 }
 

@@ -11,10 +11,10 @@ mfexample(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2, 9, -1.3),
 \item{n}{Number of gtalaxies}
 }
 \description{
-This function generates n mock galaxies with observing errors, drawn from a predefined mass function and effective observing volume. It then uses \code{\link{fit.df}} to recover the input function
+This function generates n mock galaxies with observing errors, drawn from a predefined mass function and effective observing volume. It then uses \code{\link{dffit}} to recover the input function
 }
 \examples{
-example()
+mfexample()
 
 }
 \author{

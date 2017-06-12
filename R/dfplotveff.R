@@ -1,14 +1,14 @@
 #' Plot effective volume
 #'
-#' This function plots the function \code{Veff(x)} used for the mass function fit, as stored in the sublist \code{fit} of the output produced by \code{\link{fit.df}}.
+#' This function plots the function \code{Veff(x)} used for the mass function fit, as stored in the sublist \code{fit} of the output produced by \code{\link{dffit}}.
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
-#' @param df List produced by \code{\link{fit.df}}
+#' @param df List produced by \code{\link{dffit}}
 #' @param xlab Label on x-axis (logarithmic mass or luminosity scale).
 #' @param ylab Label on y-axis (volume scale).
 #'
-#' @seealso See examples in \code{\link{fit.df}}.
+#' @seealso See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

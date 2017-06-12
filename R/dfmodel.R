@@ -15,7 +15,7 @@
 #' phi = dfmodel(x, parameters, type = 'Schechter')
 #' plot(mass, phi, type='l', log='xy')
 #'
-#' @seealso \code{\link{fit.df}}
+#' @seealso \code{\link{dffit}}
 #'
 #' @author Danail Obreschkow
 #'

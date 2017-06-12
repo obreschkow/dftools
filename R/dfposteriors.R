@@ -2,11 +2,11 @@
 #'
 #' Given a fitted df, this function computes posterior masses.
 #'
-#' @param df List produced by \code{\link{fit.df}}
+#' @param df List produced by \code{\link{dffit}}
 #'
 #' @return Returns a structured list, which, in addition to the input argument, also contains the sublist \code{posteriors}. Note that the posteriors can be visualized using \code{\link{dfplot}} with the argument \code{bin.use.posteriors = TRUE}.
 #'
-#' @seealso See examples in \code{\link{fit.df}}.
+#' @seealso See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

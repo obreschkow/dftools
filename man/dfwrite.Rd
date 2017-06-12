@@ -7,20 +7,21 @@
 dfwrite(df)
 }
 \arguments{
-\item{df}{List produced by \code{\link{fit.df}}}
+\item{df}{List produced by \code{\link{dffit}}}
 }
 \description{
-This function displays the best-fitting model parameters of a mass function previously fitted using \code{\link{fit.df}}.
+This function displays the best-fitting model parameters of a mass function previously fitted using \code{\link{dffit}}.
 }
 \examples{
-data = df.data()
-write.df(df)
+data = mfdata()
+df = dffit(data$x, data$selection, write.fit = FALSE)
+dfwrite(df)
 
 }
 \author{
 Danail Obreschkow
 }
 \seealso{
-See examples in \code{\link{fit.df}}.
+See examples in \code{\link{dffit}}.
 }
 

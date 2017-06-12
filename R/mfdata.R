@@ -9,9 +9,9 @@
 #' print(data$selection[[1]])
 #'
 #' # These data can then be used to fit a MF, e.g.
-#' df = dffit(data$x, data$veff, data$x.err)
+#' df = dffit(data$x, data$selection, data$x.err)
 #'
-#' @seealso \code{\link{fit.df}}
+#' @seealso \code{\link{dffit}}
 #'
 #' @author Danail Obreschkow
 #'

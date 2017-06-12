@@ -29,6 +29,3 @@ Obreschkow et al., 2017
 \seealso{
 \code{\link{dffit}}
 }
-\examples{
-See examplies in \code{\link{dffit}}.
-}

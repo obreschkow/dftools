@@ -18,7 +18,7 @@
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param x.grid sets the grid on which the numerical integration is performed. This grid must be specified as \code{x.grid = list(x1, ..., xp)}, where \code{xi} is an equally spaced vector with the grid values for the i-th observable. In the case of a MF (a 1-dimensional DF), \code{x.grid = list(seq(xmin,xmax,by=dx))}, where \code{xmin} and \code{xmax} are the minimum/maximum values of the log-mass considered in the numerical integratino and \code{dx} is the grid spacing.
 #'
-#' @return Returns a structured list. The sublist \code{input} contains all relevant input arguments. The sublist \code{fit} contains all the output arguments of the MLE algorithm. The output can be visualized using \code{\link{mfplot}}, \code{\link{plot.df}} and \code{\link{dfwrite}}.
+#' @return Returns a structured list. The sublist \code{input} contains all relevant input arguments. The sublist \code{fit} contains all the output arguments of the MLE algorithm. The output can be visualized using \code{\link{mfplot}}, \code{\link{dfplot}} and \code{\link{dfwrite}}.
 #'
 #' @keywords schechter function
 #' @keywords mass function
@@ -40,14 +40,14 @@
 #' # show fitted effective volume function
 #' dfplotveff(df)
 #'
-#' determine Schechter function uncertainties from resampling and evaluate bias-corrected MLE (plotted in red)
+#' # determine Schechter function uncertainties from resampling and evaluate bias-corrected MLE (plotted in red)
 #' df = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
 #' mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5, xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
 #' lines(10^df$fit$evaluation$x,df$fit$evaluation$y.bias.corrected,col='red',lty=2)
 #'
 #' # evaluate posteriors of the mass measurements and visualize the change in the mass mode between observation and posterior
 #' # i.e. the Eddington bias correction
-#' df = posterior.data(df)
+#' df = dfposteriors(df)
 #' plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',ylab='Eddington bias correction = posterior-observed log-mass mode')
 #' abline(h=1)
 #'
