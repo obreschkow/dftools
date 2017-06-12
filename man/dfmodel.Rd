@@ -13,7 +13,7 @@ dfmodel(x = NULL, p = NULL, output = "density", type = "Schechter")
 
 \item{output}{Specifies what the function is doing. \code{'density'} evaluates the MF at \code{x}, \code{'npara'} returns the number of parameters of the analytical function, \code{'initial'} returns a vector of typical parameters \code{p} that are used as default initial values when fitting the MF, \code{'equation'} returns a string with the equation of the MF.}
 
-\item{type}{Kind of MF: \code{'Schechter'} for Schechter function or \code{'PL'} for a simple power law.}
+\item{type}{Kind of MF: \code{'Schechter'} for Schechter function; \code{'PL'} for a simple power law; \code{'MRP'} for a Murray-Robotham-Power function, a 4-parameter extension of the Schechter function.}
 }
 \description{
 This function allows the user to call several pre-defined distribution functions (DFs). In the current implementation, they are all galaxy mass functions (i.e. a type of one-dimensional DFs), such as the Schechter function.

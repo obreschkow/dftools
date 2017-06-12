@@ -4,7 +4,8 @@
 \alias{mfexample}
 \title{Example of using mftools}
 \usage{
-mfexample(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2, 9, -1.3))
+mfexample(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2, 9, -1.3),
+  include.mrp = FALSE)
 }
 \arguments{
 \item{n}{Number of gtalaxies}

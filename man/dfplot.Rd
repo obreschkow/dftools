@@ -5,8 +5,13 @@
 \title{Display fitted distribution function}
 \usage{
 dfplot(df, xlab = "Observable x", ylab = expression("Distribution function"
-  ~ phi), xlim = NULL, ylim = NULL, log = "y", col = "blue",
-  show.uncertainties = TRUE, uncertainty.type = NULL)
+  ~ phi), xlim = NULL, ylim = NULL, log = "y", xpower10 = FALSE,
+  col = "blue", lwd = 2, lty = 1, show.data.points = FALSE,
+  show.data.histogram = FALSE, show.uncertainties = TRUE,
+  uncertainty.type = NULL, show.bias.correction = FALSE, add = FALSE,
+  nbins = NULL, bin.xmin = NULL, bin.xmax = NULL, bin.type = 1,
+  col.data = "black", cex.data = 1, lwd.data = 1, col.hist = "grey",
+  margins = c(5.1, 4.1, 4.1, 2.1))
 }
 \arguments{
 \item{df}{List produced by \code{\link{dffit}}}
@@ -19,9 +24,48 @@ dfplot(df, xlab = "Observable x", ylab = expression("Distribution function"
 
 \item{ylim}{2-element vector with y-axis plotting limits}
 
+\item{log}{String specifying the log-axes as in \code{\link{plot}}.}
+
+\item{xpower10}{If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.}
+
+\item{col}{Color of fit (see \code{\link{plot}})}
+
+\item{lwd}{Line width of fit (see \code{\link{plot}})}
+
+\item{lty}{Line type of fit (see \code{\link{plot}})}
+
+\item{show.data.points}{If \code{TRUE}, binned data points are displayed.}
+
+\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts is displayed in a bottom panel.}
+
 \item{show.uncertainties}{If \code{TRUE}, uncertainties are displayed around the best fit model.}
 
 \item{uncertainty.type}{\code{1}: plot Gaussian 1-sigma uncertanties propagated from the Hessian matrix of the likelihood. \code{2}: plot 68 percentile region (from 16 to 84 percent). \code{3} plot 68 (16 to 84) and 95 (2 to 98) percentile regions.}
+
+\item{show.bias.correction}{If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.}
+
+\item{add}{If \code{TRUE}, the lines are overplotted on the currently open plot.}
+
+\item{nbins}{Number of bins to be plotted; must be larger than 0. Choose \code{nbins=NULL} (default) to determine the number of bins automatically.}
+
+\item{bin.xmin}{Left edge of first bin}
+
+\item{bin.xmax}{Right edge of last bin}
+
+\item{bin.type}{Integer value defining the type of data to be plotted in bins. 1 = plot raw input masses with Veff values evaluted at these masses, subject to Eddington bias. 2 = plot random masses sampled from posterior mass PDF with corresponding values Veff. 3 = posterior source counts using the full posterior mass PDFs of all sources.}
+
+\item{col.data}{Color of binned data}
+
+\item{cex.data}{Size of binned data}
+
+\item{lwd.data}{Line width of binned data}
+
+\item{col.hist}{Color of source count histogram}
+
+\item{margins}{Margins (bottom,left,top,right)}
+}
+\value{
+Returns the input list \code{df} with the additional sub-list \code{df$bin} that contains the binned data.
 }
 \description{
 This function displays the distribution function fitted using \code{\link{dffit}}.
@@ -30,6 +74,6 @@ This function displays the distribution function fitted using \code{\link{dffit}
 Danail Obreschkow
 }
 \seealso{
-See examples in \code{\link{dffit}}.
+For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
 }
 

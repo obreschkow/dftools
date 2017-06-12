@@ -31,5 +31,3 @@ mfdata <- function() {
   return(list(x = log10(mass), x.err = mass.sigma/mass/log(10),
               selection = list(veff.values = veff.values, veff.fct = veff.fct)))
 }
-
-

@@ -14,47 +14,76 @@
 
 dfposteriors <- function(df) {
   
+  if (is.null(df$input$data$x.err)) stop('Posterior data PDFs can only be produced if the data is uncertain, i.e. if x.err is given.')
+  
   # Input handling
-  xr = df$input$options$x.mesh
-  dx = xr[2]-xr[1]
-  n = length(xr)
-  n.data = dim(df$input$data$x)[1]
-  n.dim = dim(df$input$data$x)[2]
+  x = df$input$data$x
+  x.err = df$input$data$x.err
+  x.mesh = df$input$options$x.mesh
+  x.mesh.dv = df$input$options$x.mesh.dv
+  n.data = dim(x)[1]
+  n.dim = dim(x)[2]
   
   # Make prior
-  prior = df$fit$functions$source.count(xr)
+  prior = df$input$distribution.function$phi(c(x.mesh),df$fit$parameters$p.optimal)*df$input$selection$veff.mesh
+  prior[!is.finite(prior)] = 0
+  prior = pmax(0,prior)
   
-  # Make posterior
-  rho.unbiased = array(0,length(xr))
-  m0 = m1 = md = array(NA,n.data)
+  # Make inverse covariances
+  invC = array(NA,c(n.data,n.dim,n.dim))
+  if (length(dim(x.err))==2) {
+    if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim)) {
+      stop('Unknown format for x.err in .corefit.')
+    }
+    if (n.dim==1) {
+      for (i in seq(n.data)) {
+        invC[i,,] = 1/x.err[i,]^2
+      }
+    } else {
+      for (i in seq(n.data)) {
+        invC[i,,] = diag(1/x.err[i,]^2)
+      }
+    }
+  } else if (length(dim(x.err))==3) {
+    if (n.dim==1) stop('Unknown format for x.err in .corefit.')
+    if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim & dim(x.err)[3]==n.dim)) {
+      stop('Unknown format for x.err in .corefit.')
+    }
+    for (i in seq(n.data)) {
+      invC[i,,] = solve(x.err[i,,])
+    }
+  } else {
+    stop('Unknown format for x.err in .corefit.')
+  }
+    
+  # produce posteriors
+  m0 = m1 = md = array(NA,c(n.data,n.dim))
+  rho.unbiased = array(0,dim(x.mesh))
   for (i in seq(n.data)) {
     
-    rho.observed = exp(-(df$input$data$x[i]-xr)^2/2/df$input$data$x.err[i]^2)
+    # make prior PDF for data point i
+    d = x[i,]-t(x.mesh)
+    rho.observed = exp(-colSums(d*(invC[i,,]%*%d))/2)
+    
+    # make posterior PDF for data point i
     rho.corrected = rho.observed*prior
-    
-    # total source counts
     s = sum(rho.corrected)
-    rho.unbiased = rho.unbiased+rho.corrected/(s*dx)
+    rho.unbiased = rho.unbiased+rho.corrected/(s*x.mesh.dv)
     
-    # mean and standard deviation
-    m0[i] = sum(xr*rho.corrected)/s
-    m1[i] = sqrt(sum((xr-m0[i])^2*rho.corrected)/s)
-    
-    # find maximum point (mode) using parabolic fit
-    i0 = which.max(rho.corrected)
-    y0 = rho.corrected[i0]
-    yp = rho.corrected[min(n,i0+1)]
-    ym = rho.corrected[max(1,i0-1)]
-    xpeak = -(yp-ym)/(2*(yp+ym-2*y0))
-    md[i] = xr[i0]+xpeak*dx
+    # mean, standard deviation and mode
+    for (j in seq(n.dim)) {
+      m0[i,j] = sum(x.mesh[,j]*rho.corrected)/s
+      m1[i,j] = sqrt(sum((x.mesh[,j]-m0[i,j])^2*rho.corrected)/s)
+    }
+    md[i,] = x.mesh[which.max(rho.corrected),]
   }
   
   df$posterior$source.count.density = rho.unbiased
   df$posterior$x.mean = m0
   df$posterior$x.stdev = m1
   df$posterior$x.mode = md
-  df$posterior$x.mode.correction = md-df$input$mass
-  df$posterior$x.random = m0+m1*rnorm(n.data)
+  df$posterior$x.mode.correction = md-x
+  df$posterior$x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim))
   
   return(df)
 }

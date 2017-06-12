@@ -13,16 +13,16 @@
 #'
 #' @export
 
-mfexample <- function(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2,9,-1.3)) {
+mfexample <- function(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2,9,-1.3), include.mrp = FALSE) {
 
   # user parameters
   set.seed(seed)
-  veff.scale = function(x) {1e-9*(10^x)}
+  veff.scale = function(x) {1e-9*10^x}
 
   # make rescaled Veff(x)
   dx = 0.01
   x = seq(2,12.5,dx)
-  phi.true = mfmodel(x, p.true)
+  phi.true = dfmodel(x, p.true)
   f = n/sum(phi.true*veff.scale(x)*dx)
   veff.fn <- function(x) {veff.scale(x)*f}
   veff = veff.fn(x)
@@ -44,25 +44,26 @@ mfexample <- function(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2,9,-1.3)) {
 
   # fit
   cat('Fit a Schechter function to the observed data (grey points)\n')
-  mf = fit.df(x.obs, veff.fn, rep(sigma,n), log = TRUE, write.fit = T, log.integration.range = x, p.initial = p.true)
-  p.fit = mf$fit$parameters$p.optimal
+  df = dffit(x.obs, veff.fn, rep(sigma,n), write.fit = T, x.grid = list(x), p.initial = p.true)
+  p.fit = df$fit$parameters$p.optimal
 
   # make posterior masses
   cat('Determine posterior masses\n')
-  mf = mfposterior(mf)
+  df = dfposteriors(df)
 
   # plot
   nbins = max(4,round(sqrt(n)/2))
-  mfplot(mf, xlim=c(1e4,2e10), ylim=c(1e-4,2), nbins = nbins, bin.xmin=4.8, bin.xmax=10, col.bin='grey')
-  mfplot(mf, nbins = nbins, bin.xmin=4.8, bin.xmax=10, bin.type = 2, add = TRUE, show.uncertainties = FALSE)
-  mfplot(mf, nbins = nbins, bin.xmin=4.8, bin.xmax=10, bin.type = 3, add = TRUE, show.uncertainties = FALSE, col.bin='purple')
-  lines(10^x,pmax(1e-10,mfmodel(x,p.true)),col='black',lty=2)
+  mfplot(df, xlim=c(1e4,2e10), ylim=c(1e-4,2), nbins = nbins, bin.xmin=4.8, bin.xmax=10, col.data = 'grey')
+  mfplot(df, nbins = nbins, bin.xmin=4.8, bin.xmax=10, bin.type = 3, add = TRUE, show.uncertainties = FALSE, col.data='black')
+  lines(10^x,pmax(1e-10,dfmodel(x,p.true)),col='black',lty=2)
   lines(10^x,veff/max(veff)*200,col='orange')
-
+  
   # MRP
-  cat('Fit a MRP function (4 parameter model) to the observed data\n')
-  mf2 = fit.df(x.obs, veff.fn, rep(sigma,n), log = TRUE, write.fit = T, log.integration.range = x, mass.function = 'MRP', p.initial = c(p.true,1))
-  lines(10^x,mf2$fit$functions$mass.function(x),col='red')
+  if (include.mrp) {
+    cat('Fit a MRP function (4 parameter model) to the observed data\n')
+    df2 = dffit(x.obs, veff.fn, rep(sigma,n), write.fit = T, x.grid = list(x), phi = 'MRP', p.initial = c(p.true,1))
+    lines(10^x,df2$fit$functions$phi.fit(x),col='red')
+  }
 
   # legend
   y = 1.5e-2
@@ -72,18 +73,16 @@ mfexample <- function(n = 25000, seed = 0, sigma = 0.5, p.true = c(-2,9,-1.3)) {
   text(10^x,y*1.6,expression('Assumed observing error'~sigma),cex=0.8)
   legend(2e4,6e-3,c('Input Veff (arbitrary vertical units)',
                     'Input Schechter function',
-                    'Binned mock observations with errors',
                     'Fitted Schechter function with 68%-uncertainties',
-                    'Fitted MRP function',
-                    'MF from randomly sampled posterior mass PDFs',
-                    'MF from full posterior mass PDFs',
+                    'Binned input data',
+                    'Binned posterior data',
                     'Note: Horizontal bars are bin widths.',
                     'Vertical bars are Poission errors (correlated for purple points).'),
-         bty='n',lwd=1.5,col=c('orange','black','grey','blue','red','black','purple',NA,NA),
-         pch=c(NA,NA,20,NA,NA,20,20,NA,NA),
-         lty=c(1,2,1,1,1,1,1,NA,NA),cex=0.8)
+         bty='n',lwd=1.5,col=c('orange','black','blue','grey','black',NA,NA),
+         pch=c(NA,NA,NA,20,20),
+         lty=c(1,2,1,1,1,NA,NA),cex=0.8)
 
   # plot covariances
-  mfplotcovariance(mf,p.true,title='Schechter parameter covariances')
-  mfplotcovariance(mf2,c(p.true,1),line.color='red',point.color='#ffbbbb',title='MRP parameter covariances')
+  dfplotcov(df,p.true,title='Schechter parameter covariances')
+  if (include.mrp) dfplotcov(df2,c(p.true,1),line.color='red',point.color='#ffbbbb',title='MRP parameter covariances')
 }

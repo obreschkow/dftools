@@ -5,7 +5,7 @@
 #' @param x Vector of log-masses, typically \code{x = log10(M/Msun)}.
 #' @param p Parameters of the analytical function. See argument \code{type}.
 #' @param output Specifies what the function is doing. \code{'density'} evaluates the MF at \code{x}, \code{'npara'} returns the number of parameters of the analytical function, \code{'initial'} returns a vector of typical parameters \code{p} that are used as default initial values when fitting the MF, \code{'equation'} returns a string with the equation of the MF.
-#' @param type Kind of MF: \code{'Schechter'} for Schechter function or \code{'PL'} for a simple power law.
+#' @param type Kind of MF: \code{'Schechter'} for Schechter function; \code{'PL'} for a simple power law; \code{'MRP'} for a Murray-Robotham-Power function, a 4-parameter extension of the Schechter function.
 #'
 #' @examples
 #' # Evaluate and plot a Schechter function

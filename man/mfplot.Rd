@@ -4,58 +4,12 @@
 \alias{mfplot}
 \title{Display fitted galaxy mass function}
 \usage{
-mfplot(mf, nbins = NULL, bin.xmin = NULL, bin.xmax = NULL, bin.type = 1,
-  xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi ~ "[Mpc"^-3
-  ~ "dex"^-1 ~ "]"), xlim = NULL, ylim = NULL, show.uncertainties = TRUE,
-  uncertainty.type = NULL, show.bias.correction = FALSE, add = FALSE,
-  col = "blue", lwd = 1.5, lty = 1, col.bin = "black",
-  col.bias.correction = col, lwd.bias.correction = lwd,
-  lty.bias.correction = 2, margins = c(5.1, 4.1, 4.1, 2.1))
-}
-\arguments{
-\item{mf}{List produced by \code{\link{mffit}}}
-
-\item{nbins}{Number of bins to be plotted. This is purely for illustrative purposes. The fitting does not use bins. Choose \code{nbins=NULL} (default) to determine the number of bins automatically or \code{nbins=0} to suppress the bins.}
-
-\item{bin.xmin}{Left edge of first bin}
-
-\item{bin.xmax}{Right edge of last bin}
-
-\item{bin.type}{Integer value defining the type of data to be plotted in bins. 1 = plot raw input masses with Veff values evaluted at these masses, subject to Eddington bias. 2 = plot random masses sampled from posterior mass PDF with corresponding values Veff. 3 = posterior source counts using the full posterior mass PDFs of all sources.}
-
-\item{xlab}{x-axis label}
-
-\item{ylab}{y-axis label}
-
-\item{xlim}{2-element vector with x-axis plotting limits}
-
-\item{ylim}{2-element vector with y-axis plotting limits}
-
-\item{show.uncertainties}{If \code{TRUE}, uncertainties are displayed around the best fit model.}
-
-\item{uncertainty.type}{\code{1}: plot Gaussian 1-sigma uncertanties propagated from the Hessian matrix of the likelihood. \code{2}: plot 68 percentile region (from 16 to 84 percent). \code{3} plot 68 (16 to 84) and 95 (2 to 98) percentile regions.}
-
-\item{add}{If \code{TRUE}, the lines are overplotted on the currently open plot.}
-
-\item{col}{Color of ML fit and uncertainty regions}
-
-\item{lwd}{Line width of ML fit}
-
-\item{lty}{Line type of ML fit}
-
-\item{col.bias.correction}{Line properties of bias corrected MF fit}
-
-\item{lwd.bias.correction}{Line properties of bias corrected MF fit}
-
-\item{lty.bias.correction}{Line properties of bias corrected MF fit}
-
-\item{margins}{Margins (bottom,left,top,right)}
-}
-\value{
-If used as \code{mf = mfplot(mf)} (with \code{nbins=NULL} or \code{nbins>0}), the list \code{mf} is appended an additional entry \code{bin}, containing the binned galaxy data points.
+mfplot(df, xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi ~
+  "[Mpc"^-3 ~ "dex"^-1 ~ "]"), log = "xy", xpower10 = TRUE,
+  show.data.points = TRUE, ...)
 }
 \description{
-This function displays the galaxy mass function (MF) fitted using \code{\link{mffit}}.
+This function displays the galaxy mass function (MF) fitted using \code{\link{dffit}}, by calling \code{\link{dfplot}} with appropriate parameters.
 }
 \author{
 Danail Obreschkow
