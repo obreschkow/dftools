@@ -27,10 +27,9 @@ phi = dfmodel(x, parameters, type = 'Schechter')
 plot(mass, phi, type='l', log='xy')
 
 }
-\author{
-Danail Obreschkow
-}
 \seealso{
 \code{\link{dffit}}
 }
-
+\author{
+Danail Obreschkow
+}

@@ -10,7 +10,9 @@ Imports:
     ellipse,
     magicaxis,
     mvtnorm,
-    akima
+    akima,
+    MASS,
+    pracma
 License: GPL-3
 LazyData: true
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

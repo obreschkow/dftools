@@ -68,12 +68,11 @@ dfplot(df, xlab = "Observable x", ylab = expression("Distribution function"
 Returns the input list \code{df} with the additional sub-list \code{df$bin} that contains the binned data.
 }
 \description{
-This function displays the distribution function fitted using \code{\link{dffit}}.
-}
-\author{
-Danail Obreschkow
+This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
 }
 \seealso{
 For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
 }
-
+\author{
+Danail Obreschkow
+}

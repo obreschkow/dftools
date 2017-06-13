@@ -15,10 +15,9 @@ Returns a structured list, which, in addition to the input argument, also contai
 \description{
 Given a fitted df, this function computes posterior masses.
 }
-\author{
-Danail Obreschkow
-}
 \seealso{
 See examples in \code{\link{dffit}}.
 }
-
+\author{
+Danail Obreschkow
+}

@@ -7,12 +7,13 @@
 dffit(x, selection = NULL, x.err = NULL, distance = NULL,
   phi = "Schechter", p.initial = NULL, n.iterations = 100,
   n.resampling = NULL, correct.mle.bias = FALSE, correct.lss.bias = FALSE,
-  lss.sigma = NULL, write.fit = TRUE, x.grid = list(seq(4, 12, 0.01)))
+  lss.sigma = NULL, write.fit = TRUE, x.grid = list(seq(4, 12, 0.01)),
+  force.no.bias.correction = FALSE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
 
-\item{selection}{Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(Veff.values, Veff.fct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{Veff.fct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{Veff.fct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rrange)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The optional vector \code{rrange} (with default \code{rrange=c(0,Inf)}) gives the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.}
+\item{selection}{Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(Veff.values, veff.userfct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rrange)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The optional vector \code{rrange} (with default \code{rrange=c(0,Inf)}) gives the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.}
 
 \item{x.err}{Optional vector or array specifying the observational errors of \code{x}. If \code{x} is a vector then \code{x.err} must also be a vector of same length. Its elements are interpreted as the standard deviations of Gaussian uncertainties in \code{x}. If \code{x} is a \code{N-by-P} matrix representing \code{N} objects with \code{P} observables, then \code{x.err} must be either a \code{N-by-P} matrix or a \code{N-by-P-by-P} array. In the first case, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the second case, the \code{P-by-P} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{P} observed values \code{x[i,]}.}
 
@@ -35,6 +36,8 @@ dffit(x, selection = NULL, x.err = NULL, distance = NULL,
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 
 \item{x.grid}{sets the grid on which the numerical integration is performed. This grid must be specified as \code{x.grid = list(x1, ..., xp)}, where \code{xi} is an equally spaced vector with the grid values for the i-th observable. In the case of a MF (a 1-dimensional DF), \code{x.grid = list(seq(xmin,xmax,by=dx))}, where \code{xmin} and \code{xmax} are the minimum/maximum values of the log-mass considered in the numerical integratino and \code{dx} is the grid spacing.}
+
+\item{force.no.bias.correction}{If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.}
 }
 \value{
 Returns a structured list. The sublist \code{input} contains all relevant input arguments. The sublist \code{fit} contains all the output arguments of the MLE algorithm. The output can be visualized using \code{\link{mfplot}}, \code{\link{dfplot}} and \code{\link{dfwrite}}.
@@ -44,7 +47,7 @@ This function fits galaxy mass function (MF) to a discrete set of \code{N} galax
 }
 \examples{
 # basic example
-data = mfdata()
+data = dfdata()
 df = dffit(data$x, data$selection)
 mfplot(df, xlim=c(2e6,5e10))
 
@@ -58,16 +61,20 @@ dfplotcov(df)
 # show fitted effective volume function
 dfplotveff(df)
 
-# determine Schechter function uncertainties from resampling and evaluate bias-corrected MLE (plotted in red)
+# determine Schechter function uncertainties from resampling and
+# evaluate bias-corrected MLE (plotted in red)
 df = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
-mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5, xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
+mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5,
+#xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
 lines(10^df$fit$evaluation$x,df$fit$evaluation$y.bias.corrected,col='red',lty=2)
 
-# evaluate posteriors of the mass measurements and visualize the change in the mass mode between observation and posterior
+# evaluate posteriors of the mass measurements and
+# visualize the change in the mass mode between observation and posterior
 # i.e. the Eddington bias correction
 df = dfposteriors(df)
-plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',ylab='Eddington bias correction = posterior-observed log-mass mode')
-abline(h=1)
+plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',
+ylab='Eddington bias correction = posterior-observed log-mass mode')
+abline(h=0)
 
 }
 \author{
@@ -77,4 +84,3 @@ Danail Obreschkow
 \keyword{function}
 \keyword{mass}
 \keyword{schechter}
-

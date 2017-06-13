@@ -18,35 +18,36 @@ dfplotveff <- function(df,
                       xlab = 'Observable x',
                       ylab = expression('Distribution function'~phi)) {
   
-  if (dim(df$input$data$x)[2]==1) {
-    
-    list = c(TRUE,FALSE,FALSE)
-    x = df$input$data$x
-    dx = max(x)-min(x)
-    par(pty = "m")
-    plot(0, 0, type='n', xlim=range(x)+dx*c(-0.1,0.1), ylim=c(0,1.1*max(df$input$selection$veff.function(x))),
-         xaxs='i', yaxs='i', xaxt='n', yaxt='n',
-         xlab = '', ylab = '')
-    xr = sort(c(df$fit$evaluation$x,x))
-    lines(xr,df$input$selection$veff.function(xr),col='blue',lwd=3)
-    if (!is.null(df$input$selection$veff.fct)) {
-      lines(xr,df$input$selection$veff.fct(xr))
-      list[2] = TRUE
+  n.dim = dim(df$input$data$x)[2]
+  if (n.dim!=1) {
+    if (n.dim==2) {
+      stop('Use dfplotveff2 for two-dimensional Veff functions.')
+    } else {
+      stop('dfplotveff only handles one-dimensional Veff functions.')
     }
-    if (!is.null(df$input$selection$veff.values)) {
-      points(x,df$input$selection$veff.values,pch=20)
-      list[3] = TRUE
-    }
-    magicaxis::magaxis(side=1,xlab=xlab,lwd=NA,lwd.ticks=1)
-    magicaxis::magaxis(side=2,ylab=ylab,lwd=NA,lwd.ticks=1)
-    magicaxis::magaxis(side=3,labels=FALSE,lwd=NA,lwd.ticks=1)
-    magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=1)
-    legend('bottomright',c('Model used for DF fit (veff.function)','Input model (veff.fct)','Input values (veff.values)')[list],
-           lwd=c(3,1,NA)[list],pch=c(NA,NA,20)[list],col=c('blue','black','black')[list],bty='n')
-    
-  } else {
-    
-    stop('plot.veff does not handle distribution functions with more than one dimension.')
-    
   }
+  
+  list = c(TRUE,FALSE,FALSE)
+  x = df$input$data$x
+  dx = max(x)-min(x)
+  par(pty = "m")
+  plot(0, 0, type='n', xlim=range(x)+dx*c(-0.1,0.1), ylim=c(0,1.1*max(df$input$selection$veff.function(x))),
+       xaxs='i', yaxs='i', xaxt='n', yaxt='n',
+       xlab = '', ylab = '')
+  xr = sort(c(df$fit$evaluation$x,x))
+  lines(xr,df$input$selection$veff.function(xr),col='blue',lwd=3)
+  if (!is.null(df$input$selection$veff.fct)) {
+    lines(xr,df$input$selection$veff.fct(xr))
+    list[2] = TRUE
+  }
+  if (!is.null(df$input$selection$veff.values)) {
+    points(x,df$input$selection$veff.values,pch=20)
+    list[3] = TRUE
+  }
+  magicaxis::magaxis(side=1,xlab=xlab,lwd=NA,lwd.ticks=1)
+  magicaxis::magaxis(side=2,ylab=ylab,lwd=NA,lwd.ticks=1)
+  magicaxis::magaxis(side=3,labels=FALSE,lwd=NA,lwd.ticks=1)
+  magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=1)
+  legend('bottomright',c('Model used for DF fit (veff.function)','Input model (veff.fct)','Input values (veff.values)')[list],
+         lwd=c(3,1,NA)[list],pch=c(NA,NA,20)[list],col=c('blue','black','black')[list],bty='n')
 }

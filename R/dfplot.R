@@ -1,6 +1,6 @@
 #' Display fitted distribution function
 #'
-#' This function displays the distribution function fitted using \code{\link{dffit}}.
+#' This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
@@ -115,16 +115,16 @@ dfplot <- function(df,
     if ((uncertainty.type>1) & (!length(df$fit$evaluation$y.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
     if (uncertainty.type == 3) {
       poly.y.95 = pmax(ylim[1],c(df$fit$evaluation$y.quantile.02,rev(df$fit$evaluation$y.quantile.98)))
-      polygon(poly.x,poly.y.95,col=rgb(r,g,b,0.2),border=NA)
+      polygon(poly.x,poly.y.95,col=rgb(r,g,b,0.15),border=NA)
     }
     if (uncertainty.type >= 2) {
       poly.y.68 = pmax(ylim[1],c(df$fit$evaluation$y.quantile.16,rev(df$fit$evaluation$y.quantile.84)))
-      polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.3),border=NA)
+      polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
     }
     if (uncertainty.type == 1) {
       poly.y.68 = pmax(ylim[1],c(df$fit$evaluation$y-df$fit$evaluation$y.error.neg,
                                  rev(df$fit$evaluation$y+df$fit$evaluation$y.error.pos)))
-      polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.3),border=NA)
+      polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
     }
   }
 
@@ -178,8 +178,8 @@ dfplot <- function(df,
     par(xpd=TRUE)
     lines(xlim,rep(ymax,2))
     par(xpd=FALSE)
-    magicaxis::magaxis(side=2,ylab='Counts',lwd=NA,lwd.ticks=1,minorn=0)
-    magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=1,minorn=0)
+    magicaxis::magaxis(side=2,ylab='Counts',lwd=NA,labels=FALSE,lwd.ticks=NA)
+    magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=NA)
     .plotSubEnd()
   }
 

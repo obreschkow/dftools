@@ -18,10 +18,9 @@ df = dffit(data$x, data$selection, write.fit = FALSE)
 dfwrite(df)
 
 }
-\author{
-Danail Obreschkow
-}
 \seealso{
 See examples in \code{\link{dffit}}.
 }
-
+\author{
+Danail Obreschkow
+}

@@ -2,10 +2,10 @@
 #'
 #' This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 #'
-#' @importFrom akima interpp
+#' @importFrom akima interp
 #'
 #' @param x Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.
-#' @param selection Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(Veff.values, Veff.fct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{Veff.fct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{Veff.fct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rrange)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The optional vector \code{rrange} (with default \code{rrange=c(0,Inf)}) gives the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.
+#' @param selection Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(Veff.values, veff.userfct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rrange)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The optional vector \code{rrange} (with default \code{rrange=c(0,Inf)}) gives the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.
 #' @param x.err Optional vector or array specifying the observational errors of \code{x}. If \code{x} is a vector then \code{x.err} must also be a vector of same length. Its elements are interpreted as the standard deviations of Gaussian uncertainties in \code{x}. If \code{x} is a \code{N-by-P} matrix representing \code{N} objects with \code{P} observables, then \code{x.err} must be either a \code{N-by-P} matrix or a \code{N-by-P-by-P} array. In the first case, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the second case, the \code{P-by-P} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{P} observed values \code{x[i,]}.
 #' @param distance Optional vector of \code{N} elements specifying the comoving distances of the \code{N} galaxies. This vector is only needed if \code{correct.lss.bias = TRUE}.
 #' @param phi Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{P=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{phi = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{phi(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{phi} is given as a function, the argument \code{p.initial} is mandatory.
@@ -17,6 +17,7 @@
 #' @param lss.sigma Cosmic variance of survey volume. Explicitly, \code{lss.sigma} is interpreted as the expected relative RMS on the total number of galaxies in the survey volume. This value must be determined from a cosmological model.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param x.grid sets the grid on which the numerical integration is performed. This grid must be specified as \code{x.grid = list(x1, ..., xp)}, where \code{xi} is an equally spaced vector with the grid values for the i-th observable. In the case of a MF (a 1-dimensional DF), \code{x.grid = list(seq(xmin,xmax,by=dx))}, where \code{xmin} and \code{xmax} are the minimum/maximum values of the log-mass considered in the numerical integratino and \code{dx} is the grid spacing.
+#' @param force.no.bias.correction If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
 #'
 #' @return Returns a structured list. The sublist \code{input} contains all relevant input arguments. The sublist \code{fit} contains all the output arguments of the MLE algorithm. The output can be visualized using \code{\link{mfplot}}, \code{\link{dfplot}} and \code{\link{dfwrite}}.
 #'
@@ -26,7 +27,7 @@
 #'
 #' @examples
 #' # basic example
-#' data = mfdata()
+#' data = dfdata()
 #' df = dffit(data$x, data$selection)
 #' mfplot(df, xlim=c(2e6,5e10))
 #' 
@@ -40,16 +41,20 @@
 #' # show fitted effective volume function
 #' dfplotveff(df)
 #'
-#' # determine Schechter function uncertainties from resampling and evaluate bias-corrected MLE (plotted in red)
+#' # determine Schechter function uncertainties from resampling and
+#' # evaluate bias-corrected MLE (plotted in red)
 #' df = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
-#' mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5, xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
+#' mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5,
+#' #xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
 #' lines(10^df$fit$evaluation$x,df$fit$evaluation$y.bias.corrected,col='red',lty=2)
 #'
-#' # evaluate posteriors of the mass measurements and visualize the change in the mass mode between observation and posterior
+#' # evaluate posteriors of the mass measurements and
+#' # visualize the change in the mass mode between observation and posterior
 #' # i.e. the Eddington bias correction
 #' df = dfposteriors(df)
-#' plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',ylab='Eddington bias correction = posterior-observed log-mass mode')
-#' abline(h=1)
+#' plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',
+#' ylab='Eddington bias correction = posterior-observed log-mass mode')
+#' abline(h=0)
 #'
 #' @author Danail Obreschkow
 #'
@@ -67,7 +72,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   correct.lss.bias = FALSE,
                   lss.sigma = NULL,
                   write.fit = TRUE,
-                  x.grid = list(seq(4,12,0.01))) {
+                  x.grid = list(seq(4,12,0.01)),
+                  force.no.bias.correction = FALSE) {
 
   tStart.global = Sys.time() # timer
   wt.fitting <<- 0
@@ -136,7 +142,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   if (!is.null(n.resampling)) {
     if (n.resampling<10) stop('n.resampling must be 10 or larger.')
   }
-
+  
   # Handle correct.lss.bias
   if (correct.lss.bias) {
     if (is.null(distance)) stop('Distances must be given of correct.lss.bias = TRUE.')
@@ -144,12 +150,12 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     if (lss.sigma<0) stop('lss.sigma cannot be negative.')
     veff.function.lss = 0 #xxx
   }
-
+  
   # Handle correct.mle.bias
   if (correct.mle.bias) {
     if (n.data<2) stop('At least two data points must be given if correct.mle.bias = TRUE.')
   }
-
+  
   # Handle x.grid
   if (!is.list(x.grid)) stop('x.grid must be a list of p vectors, where p is the number of columns of x.')
   if (length(x.grid)!=n.dim) stop('x.grid must be a list of p vectors, where p is the number of columns of x.')
@@ -178,20 +184,22 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                       veff.mesh,
                       phi.function, p.initial,
                       x.mesh, x.mesh.dv,
-                      n.iterations = n.iterations)
-
+                      n.iterations = n.iterations,
+                      force.no.bias.correction)
+  
   # Initialize output parameters ###########################################################
   phi.fit <- function(x) {phi.function(x,best.fit$p.optimal)}
   source.count <- function(x) {phi.fit(x)*veff.function(x)}
   input = list(data = list(x = x, x.err = x.err, distance = distance),
                selection = list(veff.function = veff.function,
                                 veff.values = veff.list$veff.values,
-                                veff.fct = veff.list$veff.fct,
+                                veff.userfct = veff.list$veff.userfct,
                                 veff.mesh = veff.mesh),
                distribution.function = list(phi = phi.function,
                                             phi.equation = phi.equation),
                options = list(p.initial = p.initial,
                               n.iterations = n.iterations, n.resampling = n.resampling,
+                              force.no.bias.correction = force.no.bias.correction,
                               correct.lss.bias = correct.lss.bias, lss.sigma = lss.sigma,
                               correct.mle.bias = correct.mle.bias, x.grid = x.grid,
                               x.mesh = x.mesh, x.mesh.dv = x.mesh.dv))
@@ -201,7 +209,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                               source.count = source.count,
                               logL = best.fit$logL),
              evaluation = list(x = x.mesh,
-                               y = apply(x.mesh,1,phi.fit)),
+                               y = c(phi.fit(x.mesh))),
              status = list(n.iterations = best.fit$n.fit.and.debias,
                            converged = best.fit$converged,
                            chain = best.fit$chain))
@@ -212,7 +220,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
     # Bias correction
     if (correct.mle.bias) {df = .correct.mle.bias(df)}
-
+    
     # Determine uncertainties
     df = .add.Gaussian.errors(df)
     if (!is.null(n.resampling)) {df = .resample(df)}
@@ -234,7 +242,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                      veff.mesh,
                      phi.function, p.initial,
                      x.mesh, x.mesh.dv,
-                     n.iterations, debiasing.first.iteration = TRUE,
+                     n.iterations, force.no.bias.correction = FALSE,
                      supress.warning = FALSE) {
   
   tStart.fitting = Sys.time()
@@ -243,6 +251,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   n.data = dim(x)[1]
   n.dim = dim(x)[2]
   n.mesh = dim(x.mesh)[1]
+  veff.mesh = c(veff.mesh)
   if (is.null(x.err)) n.iterations = 1
 
   if (!is.null(x.err)) {
@@ -301,11 +310,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         rho.unbiased[index] = rho.unbiased[index]+1/x.mesh.dv
       }
     } else {
-      if (k==1 & !debiasing.first.iteration) {
+      if (force.no.bias.correction) {
         prior = array(1,n.mesh)
       } else {
         # predicted source counts (up to a factor x.mesh.dv)
-        prior = phi.function(c(x.mesh),p.initial)*veff.mesh
+        prior = phi.function(x.mesh,p.initial)*veff.mesh
         prior[!is.finite(prior)] = 0
         prior = pmax(0,prior)
       }
@@ -328,12 +337,12 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
     # maximize ln(L)
     tStart.fitting = Sys.time()
-    opt = optim(p.initial,neglogL,hessian=TRUE,control=list(parscale=rep(1,length(p.initial)),reltol=1e-10,abstol=1e-10,maxit=1e3))
+    opt = optim(p.initial,neglogL,hessian=TRUE,control=list(parscale=rep(1,length(p.initial)),reltol=1e-10,abstol=1e-10,maxit=1e4))
     chain[k,] = c(opt$par,opt$value)
     wt.fitting <<- wt.fitting + as.double(Sys.time())-as.double(tStart.fitting)
     
     # assess convergence
-    if (is.null(x.err)) { # exist without extra iterations
+    if (is.null(x.err) | force.no.bias.correction) { # exist without extra iterations
       converged = opt$convergence==0
       running = FALSE
     } else {
@@ -396,7 +405,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   xmax = apply(x,2,max)
   mode = NULL
   veff.values = NULL
-  veff.fct = NULL
+  veff.userfct = NULL
+  veff.function = NULL
 
   # Mode 1: Constant effective volume inside observed domain
   if (is.double(selection)) {
@@ -426,7 +436,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         }
       } else if (n.dim==2) {
         vapprox = function(xval) {
-          z = 1/(akima::interpp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
+          z = 1/(akima::interp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
           if (is.na(z)) {return(0)} else {return(z)}
         }
       } else {
@@ -445,8 +455,13 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Mode 3: Effective volume given directly
   if (is.function(selection)) {
     mode = 3
-    veff.function.elemental = selection
-    veff.fct = selection
+    test = try(selection(rbind(x)))
+    if (is.double(test) & length(test)==n.data) {
+      veff.function = selection
+    } else {
+      veff.function.elemental = selection
+    }
+    veff.userfct = selection
   }
 
   # Mode 4: Hybrid of 2 and 3
@@ -454,7 +469,12 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     if (length(selection)==2) {
       if (is.double(selection[[1]]) & is.function(selection[[2]])) {
         veff.values = selection[[1]]
-        veff.fct = selection[[2]]
+        test = try(selection[[2]](rbind(x)))
+        if (is.double(test) & length(test)==n.data) {
+          veff.userfct = function(xval) selection[[2]](rbind(xval))
+        } else {
+          veff.userfct = selection[[2]]
+        }
         if (min(veff.values)<=0) stop('All values of selection (=Veff) must be positive.')
         mode = 4
         if (n.dim==1) {
@@ -464,15 +484,15 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
           }
         } else if (n.dim==2) {
           vapprox = function(xval) {
-            z = 1/(akima::interpp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
-            if (is.na(z)) {return(veff.fct(xval))} else {return(z)}
+            z = 1/(akima::interp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
+            if (is.na(z)) {return(veff.userfct(xval))} else {return(z)}
           }
         } else {
           stop('Linear interpolation of Veff not implemented for DF with more than 2 dimensions. Use a different selection type.')
         }
         veff.function.elemental = function(xval) {
           if (any(xval<xmin) | any(xval>xmax)) {
-            return(veff.fct(xval))
+            return(veff.userfct(xval))
           } else {
             return(vapprox(xval))
           }
@@ -511,24 +531,26 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   if (is.null(mode)) stop('Unknown selection.')
 
   # apply to all elements
-  veff.function = function(xval) {
-    if (length(dim(xval))==2) {
-      return(apply(xval,1,veff.function.elemental))
-    } else if (length(dim(xval))==0) {
-      if (n.dim==1) {
-        return(sapply(xval,veff.function.elemental))
+  if (is.null(veff.function)) {
+    veff.function = function(xval) {
+      if (length(dim(xval))==2) {
+        return(apply(xval,1,veff.function.elemental))
+      } else if (length(dim(xval))==0) {
+        if (n.dim==1) {
+          return(sapply(xval,veff.function.elemental))
+        } else {
+          if (length(xval)!=n.dim) stop('Incorrect argument.')
+          return(veff.function.elemental(xval))
+        }
       } else {
-        if (length(xval)!=n.dim) stop('Incorrect argument.')
-        return(veff.function.elemental(xval))
+        stop('Incorrect argument.')
       }
-    } else {
-      stop('Incorrect argument.')
     }
   }
 
   return(list(veff.function = veff.function,
               veff.values = veff.values,
-              veff.fct = veff.fct))
+              veff.userfct = veff.userfct))
 }
 
 .add.Gaussian.errors <- function(df) {
@@ -540,9 +562,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # make Gaussian uncertainties of DF
   eig = eigen(cov)
   np = length(df$fit$parameters$p.optimal)
-  nx = length(df$fit$evaluation$x)
+  nx = dim(df$fit$evaluation$x)[1]
   index = 0
-  nsteps = 6 # a larger number of steps leads to a more accurate sampling of the covariance ellipsoid
+  nsteps.tot.max = 216
+  nsteps = max(2,round(nsteps.tot.max^(1/np))) # a larger number of steps leads to a more accurate sampling of the covariance ellipsoid
   y.new = array(NA,c(nx,nsteps^np))
   k = seq(-1,1,length=nsteps)
   step = array(1,np)
@@ -607,8 +630,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                  df$input$distribution.function$phi,
                  df$fit$parameters$p.optimal,
                  df$input$options$x.mesh, df$input$options$x.mesh.dv,
-                 n.iterations = 1, debiasing.first.iteration = TRUE,
-                 supress.warning = TRUE)
+                 n.iterations = 1, supress.warning = TRUE)
     p.new[,i] = cf$p.optimal
   }
   p.reduced = apply(p.new, 1, mean, na.rm = T)

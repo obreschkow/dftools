@@ -37,10 +37,9 @@ dfplotcov(df, p = NULL, n.points = 500, n.standarddev = 5,
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
 }
-\author{
-Danail Obreschkow
-}
 \seealso{
 See examples in \code{\link{dffit}}.
 }
-
+\author{
+Danail Obreschkow
+}
