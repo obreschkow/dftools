@@ -24,15 +24,15 @@
 #'
 #' @export
 
-dfplotcov <- function(df, p = NULL, n.points = 500, n.standarddev = 5,
+dfplotcov <- function(bundle, p = NULL, n.points = 500, n.standarddev = 5,
                             line.color = 'blue', line.lwd = 2,
                             point.color = '#bbbbff', point.cex = 0.1,
                             text.size.labels = 1.1, text.size.numbers = 0.8,
                             margins = c(4,4,0.5,0.5),
                             title = '') {
-  covariance = df$fit$parameters$p.covariance
-  .covariance.plot(df$fit$parameters$p.optimal,
-                  df$fit$parameters$p.covariance,
+  covariance = bundle$fit$p.covariance
+  .covariance.plot(bundle$fit$p.best,
+                  bundle$fit$p.covariance,
                   p = p, npoints = n.points,
                   nstd = n.standarddev*2,
                   line.color = line.color, line.lwd = line.lwd,
@@ -123,7 +123,7 @@ dfplotcov <- function(df, p = NULL, n.points = 500, n.standarddev = 5,
 
     # add axes
     tickpos = c(0.2,0.5,0.8)
-    if (i==1) {
+    if (i==1 & j>1) {
       axis(2, at = yoffset+tickpos,labels=sprintf('%4.1f',E[2]+ylength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = 0.8)
       if (is.null(name)) {
         axis(2, at = yoffset+0.5,pos=-0.1,label=bquote(p [.(j)]),cex.axis=text.size.labels,tick=F)

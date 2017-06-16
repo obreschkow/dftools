@@ -14,12 +14,12 @@
 #'
 #' @export
 
-dfplotveff2 <- function(df,
+dfplotveff2 <- function(bundle,
                        xlab = 'Observable x1',
                        ylab = 'Observable x2',
                        zlab = 'Veff') {
   
-  n.dim = dim(df$input$data$x)[2]
+  n.dim = dim(bundle$data$x)[2]
   if (n.dim!=2) {
     if (n.dim==1) {
       stop('Use dfplotveff for one-dimensional Veff functions.')
@@ -28,28 +28,28 @@ dfplotveff2 <- function(df,
     }
   }
   
-  x = df$input$options$x.grid[[1]]
-  y = df$input$options$x.grid[[2]]
+  x = seq(bundle$grid$xmin[1],bundle$grid$xmax[1],bundle$grid$dx[1])
+  y = seq(bundle$grid$xmin[2],bundle$grid$xmax[2],bundle$grid$dx[2])
   
-  z = df$input$selection$veff.function(df$fit$evaluation$x)
+  z = bundle$grid$veff
   z = log10(pmax(1e-99,z))
   z = array(z,c(length(x),length(y)))
   zmax = max(z)
-  z[z<(zmax-5)] = zmax-5
+  z[z<(zmax-5)] = NA
   
-  if (!is.null(df$input$selection$veff.userfct)) {
-    z2 = df$input$selection$veff.userfct(df$fit$evaluation$x)
+  if (!is.null(bundle$input$selection$veff.input.function)) {
+    z2 = bundle$input$selection$veff.input.function(bundle$grid$x)
     z2 = log10(pmax(1e-99,z2))
     z2 = array(z2,c(length(x),length(y)))
     zmax = max(z2)
-    z2[z2<(zmax-5)] = zmax-5
+    z2[z2<(zmax-5)] = NA
   }
   
   rgl::open3d()
   rgl::decorate3d(xlim = range(x), ylim = range(y), zlim = c(-5,0)+zmax,
                   xlab = xlab, ylab = ylab, zlab = zlab, aspect = TRUE)
   rgl::surface3d(x,y,z,col='blue',alpha=0.3, forceClipregion= TRUE)
-  if (!is.null(df$input$selection$veff.userfct)) {
+  if (!is.null(bundle$input$selection$veff.input.function)) {
     rgl::surface3d(x,y,z2,col='black',alpha=0.3, forceClipregion= TRUE)
   }
   

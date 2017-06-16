@@ -8,14 +8,14 @@
 #'
 #' @export
 
-mfplot <- function(df,
+mfplot <- function(bundle,
                    xlab = expression('M [M'['sun']*']'),
                    ylab = expression(phi~'[Mpc'^-3~'dex'^-1~']'),
                    log = 'xy',
                    xpower10 = TRUE,
                    show.data.points = TRUE,
                    ...) {
-  df = dfplot(df, xlab = xlab, ylab = ylab, log = log, xpower10 = xpower10,
+  bundle = dfplot(bundle, xlab = xlab, ylab = ylab, log = log, xpower10 = xpower10,
               show.data.points = show.data.points, ...)
-  invisible(df)
+  invisible(bundle)
 }

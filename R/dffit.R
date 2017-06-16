@@ -8,18 +8,27 @@
 #' @param selection Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(Veff.values, veff.userfct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rrange)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The optional vector \code{rrange} (with default \code{rrange=c(0,Inf)}) gives the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.
 #' @param x.err Optional vector or array specifying the observational errors of \code{x}. If \code{x} is a vector then \code{x.err} must also be a vector of same length. Its elements are interpreted as the standard deviations of Gaussian uncertainties in \code{x}. If \code{x} is a \code{N-by-P} matrix representing \code{N} objects with \code{P} observables, then \code{x.err} must be either a \code{N-by-P} matrix or a \code{N-by-P-by-P} array. In the first case, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the second case, the \code{P-by-P} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{P} observed values \code{x[i,]}.
 #' @param distance Optional vector of \code{N} elements specifying the comoving distances of the \code{N} galaxies. This vector is only needed if \code{correct.lss.bias = TRUE}.
-#' @param phi Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{P=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{phi = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{phi(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{phi} is given as a function, the argument \code{p.initial} is mandatory.
+#' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{P=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
 #' @param p.initial Initial model parameters for fitting the DF.
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param n.resampling Integer (>0) specifying the number of iterations for the resampling of the most likely DF used to evaluate realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
-#' @param correct.mle.bias The maximum likelihood estimator (MLE) of a finite dataset can be biased – a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in \code{1/N}, using jackknifing.
+#' @param correct.mle.bias The maximum likelihood estimator (MLE) of a finite dataset can be biased – a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).
 #' @param lss.sigma Cosmic variance of survey volume. Explicitly, \code{lss.sigma} is interpreted as the expected relative RMS on the total number of galaxies in the survey volume. This value must be determined from a cosmological model.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
-#' @param x.grid sets the grid on which the numerical integration is performed. This grid must be specified as \code{x.grid = list(x1, ..., xp)}, where \code{xi} is an equally spaced vector with the grid values for the i-th observable. In the case of a MF (a 1-dimensional DF), \code{x.grid = list(seq(xmin,xmax,by=dx))}, where \code{xmin} and \code{xmax} are the minimum/maximum values of the log-mass considered in the numerical integratino and \code{dx} is the grid spacing.
-#' @param force.no.bias.correction If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
+#' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
+#' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
+#' 
+#' @details
+#' For a detailed description of the method, please refer to the peer-reviewed publication linked below.
 #'
-#' @return Returns a structured list. The sublist \code{input} contains all relevant input arguments. The sublist \code{fit} contains all the output arguments of the MLE algorithm. The output can be visualized using \code{\link{mfplot}}, \code{\link{dfplot}} and \code{\link{dfwrite}}.
+#' @return \code{dffit} returns a structured list, which can be interpreted by other functions, such as \code{\link{dfwrite}}, \code{\link{dfplot}}, \code{\link{dfplotcov}}, \code{\link{dfplotveff}}. The list contains the following sublists:
+#' \item{data}{is a list containing the input data, that is the array of observations \code{x}, their Gaussian uncertainties \code{x.err} and the distances if the objects \code{r}.}
+#' \item{selection}{is a list describing the selection function underlying the observations, namely the function \code{veff(x)}, which is derived from the input argument \code{selection}.}
+#' \item{model}{is a list describing the generative distribution function used to model. The main entry of this list is the function \code{gdf(xval,p)} (often written as phi(x|theta) in the literature).}
+#' \item{grid}{is a list of arrays representing a grid in the observables used for numerical integrations. Most importantly, the N-by-P array \code{x} contains the grid points, the N-element vector \code{gdf} gives the corresponding values of the fitted generative distribution function and the N-element vector \code{scd} representing the source count density given no measurement errors.}
+#' \item{fit}{is a list describing the fitted generative distribution function. It contains the array \code{p.best} giving the most likely model parameters, as well as their Gaussian uncertainties \code{p.sigma} and covariance matrix \code{p.covariance}. The list also contains the function \code{gdf(x)}, which is the model function evaluated at the parameters \code{p.best}; and the function \code{scd(x)=gdf(x)*veff(x)} representing the expected source count density.}
+#' \item{options}{is a list of various optional input arguments of \code{dffit}.}
 #'
 #' @keywords schechter function
 #' @keywords mass function
@@ -28,31 +37,31 @@
 #' @examples
 #' # basic example
 #' data = dfdata()
-#' df = dffit(data$x, data$selection)
-#' mfplot(df, xlim=c(2e6,5e10))
+#' bundle = dffit(data$x, data$selection)
+#' mfplot(bundle, xlim=c(2e6,5e10))
 #' 
 #' # include measurement errors in fit and also plot histogram of source counts
-#' df = dffit(data$x, data$selection, data$x.err)
-#' mfplot(df, xlim=c(2e6,5e10), show.data.histogram = TRUE)
+#' bundle = dffit(data$x, data$selection, data$x.err)
+#' mfplot(bundle, xlim=c(2e6,5e10), show.data.histogram = TRUE)
 #'
 #' # show fitted parameter PDFs and covariances
-#' dfplotcov(df)
+#' dfplotcov(bundle)
 #'
 #' # show fitted effective volume function
-#' dfplotveff(df)
+#' dfplotveff(bundle)
 #'
 #' # determine Schechter function uncertainties from resampling and
 #' # evaluate bias-corrected MLE (plotted in red)
-#' df = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
-#' mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5,
+#' bundle = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
+#' mfplot(bundle, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5,
 #' #xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
-#' lines(10^df$fit$evaluation$x,df$fit$evaluation$y.bias.corrected,col='red',lty=2)
+#' lines(10^bundle$fit$evaluation$x,bundle$fit$evaluation$y.bias.corrected,col='red',lty=2)
 #'
 #' # evaluate posteriors of the mass measurements and
 #' # visualize the change in the mass mode between observation and posterior
 #' # i.e. the Eddington bias correction
-#' df = dfposteriors(df)
-#' plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',
+#' bundle = dfposteriors(bundle)
+#' plot(data$x,bundle$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',
 #' ylab='Eddington bias correction = posterior-observed log-mass mode')
 #' abline(h=0)
 #'
@@ -63,8 +72,8 @@
 dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   selection = NULL,
                   x.err = NULL, # Gaussian standard deviations of x
-                  distance = NULL,
-                  phi = 'Schechter',
+                  r = NULL, # Distance (or redshift)
+                  gdf = 'Schechter',
                   p.initial = NULL,
                   n.iterations = 100,
                   n.resampling = NULL,
@@ -72,103 +81,357 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   correct.lss.bias = FALSE,
                   lss.sigma = NULL,
                   write.fit = TRUE,
-                  x.grid = list(seq(4,12,0.01)),
-                  force.no.bias.correction = FALSE) {
+                  xmin = 4,
+                  xmax = 12,
+                  dx = 0.01,
+                  keep.eddington.bias = FALSE) {
 
-  tStart.global = Sys.time() # timer
-  wt.fitting <<- 0
+  # Set timer
+  tStart = Sys.time()
   
-  # Input handling ########################################################################
+  # Initialize main dataframe
+  bundle = list(data = list(x = x, x.err = x.err, r = r),
+                selection = list(),
+                model = list(),
+                grid = list(xmin = xmin, xmax = xmax, dx = dx),
+                fit = list(),
+                options = list(p.initial = p.initial, n.iterations = n.iterations, n.resampling = n.resampling,
+                               keep.eddington.bias = keep.eddington.bias,  correct.lss.bias = correct.lss.bias,
+                               lss.sigma = lss.sigma, correct.mle.bias = correct.mle.bias),
+                tmp = list(selection = selection, gdf = gdf))
+  
+  # Check and pre-process input arguments
+  bundle = .handle.input(bundle)
+  bundle = .make.veff(bundle)
+  bundle = .make.grid(bundle)
+  bundle[which(names(bundle)=='tmp')] = NULL
+  
+  # Find most likely generative model
+  bundle = .corefit(bundle)
+  if (write.fit) dfwrite(bundle)
+  
+  # Determine Gaussian uncertainties
+  bundle = .add.Gaussian.errors(bundle)
+  
+  # Resample to determine more accurate uncertainties with quantiles
+  if (bundle$fit$status$converged & !is.null(bundle$options$n.resampling)) {bundle = .resample(bundle)}
+  
+  # LSS bias correction
+  if (bundle$fit$status$converged & bundle$options$correct.lss.bias) {bundle = .correct.lss.bias(bundle)}
+  
+  # Estimator bias correction
+  if (bundle$fit$status$converged & bundle$options$correct.mle.bias) {bundle = .correct.mle.bias(bundle)}
 
+  # Finalize
+  bundle$fit$status$walltime.total = as.double(Sys.time())-as.double(tStart)
+  invisible(bundle)
+
+}
+
+.handle.input <- function(bundle) {
+  
   # Handle x
-  if (length(x)<1) stop('Give at least one data point.')
-  if (is.null(dim(x))) {
-    x = cbind(as.vector(x)) # make col-vector
-  } else if (length(dim(x))==1) {
-    x = cbind(x)
-  } else if (length(dim(x))!=2) {
+  if (length(bundle$data$x)<1) stop('Give at least one data point.')
+  if (is.null(dim(bundle$data$x))) {
+    bundle$data$x = cbind(as.vector(bundle$data$x)) # make col-vector
+  } else if (length(dim(bundle$data$x))==1) {
+    bundle$data$x = cbind(bundle$data$x)
+  } else if (length(dim(bundle$data$x))!=2) {
     stop('x cannot have more than two dimensions.')
   }
-  n.data = dim(x)[1]
-  n.dim = dim(x)[2]
-
+  bundle$data$n.data = dim(bundle$data$x)[1]
+  bundle$data$n.dim = dim(bundle$data$x)[2]
+  
   # Handle x.err
-  if (!is.null(x.err)) {
-    if (is.null(dim(x.err))) {
-      x.err = cbind(as.vector(x.err)) # make col-vector
-    } else if (length(dim(x.err))==1) {
-      x.err = cbind(x.err)
-    } else  if (length(dim(x.err))==2) {
-      if (any(dim(x)!=dim(x.err))) stop('Size of x.err not compatible with size of x.')
-    } else if (length(dim(x.err))==3) {
-      if (n.dim==1) stop('For one-dimensional distribution function x.err cannot have 3 dimensions.')
-      if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim & dim(x.err)[3]==n.dim)) {
+  if (!is.null(bundle$data$x.err)) {
+    if (is.null(dim(bundle$data$x.err))) {
+      bundle$data$x.err = cbind(as.vector(bundle$data$x.err)) # make col-vector
+    } else if (length(dim(bundle$data$x.err))==1) {
+      bundle$data$x.err = cbind(bundle$data$x.err)
+    } else  if (length(dim(bundle$data$x.err))==2) {
+      if (any(dim(bundle$data$x)!=dim(bundle$data$x.err))) stop('Size of x.err not compatible with size of x.')
+    } else if (length(dim(bundle$data$x.err))==3) {
+      if (bundle$data$n.dim==1) stop('For one-dimensional distribution function x.err cannot have 3 dimensions.')
+      if (!(dim(bundle$data$x.err)[1]==bundle$data$n.data & dim(bundle$data$x.err)[2]==bundle$data$n.dim & dim(bundle$data$x.err)[3]==bundle$data$n.dim)) {
         stop('Size of x.err not compatible with size of x.')
       }
     } else {
       stop('x.err cannot have more than three dimensions.')
     }
-    if (min(x)<=0) stop('All values of x.err must be positive.')
+    if (min(bundle$data$x)<=0) stop('All values of x.err must be positive.')
   }
-
+  
   # Handle distance
-  if (!is.null(distance)) {
-    distance = as.vector(distance)
-    if (length(distance)!=n.data) stop('The number of distance values must be equal to the number of data points (=number of columns of x).')
-    if (min(distance)<=0) stop('All distance values must be positive.')
-  }
-
-  # Handle selection
-  if (is.null(selection)) stop('A selection function must be given.')
-  veff.list = .make.veff(selection,x)
-  veff.function = veff.list$veff.function
-
-  # Handle phi
-  if (is.function(phi)) {
-    phi.function = phi
-    phi.equation = NA
-    if (is.null(p.initial)) stop('For user-defined distribution functions initial parameters must be given.')
-  } else {
-    phi.function <- function(x,p) {dfmodel(x, p, type = phi)}
-    phi.equation = dfmodel(output = 'equation', type = phi)
-    if (is.null(p.initial)) p.initial = dfmodel(output = 'initial', type = phi)
-  }
-
-  # Handle n.iterations
-  if (is.null(n.iterations)) stop('n.iterations must be a positive integer.')
-  if (n.iterations<1) stop('n.iterations must be a positive integer.')
-
-  # Handle n.resampling
-  if (!is.null(n.resampling)) {
-    if (n.resampling<10) stop('n.resampling must be 10 or larger.')
+  if (!is.null(bundle$data$r)) {
+    bundle$data$r = as.vector(bundle$data$r)
+    if (length(bundle$data$r)!=bundle$data$n.data) stop('The number of distance values must be equal to the number of data points (=number of columns of x).')
+    if (min(bundle$data$r)<=0) stop('All distance values must be positive.')
   }
   
   # Handle correct.lss.bias
-  if (correct.lss.bias) {
-    if (is.null(distance)) stop('Distances must be given of correct.lss.bias = TRUE.')
-    if (is.null(lss.sigma)) stop('lss.sigma must be given of correct.lss.bias = TRUE.')
-    if (lss.sigma<0) stop('lss.sigma cannot be negative.')
-    veff.function.lss = 0 #xxx
+  if (bundle$options$correct.lss.bias) {
+    if (is.null(bundle$data$r)) stop('Distances must be given of correct.lss.bias = TRUE.')
+    if (is.null(bundle$options$lss.sigma)) stop('lss.sigma must be given of correct.lss.bias = TRUE.')
+    if (bundle$options$lss.sigma<0) stop('lss.sigma cannot be negative.')
+    if (bundle$data$n.dim>1) stop('Currently correct.lss.bias can only be TRUE for one-dimensional DFs.')
+  }
+  
+  # Handle gdf
+  if (is.function(bundle$tmp$gdf)) {
+    bundle$model$gdf = bundle$tmp$gdf
+    bundle$model$gdf.equation = NA
+    if (is.null(bundle$options$p.initial)) stop('For user-defined distribution functions initial parameters must be given.')
+  } else {
+    bundle$model$gdf <- function(x,p) {dfmodel(x, p, type = bundle$tmp$gdf)}
+    bundle$model$gdf.equation = dfmodel(output = 'equation', type = bundle$tmp$gdf)
+    if (is.null(bundle$options$p.initial)) bundle$options$p.initial = dfmodel(output = 'initial', type = bundle$tmp$gdf)
+  }
+  bundle$model$n.para = length(bundle$options$p.initial)
+  
+  # Handle n.iterations
+  if (is.null(bundle$options$n.iterations)) stop('n.iterations must be a positive integer.')
+  if (bundle$options$n.iterations<1) stop('n.iterations must be a positive integer.')
+  
+  # Handle n.resampling
+  if (!is.null(bundle$options$n.resampling)) {
+    if (bundle$options$n.resampling<10) stop('n.resampling must be 10 or larger.')
   }
   
   # Handle correct.mle.bias
-  if (correct.mle.bias) {
-    if (n.data<2) stop('At least two data points must be given if correct.mle.bias = TRUE.')
+  if (bundle$options$correct.mle.bias) {
+    if (bundle$options$bundle$data$n.data<2) stop('At least two data points must be given if correct.mle.bias = TRUE.')
   }
   
-  # Handle x.grid
-  if (!is.list(x.grid)) stop('x.grid must be a list of p vectors, where p is the number of columns of x.')
-  if (length(x.grid)!=n.dim) stop('x.grid must be a list of p vectors, where p is the number of columns of x.')
-  dx = nx = array(NA,n.dim)
-  for (i in seq(n.dim)) {
-    dx[i] = x.grid[[i]][2]-x.grid[[i]][1]
-    if (dx[i]<=0) stop('x.grid must be made of vectors with monotonically increasing elements.')
-    nx[i] = length(x.grid[[i]])
-    if (nx[i]<2) stop('x.grid must be made of vectors with at least 2 elements, each.')
-    dtmp = x.grid[[i]][3:nx[i]]-x.grid[[i]][2:(nx[i]-1)]
-    if (any(abs(dtmp-dx[i])>dx[i]*1e-10)) stop('x.grid must be made of vectors with equally spaced elements.')
+  invisible(bundle)
+}
+
+#' @export
+.make.veff = function(bundle) {
+  
+  # Generates the function veff.function(xval) from various selection function types.
+  
+  # Handle selection
+  if (is.null(bundle$tmp$selection)) stop('A selection function must be given.')
+  s = bundle$tmp$selection
+  x = bundle$data$x
+  r = bundle$data$r
+  n.dim = bundle$data$n.dim
+  n.data = bundle$data$n.data
+  xmin = apply(x,2,min)
+  xmax = apply(x,2,max)
+  mode = NULL
+  veff.values = NULL
+  veff.userfct = NULL
+  veff.function = NULL
+  veff.function.lss = NULL
+  
+  # Mode 1: Constant effective volume inside observed domain
+  if (is.double(s)) {
+    if (length(s)==1) {
+      if (s<=0) stop('s = Vconstant mustt be positive.')
+      mode = 1
+      veff.function.elemental = function(xval) {
+        if (any(xval<xmin) | any(xval>xmax)) {
+          return(0)
+        } else {
+          return(s)
+        }
+      }
+    }
   }
-  x.mesh.dv = prod(dx)
+  
+  # Mode 2: Interpolated effective volume inside observed domain
+  if (is.double(s)) {
+    if (length(s)==n.data) {
+      if (min(s)<=0) stop('All values of selection (=Veff) must be positive.')
+      mode = 2
+      veff.values = s
+      if (n.dim==1) {
+        vapprox = function(xval) {
+          f = approxfun(x[,1],1/veff.values,rule=2)
+          return(1/f(xval))
+        }
+      } else if (n.dim==2) {
+        vapprox = function(xval) {
+          z = 1/(akima::interp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
+          if (is.na(z)) {return(0)} else {return(z)}
+        }
+      } else {
+        stop('Linear interpolation of Veff not implemented for DF with more than 2 dimensions. Use a different selection type.')
+      }
+      veff.function.elemental = function(xval) {
+        if (any(xval<xmin) | any(xval>xmax)) {
+          return(0)
+        } else {
+          return(vapprox(xval))
+        }
+      }
+    }
+  }
+  
+  # Mode 3: Effective volume given directly
+  if (is.function(s)) {
+    mode = 3
+    test = try(s(rbind(x)))
+    if (is.double(test) & length(test)==n.data) {
+      veff.function = s
+    } else {
+      veff.function.elemental = s
+    }
+    veff.userfct = s
+  }
+  
+  # Mode 4: Hybrid of 2 and 3
+  if (is.list(s)) {
+    if (length(s)==2) {
+      if (is.double(s[[1]]) & is.function(s[[2]])) {
+        veff.values = s[[1]]
+        test = try(s[[2]](rbind(x)))
+        if (is.double(test) & length(test)==n.data) {
+          veff.userfct = function(xval) s[[2]](rbind(xval))
+        } else {
+          veff.userfct = s[[2]]
+        }
+        if (min(veff.values)<=0) stop('All values of selection (=Veff) must be positive.')
+        mode = 4
+        if (n.dim==1) {
+          vapprox = function(xval) {
+            f = approxfun(x[,1],1/veff.values,rule=2)
+            return(1/f(xval))
+          }
+        } else if (n.dim==2) {
+          vapprox = function(xval) {
+            z = 1/(akima::interp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
+            if (is.na(z)) {return(veff.userfct(xval))} else {return(z)}
+          }
+        } else {
+          stop('Linear interpolation of Veff not implemented for DF with more than 2 dimensions. Use a different selection type.')
+        }
+        veff.function.elemental = function(xval) {
+          if (any(xval<xmin) | any(xval>xmax)) {
+            return(veff.userfct(xval))
+          } else {
+            return(vapprox(xval))
+          }
+        }
+      }
+    }
+  }
+  
+  # Mode 5: Selection given as {f(x,r), dVdr(r), range}
+  if (is.list(s)) {
+    if (length(s)>=2 & length(s)<=3) {
+      if (is.function(s[[1]]) & is.function(s[[2]])) {
+        if (length(s)==3) {
+          if (is.double(s[[3]])) {
+            if (length(s[[3]])==2) {
+              rmin = s[[3]][1]
+              rmax = s[[3]][2]
+            } else {
+              stop('Unknown selection format.')
+            }
+          } else {
+            stop('Unknown selection format.')
+          }
+        } else {
+          rmin = 0
+          rmax = Inf
+        }
+        mode = 5
+        test = try(s[[1]](NA,NA)*s[[2]](NA),silent=TRUE)
+        if (!is.double(test)) stop('In the argument selection = list(f, dVdr, ...), the functions f(xval,r) and dVdr(r) must work if r is a vector.')
+        veff.function.elemental = function(xval) {
+          f = function(r) {s[[1]](xval,r)*s[[2]](r)}
+          return(integrate(f,rmin,rmax)$value)
+        }
+        
+        # make Veff for LSS bias correction
+        if (bundle$options$correct.lss.bias) {
+          veff.function.lss.elemental = function(xval,p) {
+            f = function(x,r) {s[[1]](x,r)*s[[2]](r)}
+            s = 0
+            for (i in seq(n.data)) {
+              if (distance[i]>=rmin & distance[i]<=rmax & f(xval,distance[i])>0) {
+                s = s+f(xval,distance[i])/integrate(f,0,Inf,distance[i])
+              }
+            }
+            return(s)
+          }
+        }
+      }
+    }
+  }
+  
+  if (is.null(mode)) stop('Unknown selection format.')
+  
+  if (mode!=5 & bundle$options$correct.lss.bias) {
+    # make Veff for LSS bias correction in the approximation of a binary selection function
+    xmin = array(NA,n.data)
+    for (i in seq(n.data)) {
+      xmin[i] = min(x[distance>=distance[i]])
+    }
+    veff.function.lss.elemental = function(xval,p) {
+      s = 0
+      for (i in seq(n.data)) {
+        if (xval>=xmin[i]) {
+          s = s+1/integrate(bundle$model$gdf,xmin[i],Inf,p)
+        }
+      }
+      return(s)
+    }
+  }
+  
+  # apply to all elements
+  if (is.null(veff.function)) {
+    veff.function = function(xval) {
+      if (length(dim(xval))==2) {
+        return(apply(xval,1,veff.function.elemental))
+      } else if (length(dim(xval))==0) {
+        if (n.dim==1) {
+          return(sapply(xval,veff.function.elemental))
+        } else {
+          if (length(xval)!=n.dim) stop('Incorrect argument.')
+          return(veff.function.elemental(xval))
+        }
+      } else {
+        stop('Incorrect argument.')
+      }
+    }
+  }
+  if (bundle$options$correct.lss.bias) {
+    veff.function.lss = function(xval,p) {
+      if (length(dim(xval))==2) {
+        return(apply(xval,1,veff.function.lss.elemental))
+      } else if (length(dim(xval))==0) {
+        if (n.dim==1) {
+          return(sapply(xval,veff.function.lss.elemental))
+        } else {
+          stop('Incorrect argument.')
+        }
+      } else {
+        stop('Incorrect argument.')
+      }
+    }
+  }
+  
+  bundle$selection = list(veff = veff.function, veff.lss = veff.function.lss, veff.input.values = veff.values, veff.input.function = veff.userfct)
+  invisible(bundle)
+}
+
+.make.grid = function(bundle) {
+  
+  n.dim = bundle$data$n.dim
+  if (length(bundle$grid$xmin)!=n.dim) stop('xmin must be a P-element vector, where P is the number of columns of x.')
+  if (length(bundle$grid$xmax)!=n.dim) stop('xmax must be a P-element vector, where P is the number of columns of x.')
+  if (length(bundle$grid$dx)!=n.dim) stop('dx must be a P-element vector, where P is the number of columns of x.')
+  x.grid = list()
+  nx = array(NA,n.dim)
+  for (i in seq(n.dim)) {
+    if (bundle$grid$xmax[i]<bundle$grid$xmin[i]+bundle$grid$dx[i]) stop('xmax cannot be smaller than xmin+dx.')
+    x.grid[[i]] = seq(bundle$grid$xmin[i],bundle$grid$xmax[i],bundle$grid$dx[i])
+    nx[i] = length(x.grid[[i]])
+  }
+  x.mesh.dv = prod(bundle$grid$dx)
   x.mesh = array(NA,c(prod(nx),n.dim))
   k1 = 1
   k2 = prod(nx)
@@ -177,79 +440,33 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     x.mesh[,i] = rep(rep(x.grid[[i]],each=k1),k2)
     k1 = k1*nx[i]
   }
-  veff.mesh = veff.function(x.mesh)
-
-  # Find most likely generative model ######################################################
-  best.fit = .corefit(x, x.err,
-                      veff.mesh,
-                      phi.function, p.initial,
-                      x.mesh, x.mesh.dv,
-                      n.iterations = n.iterations,
-                      force.no.bias.correction)
-  
-  # Initialize output parameters ###########################################################
-  phi.fit <- function(x) {phi.function(x,best.fit$p.optimal)}
-  source.count <- function(x) {phi.fit(x)*veff.function(x)}
-  input = list(data = list(x = x, x.err = x.err, distance = distance),
-               selection = list(veff.function = veff.function,
-                                veff.values = veff.list$veff.values,
-                                veff.userfct = veff.list$veff.userfct,
-                                veff.mesh = veff.mesh),
-               distribution.function = list(phi = phi.function,
-                                            phi.equation = phi.equation),
-               options = list(p.initial = p.initial,
-                              n.iterations = n.iterations, n.resampling = n.resampling,
-                              force.no.bias.correction = force.no.bias.correction,
-                              correct.lss.bias = correct.lss.bias, lss.sigma = lss.sigma,
-                              correct.mle.bias = correct.mle.bias, x.grid = x.grid,
-                              x.mesh = x.mesh, x.mesh.dv = x.mesh.dv))
-  fit = list(parameters = list(p.optimal = best.fit$p.optimal,
-                               p.covariance = best.fit$covariance),
-             functions = list(phi.fit = phi.fit,
-                              source.count = source.count,
-                              logL = best.fit$logL),
-             evaluation = list(x = x.mesh,
-                               y = c(phi.fit(x.mesh))),
-             status = list(n.iterations = best.fit$n.fit.and.debias,
-                           converged = best.fit$converged,
-                           chain = best.fit$chain))
-  df = list(input = input, fit = fit)
-  
-  # Additional processing for converged solutions ###############################################
-  if (df$fit$status$converged) {
-
-    # Bias correction
-    if (correct.mle.bias) {df = .correct.mle.bias(df)}
-    
-    # Determine uncertainties
-    df = .add.Gaussian.errors(df)
-    if (!is.null(n.resampling)) {df = .resample(df)}
-
-  }
-
-  # Finalize ###########################################################
-  if (write.fit) dfwrite(df)
-  df$fit$status$walltime.fitting = wt.fitting
-  df$fit$status$walltime.total = as.double(Sys.time())-as.double(tStart.global)
-  
-  invisible(df)
-
+  bundle$grid$x = x.mesh
+  bundle$grid$dvolume = x.mesh.dv
+  bundle$grid$veff = bundle$selection$veff(x.mesh)
+  bundle$grid$n.points = dim(x.mesh)[1]
+  invisible(bundle)
 }
 
 #' @export
-#'
-.corefit <- function(x, x.err,
-                     veff.mesh,
-                     phi.function, p.initial,
-                     x.mesh, x.mesh.dv,
-                     n.iterations, force.no.bias.correction = FALSE,
-                     supress.warning = FALSE) {
+.corefit <- function(bundle, supress.warning = FALSE) {
   
-  tStart.fitting = Sys.time()
+  # Start timer
+  tStart = Sys.time()
+  
+  # simplify input
+  x = bundle$data$x
+  x.err = bundle$data$x.err
+  veff.mesh = bundle$grid$veff
+  gdf = bundle$model$gdf
+  p.initial = bundle$options$p.initial
+  x.mesh = bundle$grid$x
+  x.mesh.dv = bundle$grid$dvolume
+  n.iterations = bundle$options$n.iterations
+  keep.eddington.bias = bundle$options$keep.eddington.bias
+  n.data = bundle$data$n.data
+  n.dim = bundle$data$n.dim
 
   # Input handling
-  n.data = dim(x)[1]
-  n.dim = dim(x)[2]
   n.mesh = dim(x.mesh)[1]
   veff.mesh = c(veff.mesh)
   if (is.null(x.err)) n.iterations = 1
@@ -294,7 +511,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Iterative algorithm
   running = TRUE
   k = 0
-  value.old = Inf
   chain = array(NA,c(n.iterations,length(p.initial)+1))
   
   while (running) {
@@ -310,11 +526,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         rho.unbiased[index] = rho.unbiased[index]+1/x.mesh.dv
       }
     } else {
-      if (force.no.bias.correction) {
+      if (keep.eddington.bias) {
         prior = array(1,n.mesh)
       } else {
         # predicted source counts (up to a factor x.mesh.dv)
-        prior = phi.function(x.mesh,p.initial)*veff.mesh
+        prior = gdf(x.mesh,p.initial)*veff.mesh
         prior[!is.finite(prior)] = 0
         prior = pmax(0,prior)
       }
@@ -327,7 +543,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
     # make -ln(L)
     neglogL = function(p) {
-      phi = phi.function(x.mesh,p)
+      phi = gdf(x.mesh,p)
       # safety operations (adding about 50% computation time)
       phi[!is.finite(phi)] = 0
       phi = pmax(.Machine$double.xmin,phi) # also vectorizes the array
@@ -336,26 +552,24 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     }
 
     # maximize ln(L)
-    tStart.fitting = Sys.time()
     opt = optim(p.initial,neglogL,hessian=TRUE,control=list(parscale=rep(1,length(p.initial)),reltol=1e-10,abstol=1e-10,maxit=1e4))
     chain[k,] = c(opt$par,opt$value)
-    wt.fitting <<- wt.fitting + as.double(Sys.time())-as.double(tStart.fitting)
     
     # assess convergence
-    if (is.null(x.err) | force.no.bias.correction) { # exist without extra iterations
+    if (is.null(x.err) | keep.eddington.bias) { # exist without extra iterations
       converged = opt$convergence==0
       running = FALSE
     } else {
       # asses convergence
       if (k==1) {
-        d = 1e98
-        d.old = 1e99
+        converged = FALSE
+        d.old = Inf
       } else {
-        d = abs(opt$value-value.old)/n.data
+        d = abs(opt$value-value.old)
+        converged = d>=d.old
+        d.old = d
       }
-      converged = d>=d.old
       value.old = opt$value
-      d.old = d
 
       if (converged) {
         running = FALSE
@@ -371,6 +585,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       p.initial = opt$par
     }
   }
+  
+  # Timer
+  if (is.null(bundle$fit$status$walltime.fitting)) {bundle$fit$status$walltime.fitting = 0}
+  dt = as.double(Sys.time())-as.double(tStart)
+  bundle$fit$status$walltime.fitting = bundle$fit$status$walltime.fitting+dt
 
   # make output
   if (det(opt$hessian)<1e-12) {
@@ -383,186 +602,28 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     cov = solve(opt$hessian)
   }
   
-  return(list(p.optimal = opt$par, covariance = cov, n.fit.and.debias = k,
-              converged = converged,
-              chain = chain[1:k,],
-              logL = function(p) -neglogL(p)))
+  bundle$fit$p.best = opt$par
+  bundle$fit$p.sigma = sqrt(diag(cov))
+  bundle$fit$p.covariance = cov
+  bundle$fit$gdf = function(x) bundle$model$gdf(x,opt$par)
+  bundle$fit$scd = function(x) bundle$fit$gdf(x)*bundle$selection$veff(x)
+  bundle$fit$logL = function(p) -neglogL(p)
+  bundle$fit$status = list(n.fit.and.debias = k, converged = converged, chain = chain[1:k,])
+  bundle$grid$gdf = c(bundle$fit$gdf(bundle$grid$x))
+  bundle$grid$scd = c(bundle$fit$scd(bundle$grid$x))
+  
+  invisible(bundle)
 
 }
 
-#' @export
-#'
-.make.veff = function(selection,x) {
+.add.Gaussian.errors <- function(bundle) {
 
-  # Generates the function veff.function(xval) from various selection function types.
-  # The argument xval must be a M-by-P array. veff.function(xval) returns a vector of
-  # M elements.
-
-  if (length(dim(x))==0) stop('x must be a N-by-P array.')
-  n.data = dim(x)[1]
-  n.dim = dim(x)[2]
-  xmin = apply(x,2,min)
-  xmax = apply(x,2,max)
-  mode = NULL
-  veff.values = NULL
-  veff.userfct = NULL
-  veff.function = NULL
-
-  # Mode 1: Constant effective volume inside observed domain
-  if (is.double(selection)) {
-    if (length(selection)==1) {
-      if (selection<=0) stop('selection = Vconstant mustt be positive.')
-      mode = 1
-      veff.function.elemental = function(xval) {
-        if (any(xval<xmin) | any(xval>xmax)) {
-          return(0)
-        } else {
-          return(selection)
-        }
-      }
-    }
-  }
-
-  # Mode 2: Interpolated effective volume inside observed domain
-  if (is.double(selection)) {
-    if (length(selection)==n.data) {
-      if (min(selection)<=0) stop('All values of selection (=Veff) must be positive.')
-      mode = 2
-      veff.values = selection
-      if (n.dim==1) {
-        vapprox = function(xval) {
-          f = approxfun(x[,1],1/veff.values,rule=2)
-          return(1/f(xval))
-        }
-      } else if (n.dim==2) {
-        vapprox = function(xval) {
-          z = 1/(akima::interp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
-          if (is.na(z)) {return(0)} else {return(z)}
-        }
-      } else {
-        stop('Linear interpolation of Veff not implemented for DF with more than 2 dimensions. Use a different selection type.')
-      }
-      veff.function.elemental = function(xval) {
-        if (any(xval<xmin) | any(xval>xmax)) {
-          return(0)
-        } else {
-          return(vapprox(xval))
-        }
-      }
-    }
-  }
-
-  # Mode 3: Effective volume given directly
-  if (is.function(selection)) {
-    mode = 3
-    test = try(selection(rbind(x)))
-    if (is.double(test) & length(test)==n.data) {
-      veff.function = selection
-    } else {
-      veff.function.elemental = selection
-    }
-    veff.userfct = selection
-  }
-
-  # Mode 4: Hybrid of 2 and 3
-  if (is.list(selection)) {
-    if (length(selection)==2) {
-      if (is.double(selection[[1]]) & is.function(selection[[2]])) {
-        veff.values = selection[[1]]
-        test = try(selection[[2]](rbind(x)))
-        if (is.double(test) & length(test)==n.data) {
-          veff.userfct = function(xval) selection[[2]](rbind(xval))
-        } else {
-          veff.userfct = selection[[2]]
-        }
-        if (min(veff.values)<=0) stop('All values of selection (=Veff) must be positive.')
-        mode = 4
-        if (n.dim==1) {
-          vapprox = function(xval) {
-            f = approxfun(x[,1],1/veff.values,rule=2)
-            return(1/f(xval))
-          }
-        } else if (n.dim==2) {
-          vapprox = function(xval) {
-            z = 1/(akima::interp(x[,1],x[,2],1/veff.values,xval[1],xval[2],duplicate='mean'))$z
-            if (is.na(z)) {return(veff.userfct(xval))} else {return(z)}
-          }
-        } else {
-          stop('Linear interpolation of Veff not implemented for DF with more than 2 dimensions. Use a different selection type.')
-        }
-        veff.function.elemental = function(xval) {
-          if (any(xval<xmin) | any(xval>xmax)) {
-            return(veff.userfct(xval))
-          } else {
-            return(vapprox(xval))
-          }
-        }
-      }
-    }
-  }
-
-  # Mode 5: selection given as {f(x,r), dVdr(r), range}
-  if (is.list(selection)) {
-    if (length(selection)>=2 & length(selection)<=3) {
-      if (is.function(selection[[1]]) & is.function(selection[[2]])) {
-        if (length(selection)==3) {
-          if (is.double(selection[[3]])) {
-            if (length(selection[[3]])==2) {
-              mode = 5.1
-              rmin = selection[[3]][1]
-              rmax = selection[[3]][2]
-            }
-          }
-        } else {
-          mode = 5
-          rmin = 0
-          rmax = Inf
-        }
-        test = try(selection[[1]](NA,NA)*selection[[2]](NA),silent=TRUE)
-        if (!is.double(test)) stop('In the argument selection = list(f, dVdr, ...), the functions f(xval,r) and dVdr(r) must not contain if-statements and work for r being a vector.')
-        veff.function.elemental = function(xval) {
-          f = function(r) {selection[[1]](xval,r)*selection[[2]](r)}
-          return(integrate(f,rmin,rmax)$value)
-        }
-      }
-    }
-  }
-
-  if (is.null(mode)) stop('Unknown selection.')
-
-  # apply to all elements
-  if (is.null(veff.function)) {
-    veff.function = function(xval) {
-      if (length(dim(xval))==2) {
-        return(apply(xval,1,veff.function.elemental))
-      } else if (length(dim(xval))==0) {
-        if (n.dim==1) {
-          return(sapply(xval,veff.function.elemental))
-        } else {
-          if (length(xval)!=n.dim) stop('Incorrect argument.')
-          return(veff.function.elemental(xval))
-        }
-      } else {
-        stop('Incorrect argument.')
-      }
-    }
-  }
-
-  return(list(veff.function = veff.function,
-              veff.values = veff.values,
-              veff.userfct = veff.userfct))
-}
-
-.add.Gaussian.errors <- function(df) {
-
-  # make Gaussian uncertainties of parameters
-  cov = df$fit$parameters$p.covariance
-  df$fit$parameters$p.sigma = sqrt(diag(cov))
+  cov = bundle$fit$p.covariance
 
   # make Gaussian uncertainties of DF
   eig = eigen(cov)
-  np = length(df$fit$parameters$p.optimal)
-  nx = dim(df$fit$evaluation$x)[1]
+  np = bundle$model$n.para
+  nx = bundle$grid$n.points
   index = 0
   nsteps.tot.max = 216
   nsteps = max(2,round(nsteps.tot.max^(1/np))) # a larger number of steps leads to a more accurate sampling of the covariance ellipsoid
@@ -591,66 +652,73 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     if (any(k[step]!=0)) {
       e = k[step]/sqrt(sum(k[step]^2))
       v = c(eig$vectors%*%(sqrt(eig$values)*e))
-      p.new = df$fit$parameters$p.optimal+v
-      y.new[,i] = df$input$distribution.function$phi(df$fit$evaluation$x,p.new)
+      p.new = bundle$fit$p.best+v
+      y.new[,i] = bundle$model$gdf(bundle$grid$x,p.new)
       if (any(!is.finite(y.new[,i])) | any(y.new[,i]<0)) y.new[,i] = NA
     }
   }
 
-  df$fit$evaluation$y.error.neg = array(NA,nx)
-  df$fit$evaluation$y.error.pos = array(NA,nx)
+  bundle$grid$gdf.error.neg = array(NA,nx)
+  bundle$grid$gdf.error.pos = array(NA,nx)
   for (i in seq(nx)) {
-    df$fit$evaluation$y.error.neg[i] = df$fit$evaluation$y[i]-min(c(y.new[i,],Inf),na.rm=TRUE)
-    df$fit$evaluation$y.error.pos[i] = max(c(y.new[i,],-Inf),na.rm=TRUE)-df$fit$evaluation$y[i]
+    bundle$grid$gdf.error.neg[i] = bundle$grid$gdf[i]-min(c(y.new[i,],Inf),na.rm=TRUE)
+    bundle$grid$gdf.error.pos[i] = max(c(y.new[i,],-Inf),na.rm=TRUE)-bundle$grid$gdf[i]
   }
 
-  return(df)
+  invisible(bundle)
 }
 
-.correct.mle.bias <- function(df) {
-  n = dim(df$input$data$x)[1]
-  np = length(df$fit$parameters$p.optimal)
+.correct.mle.bias <- function(bundle) {
+  n = dim(bundle$data$x)[1]
+  np = bundle$model$n.para
   if (n<2) {
     stop('Bias correction requires at least two objects.')
   } else if (n>=1e3) {
     cat('WARNING: bias correction normally not relevant for more than 1000 objects.\n')
   }
   p.new = array(NA,c(np,n))
+  b = bundle
+  b$options$p.initial = bundle$fit$p.best
+  b$options$n.iterations = 1
+  b$grid$veff = bundle$grid$veff*(n-1)/n
   for (i in seq(n)) {
     list = setdiff(seq(n),i)
-    if (is.null(df$input$data$x.err)) {
+    if (is.null(bundle$data$x.err)) {
       x.err = NULL
-    } else if (length(dim(df$input$data$x.err))==2) {
-      x.err = as.matrix(df$input$data$x.err[list,])
-    } else if (length(dim(df$input$data$x.err))==3) {
-      x.err = as.matrix(df$input$data$x.err[list,,])
+    } else if (length(dim(bundle$data$x.err))==2) {
+      x.err = as.matrix(bundle$data$x.err[list,])
+    } else if (length(dim(bundle$data$x.err))==3) {
+      x.err = as.matrix(bundle$data$x.err[list,,])
     }
-    cf = .corefit(as.matrix(df$input$data$x[list,]), x.err,
-                 df$input$selection$veff.mesh*(n-1)/n,
-                 df$input$distribution.function$phi,
-                 df$fit$parameters$p.optimal,
-                 df$input$options$x.mesh, df$input$options$x.mesh.dv,
-                 n.iterations = 1, supress.warning = TRUE)
-    p.new[,i] = cf$p.optimal
+    b$data$x = bundle$data$x[list,]
+    b$data$xerr = xerr
+    b = .corefit(b, supress.warning = TRUE)
+    p.new[,i] = b$fit$p.best
   }
   p.reduced = apply(p.new, 1, mean, na.rm = T)
-  df$fit$parameters$p.optimal.bias.corrected = n*df$fit$parameters$p.optimal-(n-1)*p.reduced
-  df$fit$evaluation$y.bias.corrected = df$input$distribution.function$phi(df$fit$evaluation$x,df$fit$parameters$p.optimal.bias.corrected)
-  return(df)
+  bundle$fit$p.best.mle.bias.corrected = n*bundle$fit$p.best-(n-1)*p.reduced
+  bundle$fit$gdf.mle.bias.corrected = function(x) bundle$model$gdf(x,bundle$fit.mle.bias.corrected$p.best)
+  bundle$fit$scd.mle.bias.corrected = function(x) bundle$fit$gdf.mle.bias.corrected(x)*bundle$selection$veff(x)
+  bundle$grid$gdf.mle.bias.corrected = bundle$fit$gdf.mle.bias.corrected(bundle$grid$x)
+  bundle$grid$scd.mle.bias.corrected = bundle$fit$scd.mle.bias.corrected(bundle$grid$x)
+  invisible(bundle)
 }
 
-.resample <- function(df, seed = 1) {
+.resample <- function(bundle, seed = 1) {
 
   # randomly resample and refit the DF
-  if (dim(df$input$data$x)[2]>1) stop('resampling only available for one-dimensional distribution functions.')
+  if (dim(bundle$data$x)[2]>1) stop('resampling only available for one-dimensional distribution functions.')
   set.seed(seed)
-  np = length(df$fit$parameters$p.optimal)
-  x = df$input$options$x.grid[[1]]
-  density = pmax(0,df$fit$evaluation$y*df$input$selection$veff.function(x))
+  np = bundle$model$n.para
+  x = seq(bundle$grid$xmin,df$grid$xmax,bundle$grid$dx)
+  density = pmax(0,df$fit$evaluation$y*bundle$selection$veff(x))
   cum = cumsum(density/sum(density))
-  n.data = dim(df$input$data$x)[1]
-  p.new = array(NA,c(df$input$options$n.resampling,np))
-  for (iteration in seq(df$input$options$n.resampling)) {
+  n.data = dim(bundle$data$x)[1]
+  b = bundle
+  b$options$n.iterations = 1
+  b$data$x.err = NULL
+  p.new = array(NA,c(bundle$options$n.resampling,np))
+  for (iteration in seq(bundle$options$n.resampling)) {
     n.new = max(2,rpois(1,n.data))
     x.obs = array(NA,n.new)
     r = runif(n.new)
@@ -658,11 +726,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       index = which.min(abs(cum-r[i]))
       x.obs[i] = x[index]
     }
-    p.new[iteration,] = .corefit(cbind(x.obs), NULL, df$input$selection$veff.mesh,
-                                 df$input$distribution.function$phi,
-                                 df$fit$parameters$p.optimal,
-                                 df$input$options$x.mesh, df$input$options$x.mesh.dv,
-                                 n.iterations = 1)$p.optimal
+    b$data$x = cbind(x.obs)
+    p.new[iteration,] = .corefit(b)$fit$p.best
   }
 
   # make parameter quantiles
@@ -671,25 +736,26 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   for (i in seq(np)) {
     p.quant[,i] = quantile(p.new[,i],q,names=FALSE)
   }
-  p.quantile = list(p.quantile.02 = p.quant[1,], p.quantile.16 = p.quant[2,],
-                    p.quantile.84 = p.quant[3,], p.quantile.98 = p.quant[4,])
+  bundle$fit$p.quantile.02 = p.quant[1,]
+  bundle$fit$p.quantile.16 = p.quant[2,]
+  bundle$fit$p.quantile.84 = p.quant[3,]
+  bundle$fit$p.quantile.98 = p.quant[4,]
 
   # make DF quantiles
-  s = array(NA,c(df$input$options$n.resampling,length(x)))
-  for (iteration in seq(df$input$options$n.resampling)) {
-    s[iteration,] = df$input$distribution.function$phi(x,p.new[iteration,])
+  s = array(NA,c(bundle$options$n.resampling,length(x)))
+  for (iteration in seq(bundle$options$n.resampling)) {
+    s[iteration,] = bundle$model$gdf(x,p.new[iteration,])
   }
   y.quant = array(NA,c(4,length(x)))
   for (i in seq(length(x))) {
     list = !is.na(s[,i]) & is.finite(s[,i]) & (s[,i]>0)
     y.quant[,i] = quantile(s[list,i],q,names=FALSE)
   }
-  y.quantile = list(y.quantile.02 = y.quant[1,], y.quantile.16 = y.quant[2,],
-                    y.quantile.84 = y.quant[3,], y.quantile.98 = y.quant[4,])
-
-  # output parameters
-  df$fit$parameters = append(df$fit$parameters, p.quantile)
-  df$fit$evaluation = append(df$fit$evaluation, y.quantile)
-  return(df)
+  bundle$grid$gdf.quantile.02 = y.quant[1,]
+  bundle$grid$gdf.quantile.16 = y.quant[2,]
+  bundle$grid$gdf.quantile.84 = y.quant[3,]
+  bundle$grid$gdf.quantile.98 = y.quant[4,]
+  
+  invisible(bundle)
 
 }

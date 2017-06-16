@@ -12,20 +12,20 @@
 #'
 #' @export
 
-dfposteriors <- function(df) {
+dfposteriors <- function(bundle) {
   
-  if (is.null(df$input$data$x.err)) stop('Posterior data PDFs can only be produced if the data is uncertain, i.e. if x.err is given.')
+  if (is.null(bundle$data$x.err)) stop('Posterior data PDFs can only be produced if the data is uncertain, i.e. if x.err is given.')
   
   # Input handling
-  x = df$input$data$x
-  x.err = df$input$data$x.err
-  x.mesh = df$input$options$x.mesh
-  x.mesh.dv = df$input$options$x.mesh.dv
+  x = bundle$data$x
+  x.err = bundle$data$x.err
+  x.mesh = bundle$grid$x
+  x.mesh.dv = bundle$grid$dvolume
   n.data = dim(x)[1]
   n.dim = dim(x)[2]
   
   # Make prior
-  prior = df$input$distribution.function$phi(c(x.mesh),df$fit$parameters$p.optimal)*df$input$selection$veff.mesh
+  prior = bundle$grid$scd
   prior[!is.finite(prior)] = 0
   prior = pmax(0,prior)
   
@@ -78,12 +78,8 @@ dfposteriors <- function(df) {
     md[i,] = x.mesh[which.max(rho.corrected),]
   }
   
-  df$posterior$source.count.density = rho.unbiased
-  df$posterior$x.mean = m0
-  df$posterior$x.stdev = m1
-  df$posterior$x.mode = md
-  df$posterior$x.mode.correction = md-x
-  df$posterior$x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim))
+  bundle$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)),
+                          scd = rho.unbiased)
   
-  return(df)
+  invisible(bundle)
 }

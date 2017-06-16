@@ -4,8 +4,8 @@
 \alias{mfplot}
 \title{Display fitted galaxy mass function}
 \usage{
-mfplot(df, xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi ~
-  "[Mpc"^-3 ~ "dex"^-1 ~ "]"), log = "xy", xpower10 = TRUE,
+mfplot(bundle, xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi
+  ~ "[Mpc"^-3 ~ "dex"^-1 ~ "]"), log = "xy", xpower10 = TRUE,
   show.data.points = TRUE, ...)
 }
 \description{

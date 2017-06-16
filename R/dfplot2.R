@@ -18,7 +18,7 @@
 #' @param show.data.err If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.
 #' @param margins Margins (bottom,left,top,right)
 #' 
-#' @return Returns the input list \code{df} with the additional sub-list \code{df$bin} that contains the binned data.
+#' @return Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
 #' 
 #' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
 #'
@@ -26,7 +26,7 @@
 #'
 #' @export
 
-dfplot2 <- function(df,
+dfplot2 <- function(bundle,
                    xlab = 'Observable x1',
                    ylab = 'Observable x2',
                    xlim = NULL,
@@ -59,8 +59,8 @@ dfplot2 <- function(df,
                    lty.ref.contours = 2,
                    margins=c(5.1,4.1,4.1,2.1)) {
   
-  n.data = dim(df$input$data$x)[1]
-  n.dim = dim(df$input$data$x)[2]
+  n.data = dim(bundle$data$x)[1]
+  n.dim = dim(bundle$data$x)[2]
   
   if (n.dim!=2) {
     if (n.dim==1) {
@@ -71,8 +71,10 @@ dfplot2 <- function(df,
   }
   
   # define plot limits
-  xrange = range(df$fit$evaluation$x[,1])
-  yrange = range(df$fit$evaluation$x[,2])
+  x.grid = list(seq(bundle$grid$xmin[1],bundle$grid$xmax[1],bundle$grid$dx[1]),
+                seq(bundle$grid$xmin[2],bundle$grid$xmax[2],bundle$grid$dx[2]))
+  xrange = c(bundle$grid$xmin[1],bundle$grid$xmax[1])
+  yrange = c(bundle$grid$xmin[2],bundle$grid$xmax[2])
   log = ''
   if (is.null(xlim)) {
     if (xpower10) {
@@ -91,27 +93,27 @@ dfplot2 <- function(df,
     }
   }
   if (xpower10) {
-    x = 10^df$input$data$x[,1]
-    cx = 10^df$input$options$x.grid[[1]]
+    x = 10^bundle$data$x[,1]
+    cx = 10^x.grid[[1]]
   } else {
-    x = df$input$data$x[,1]
-    cx = df$input$options$x.grid[[1]]
+    x = bundle$data$x[,1]
+    cx = x.grid[[1]]
   }
   if (ypower10) {
-    y = 10^df$input$data$x[,2]
-    cy = 10^df$input$options$x.grid[[2]]
+    y = 10^bundle$data$x[,2]
+    cy = 10^x.grid[[2]]
   } else {
-    y = df$input$data$x[,2]
-    cy = df$input$options$x.grid[[2]]
+    y = bundle$data$x[,2]
+    cy = x.grid[[2]]
   }
   
   # make model DF field
   r = col2rgb(col.phi)[1]/255
   g = col2rgb(col.phi)[2]/255
   b = col2rgb(col.phi)[3]/255
-  nx = length(df$input$options$x.grid[[1]])
-  ny = length(df$input$options$x.grid[[2]])
-  img = array(df$fit$evaluation$y,c(nx,ny))
+  nx = length(x.grid[[1]])
+  ny = length(x.grid[[2]])
+  img = array(bundle$grid$gdf,c(nx,ny))
   img = img/max(img)
   rgb = array(NA,c(nx,ny,3))
   rgb[,,1] = 1-img^gamma*0.7*(1-r)
@@ -119,12 +121,12 @@ dfplot2 <- function(df,
   rgb[,,3] = 1-img^gamma*(1-b)
   
   # make model source count field
-  imgsc = array(df$fit$functions$source.count(df$fit$evaluation$x),c(nx,ny))
+  imgsc = array(bundle$grid$scd,c(nx,ny))
   imgsc = imgsc/max(imgsc)
   
   # make reference DF field
   if (!is.null(p.ref)) {
-    yref = df$input$distribution.function$phi(df$fit$evaluation$x,p.ref)
+    yref = bundle$model$gdf(bundle$grid$x,p.ref)
     imgref = array(yref,c(nx,ny))
     imgref = imgref/max(imgref)
   }
@@ -156,22 +158,22 @@ dfplot2 <- function(df,
   # plot data points
   if (show.data) {
     if (show.data.err) {
-      if (length(dim(df$input$data$x.err))==2) {
+      if (length(dim(bundle$data$x.err))==2) {
         for (i in seq(n.data)) {
-          px = df$input$data$x[i,1]+c(-1,+1)*df$input$data$x.err[i,1]
-          py = df$input$data$x[i,2]*c(1,1)
+          px = bundle$data$x[i,1]+c(-1,+1)*bundle$data$x.err[i,1]
+          py = bundle$data$x[i,2]*c(1,1)
           if (xpower10) {px = 10^px}
           if (ypower10) {py = 10^py}
           lines(px,py,col=col.data.err,lwd=lwd.data.err,lty=lty.data.err)
-          px = df$input$data$x[i,1]*c(1,1)
-          py = df$input$data$x[i,2]+c(-1,+1)*df$input$data$x.err[i,2]
+          px = bundle$data$x[i,1]*c(1,1)
+          py = bundle$data$x[i,2]+c(-1,+1)*bundle$data$x.err[i,2]
           if (xpower10) {px = 10^px}
           if (ypower10) {py = 10^py}
           lines(px,py,col=col.data.err,lwd=lwd.data.err,lty=lty.data.err)
         }
-      } else if (length(dim(df$input$data$x.err))==3) {
+      } else if (length(dim(bundle$data$x.err))==3) {
         for (i in seq(n.data)) {
-          pts = ellipse::ellipse(df$input$data$x.err[i,,],centre=df$input$data$x[i,],level=0.68,draw=F)
+          pts = ellipse::ellipse(bundle$data$x.err[i,,],centre=bundle$data$x[i,],level=0.68,draw=F)
           if (xpower10) {px = 10^pts[,1]} else {px = pts[,1]}
           if (ypower10) {py = 10^pts[,2]} else {py = pts[,2]}
           lines(px,py,col=col.data.err,lwd=lwd.data.err,lty=lty.data.err)
@@ -189,5 +191,5 @@ dfplot2 <- function(df,
   box(which = "plot", lty = "solid", lwd = 1)
   par(pty = "m")
   
-  invisible(df)
+  invisible(bundle)
 }

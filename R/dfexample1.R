@@ -24,8 +24,10 @@ dfexample1 <- function(n = 5000, seed = 3, sigma = 0.5, p.true = c(-2,9,-1.3), i
   veff.scale = function(x) {1e-9*10^(0.8*x)}
 
   # make rescaled Veff(x)
+  xmin = 2
+  xmax = 13
   dx = 0.01
-  x = seq(2,12.5,dx)
+  x = seq(xmin,xmax,dx)
   phi.true = dfmodel(x, p.true)
   f = n/sum(phi.true*veff.scale(x)*dx)
   veff.fn <- function(x) {veff.scale(x)*f}
@@ -48,30 +50,30 @@ dfexample1 <- function(n = 5000, seed = 3, sigma = 0.5, p.true = c(-2,9,-1.3), i
 
   # fit
   cat('Fit a Schechter function to the observed data (grey points)\n')
-  df = dffit(x.obs, veff.fn, rep(sigma,n), write.fit = T, x.grid = list(x), p.initial = p.true)
-  p.fit = df$fit$parameters$p.optimal
+  bundle = dffit(x.obs, veff.fn, rep(sigma,n), write.fit = T, xmin = xmin, xmax = xmax, dx = dx, p.initial = p.true)
+  p.fit = bundle$fit$parameters$p.optimal
 
   # make posterior masses
   cat('Determine posterior masses\n')
-  df = dfposteriors(df)
+  bundle = dfposteriors(bundle)
   
   # MRP
   if (include.mrp) {
     cat('Fit a MRP function (4 parameter model) to the observed data\n')
-    df2 = dffit(x.obs, veff.fn, rep(sigma,n), write.fit = T, x.grid = list(x), phi = 'MRP', p.initial = c(p.true,1))
+    bundle2 = dffit(x.obs, veff.fn, rep(sigma,n), write.fit = T, xmin = xmin, xmax = xmax, dx = dx, phi = 'MRP', p.initial = c(p.true,1))
   }
   
   # plot covariances
-  dfplotcov(df,p.true,title='Schechter parameter covariances')
-  if (include.mrp) dfplotcov(df2,c(p.true,1),line.color='red',point.color='#ffbbbb',title='MRP parameter covariances')
+  dfplotcov(bundle,p.true,title='Schechter parameter covariances')
+  if (include.mrp) dfplotcov(bundle2,c(p.true,1),line.color='red',point.color='#ffbbbb',title='MRP parameter covariances')
 
   # plot main plot
   nbins = max(4,round(sqrt(n)/2))
-  mfplot(df, xlim=c(1e4,2e10), ylim=c(1e-4,2), nbins = nbins, bin.xmin=4.8, bin.xmax=10, col.data = 'grey')
-  mfplot(df, nbins = nbins, bin.xmin=4.8, bin.xmax=10, bin.type = 3, add = TRUE, show.uncertainties = FALSE, col.data='black')
+  mfplot(bundle, xlim=c(1e4,2e10), ylim=c(1e-4,2), nbins = nbins, bin.xmin=4.8, bin.xmax=10, col.data = 'grey')
+  mfplot(bundle, nbins = nbins, bin.xmin=4.8, bin.xmax=10, bin.type = 3, add = TRUE, show.uncertainties = FALSE, col.data='black')
   lines(10^x,pmax(1e-10,dfmodel(x,p.true)),col='black',lty=2)
   lines(10^x,veff/max(veff)*200,col='orange')
-  if (include.mrp) {lines(10^x,df2$fit$functions$phi.fit(x),col='red')}
+  if (include.mrp) {lines(10^x,bundle2$fit$functions$phi.fit(x),col='red')}
 
   # legend
   y = 1.5e-2
@@ -91,8 +93,8 @@ dfexample1 <- function(n = 5000, seed = 3, sigma = 0.5, p.true = c(-2,9,-1.3), i
          lty=c(1,2,1,1,1,NA,NA),cex=0.8)
 
   # console output
-  cat(sprintf('Total computation time       = %.2fs\n',df$fit$status$walltime.total))
-  cat(sprintf('Computation time for fitting = %.2fs\n',df$fit$status$walltime.fitting))
+  cat(sprintf('Total computation time       = %.2fs\n',bundle$fit$status$walltime.total))
+  cat(sprintf('Computation time for fitting = %.2fs\n',bundle$fit$status$walltime.fitting))
   
-  invisible(df)
+  invisible(bundle)
 }

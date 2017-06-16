@@ -4,7 +4,7 @@
 \alias{dfwrite}
 \title{Write best fitting parameters}
 \usage{
-dfwrite(df)
+dfwrite(bundle)
 }
 \arguments{
 \item{df}{List produced by \code{\link{dffit}}}

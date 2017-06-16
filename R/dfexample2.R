@@ -26,7 +26,7 @@ dfexample2 = function(p.true = c(-2,10,-1.3,2/3,7,0.3), seed = 3,
   # define 2D distribution function in the (x1,x2)-plane, where
   # x1 = log10(baryon mass [Msun])
   # x2 = log10(baryon specific angular momentum [kpc km/s])
-  phi = function(x,p) {
+  gdf = function(x,p) {
     mu = 10^(x[,1]-p[2])
     phi_m = log(10)*10^p[1]*mu^(p[3]+1)*exp(-mu)
     dj = x[,2]-p[4]*(x[,1]-p[5]) # offset from mean M-j relation
@@ -42,7 +42,7 @@ dfexample2 = function(p.true = c(-2,10,-1.3,2/3,7,0.3), seed = 3,
   
   # expected source count density function
   sc = function(x) {
-    return(phi(x,p.true)*veff(x))
+    return(gdf(x,p.true)*veff(x))
   }
   
   # compute expected number of galaxies
@@ -90,21 +90,20 @@ dfexample2 = function(p.true = c(-2,10,-1.3,2/3,7,0.3), seed = 3,
   # fit model to sample
   cat('Fit six parameters:\n')
   if (corr.xy==0) {x.err = cbind(rep(sigma.x,n),rep(sigma.y,n))} # just to try if everything works well in this mode, too
-  df = dffit(x, veff, x.err, phi = phi, p.initial = p.true, x.grid = list(seq(mrange[1],mrange[2],0.1),
-                                                                 seq(jrange[1],jrange[2],0.1)))
+  bundle = dffit(x, veff, x.err, gdf = gdf, p.initial = p.true, xmin = c(mrange[1],jrange[1]), xmax = c(mrange[2],jrange[2]), dx = c(0.1,0.1))
   
   # plot parameter covariances and initial parameters
-  dfplotcov(df, p = p.true)
+  dfplotcov(bundle, p = p.true)
   
   # plot DF
-  dfplot2(df, p.ref = p.true, xlab = 'log10(Mass/Msun)', ylab = 'log10(j/[kpc km/s])')
+  dfplot2(bundle, p.ref = p.true, xlab = 'log10(Mass/Msun)', ylab = 'log10(j/[kpc km/s])')
   legend(1.3e8,8e3,c('Mock observations','Observational uncertainties','Input distribution function (DF)','Fitted DF','Source count model from fitted DF'),
          pch=c(20,NA,NA,15,NA),col=c('black','grey','red','blue','purple'),lty=c(NA,1,2,2,1),bty='n')
   
   # console output
-  cat(sprintf('Total computation time       = %.2fs\n',df$fit$status$walltime.total))
-  cat(sprintf('Computation time for fitting = %.2fs\n',df$fit$status$walltime.fitting))
+  cat(sprintf('Total computation time       = %.2fs\n',bundle$fit$status$walltime.total))
+  cat(sprintf('Computation time for fitting = %.2fs\n',bundle$fit$status$walltime.fitting))
   
-  invisible(df)
+  invisible(bundle)
   
 }

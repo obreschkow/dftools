@@ -4,14 +4,12 @@
 \alias{dfplotcov}
 \title{Plot parameter covariance matrix}
 \usage{
-dfplotcov(df, p = NULL, n.points = 500, n.standarddev = 5,
+dfplotcov(bundle, p = NULL, n.points = 500, n.standarddev = 5,
   line.color = "blue", line.lwd = 2, point.color = "#bbbbff",
   point.cex = 0.1, text.size.labels = 1.1, text.size.numbers = 0.8,
   margins = c(4, 4, 0.5, 0.5), title = "")
 }
 \arguments{
-\item{df}{List produced by \code{\link{dffit}}}
-
 \item{p}{Reference parameters to be plotted as crosses.}
 
 \item{n.points}{Number of random points drawn from the multivariate Gaussian.}
@@ -33,6 +31,8 @@ dfplotcov(df, p = NULL, n.points = 500, n.standarddev = 5,
 \item{margins}{Margins (bottom,left,top,right)}
 
 \item{title}{Title text}
+
+\item{df}{List produced by \code{\link{dffit}}}
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.

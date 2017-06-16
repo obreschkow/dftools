@@ -2,20 +2,19 @@
 % Please edit documentation in R/dfplot.R
 \name{dfplot}
 \alias{dfplot}
-\title{Display fitted distribution function}
+\title{Display fitted generative distribution function}
 \usage{
-dfplot(df, xlab = "Observable x", ylab = expression("Distribution function"
-  ~ phi), xlim = NULL, ylim = NULL, log = "y", xpower10 = FALSE,
-  col = "blue", lwd = 2, lty = 1, show.data.points = FALSE,
-  show.data.histogram = FALSE, show.uncertainties = TRUE,
-  uncertainty.type = NULL, show.bias.correction = FALSE, add = FALSE,
-  nbins = NULL, bin.xmin = NULL, bin.xmax = NULL, bin.type = 1,
-  col.data = "black", cex.data = 1, lwd.data = 1, col.hist = "grey",
-  margins = c(5.1, 4.1, 4.1, 2.1))
+dfplot(bundle, xlab = "Observable x",
+  ylab = expression("Generative distribution function" ~ phi), xlim = NULL,
+  ylim = NULL, log = "y", xpower10 = FALSE, col = "blue", lwd = 2,
+  lty = 1, show.data.points = FALSE, show.data.histogram = FALSE,
+  show.uncertainties = TRUE, uncertainty.type = NULL,
+  show.bias.correction = FALSE, add = FALSE, nbins = NULL,
+  bin.xmin = NULL, bin.xmax = NULL, bin.type = 1, col.data = "black",
+  cex.data = 1, lwd.data = 1, col.hist = "grey", margins = c(5.1, 4.1,
+  4.1, 2.1))
 }
 \arguments{
-\item{df}{List produced by \code{\link{dffit}}}
-
 \item{xlab}{x-axis label}
 
 \item{ylab}{y-axis label}
@@ -63,12 +62,14 @@ dfplot(df, xlab = "Observable x", ylab = expression("Distribution function"
 \item{col.hist}{Color of source count histogram}
 
 \item{margins}{Margins (bottom,left,top,right)}
+
+\item{df}{List produced by \code{\link{dffit}}}
 }
 \value{
-Returns the input list \code{df} with the additional sub-list \code{df$bin} that contains the binned data.
+Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
 }
 \description{
-This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
+This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.
 }
 \seealso{
 For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.

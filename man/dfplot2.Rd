@@ -4,10 +4,10 @@
 \alias{dfplot2}
 \title{Display fitted distribution function}
 \usage{
-dfplot2(df, xlab = "Observable x1", ylab = "Observable x2", xlim = NULL,
-  ylim = NULL, p.ref = NULL, xpower10 = TRUE, ypower10 = TRUE,
-  show.data = TRUE, show.data.err = TRUE, show.phi = TRUE,
-  show.phi.contours = TRUE, show.sc.contours = TRUE,
+dfplot2(bundle, xlab = "Observable x1", ylab = "Observable x2",
+  xlim = NULL, ylim = NULL, p.ref = NULL, xpower10 = TRUE,
+  ypower10 = TRUE, show.data = TRUE, show.data.err = TRUE,
+  show.phi = TRUE, show.phi.contours = TRUE, show.sc.contours = TRUE,
   contour.levels = c(0.5, 0.2, 0.1), gamma = 0.2, col.data = "black",
   cex.data = 0.5, pch.data = 20, col.data.err = "#00000030",
   lwd.data.err = 1, lty.data.err = 1, col.phi = "blue",
@@ -17,8 +17,6 @@ dfplot2(df, xlab = "Observable x1", ylab = "Observable x2", xlim = NULL,
   margins = c(5.1, 4.1, 4.1, 2.1))
 }
 \arguments{
-\item{df}{List produced by \code{\link{dffit}}}
-
 \item{xlab}{x-axis label}
 
 \item{ylab}{y-axis label}
@@ -37,6 +35,8 @@ dfplot2(df, xlab = "Observable x1", ylab = "Observable x2", xlim = NULL,
 
 \item{margins}{Margins (bottom,left,top,right)}
 
+\item{df}{List produced by \code{\link{dffit}}}
+
 \item{col}{Color of fit (see \code{\link{plot}})}
 
 \item{cex}{Line width of fit (see \code{\link{plot}})}
@@ -44,7 +44,7 @@ dfplot2(df, xlab = "Observable x1", ylab = "Observable x2", xlim = NULL,
 \item{pch}{Line type of fit (see \code{\link{plot}})}
 }
 \value{
-Returns the input list \code{df} with the additional sub-list \code{df$bin} that contains the binned data.
+Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
 }
 \description{
 This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.

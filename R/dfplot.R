@@ -1,6 +1,6 @@
-#' Display fitted distribution function
+#' Display fitted generative distribution function
 #'
-#' This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
+#' This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
@@ -30,7 +30,7 @@
 #' @param col.hist Color of source count histogram
 #' @param margins Margins (bottom,left,top,right)
 #' 
-#' @return Returns the input list \code{df} with the additional sub-list \code{df$bin} that contains the binned data.
+#' @return Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
 #' 
 #' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
 #'
@@ -38,9 +38,9 @@
 #'
 #' @export
 
-dfplot <- function(df,
+dfplot <- function(bundle,
                    xlab = 'Observable x',
-                   ylab = expression('Distribution function'~phi),
+                   ylab = expression('Generative distribution function'~phi),
                    xlim = NULL,
                    ylim = NULL,
                    log = 'y',
@@ -68,8 +68,8 @@ dfplot <- function(df,
   g = col2rgb(col)[2]/255
   b = col2rgb(col)[3]/255
   
-  n.data = dim(df$input$data$x)[1]
-  n.dim = dim(df$input$data$x)[2]
+  n.data = dim(bundle$data$x)[1]
+  n.dim = dim(bundle$data$x)[2]
   
   if (n.dim!=1) {
     if (n.dim==2) {
@@ -81,13 +81,14 @@ dfplot <- function(df,
 
   # define plot limits
   if (is.null(xlim)) {
-    xlim = range(df$fit$evaluation$x)
+    xlim = range(bundle$grid$x)
     if (xpower10) xlim = 10^xlim
   }
-  if (is.null(ylim)) ylim = c(1e-3*max(df$fit$evaluation$y),2*max(df$fit$evaluation$y))
+  if (is.null(ylim)) ylim = c(1e-3*max(bundle$grid$gdf),2*max(bundle$grid$gdf))
   
   # bin data
-  df = .bin.data(df,nbins,bin.type,bin.xmin,bin.xmax)
+  bundle = .bin.data(bundle,nbins,bin.type,bin.xmin,bin.xmax)
+  bb <<- bundle
   
   # open plot
   if (!add) {
@@ -102,58 +103,58 @@ dfplot <- function(df,
   }
 
   # plot uncertainty regions
-  if (show.uncertainties & df$fit$status$converged) {
-    poly.x = c(df$fit$evaluation$x,rev(df$fit$evaluation$x))
+  if (show.uncertainties & bundle$fit$status$converged) {
+    poly.x = c(bundle$grid$x,rev(bundle$grid$x))
     if (xpower10) poly.x = 10^poly.x
     if (is.null(uncertainty.type)) {
-      if (length(df$fit$evaluation$y.quantile.16)>0) {
+      if (length(bundle$grid$gdf.quantile.16)>0) {
         uncertainty.type = 2
       } else {
         uncertainty.type = 1
       }
     }
-    if ((uncertainty.type>1) & (!length(df$fit$evaluation$y.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
+    if ((uncertainty.type>1) & (!length(bundle$grid$gdf.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
     if (uncertainty.type == 3) {
-      poly.y.95 = pmax(ylim[1],c(df$fit$evaluation$y.quantile.02,rev(df$fit$evaluation$y.quantile.98)))
+      poly.y.95 = pmax(ylim[1],c(bundle$grid$gdf.quantile.02,rev(bundle$grid$gdf.quantile.98)))
       polygon(poly.x,poly.y.95,col=rgb(r,g,b,0.15),border=NA)
     }
     if (uncertainty.type >= 2) {
-      poly.y.68 = pmax(ylim[1],c(df$fit$evaluation$y.quantile.16,rev(df$fit$evaluation$y.quantile.84)))
+      poly.y.68 = pmax(ylim[1],c(bundle$grid$gdf.quantile.16,rev(bundle$grid$gdf.quantile.84)))
       polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
     }
     if (uncertainty.type == 1) {
-      poly.y.68 = pmax(ylim[1],c(df$fit$evaluation$y-df$fit$evaluation$y.error.neg,
-                                 rev(df$fit$evaluation$y+df$fit$evaluation$y.error.pos)))
+      poly.y.68 = pmax(ylim[1],c(bundle$grid$gdf-bundle$grid$gdf.error.neg,
+                                 rev(bundle$grid$gdf+bundle$grid$gdf.error.pos)))
       polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
     }
   }
 
   # plot central fit
-  x = df$fit$evaluation$x[df$fit$evaluation$y>0]
+  x = bundle$grid$x[bundle$grid$gdf>0]
   if (xpower10) x = 10^x
-  if (show.bias.correction & df$fit$status$converged) {
-    if (length(df$fit$parameters$p.optimal.bias.corrected)==0) stop('Bias corrected MLE parameters not available. Use bias.correction in dffit.')
-    lines(x,df$input$distribution.function$phi(df$fit$evaluation$x[df$fit$evaluation$y>0],
-                                               df$fit$parameters$p.optimal.bias.corrected),col=col,lwd=lwd,lty=lty)
+  if (show.bias.correction & bundle$fit$status$converged) {
+    if (length(bundle$fit$parameters$p.optimal.bias.corrected)==0) stop('Bias corrected MLE parameters not available. Use bias.correction in dffit.')
+    lines(x,bundle$input$distribution.function$phi(bundle$grid$x[bundle$grid$gdf>0],
+                                               bundle$fit$parameters$p.optimal.bias.corrected),col=col,lwd=lwd,lty=lty)
   } else {
-    lines(x,df$fit$evaluation$y[df$fit$evaluation$y>0],col=col,lwd=lwd,lty=lty)
+    lines(x,bundle$grid$gdf[bundle$grid$gdf>0],col=col,lwd=lwd,lty=lty)
   }
 
   # plot binned data points
   if (show.data.points) {
-    list = df$bin$phi>0
-    f.16 = pmax(1e-3,qpois(0.16,df$bin$count[list])/df$bin$count[list])
-    f.84 = qpois(0.84,df$bin$count[list])/df$bin$count[list]
+    list = bundle$bin$gdf>0
+    f.16 = pmax(1e-3,qpois(0.16,bundle$bin$count[list])/bundle$bin$count[list])
+    f.84 = qpois(0.84,bundle$bin$count[list])/bundle$bin$count[list]
     if (xpower10) {
-      points(10^df$bin$xmean[list],df$bin$phi[list],pch=20,col=col.data,cex=cex.data)
-      segments(10^df$bin$xmean[list],df$bin$phi[list]*f.16,10^df$bin$xmean[list],df$bin$phi[list]*f.84,col=col.data,lwd=lwd.data)
-      segments(10^(df$bin$xmin+seq(0,df$bin$n-1)[list]*df$bin$dx),df$bin$phi[list],
-               10^(df$bin$xmin+seq(1,df$bin$n)[list]*df$bin$dx),df$bin$phi[list],col=col.data,lwd=lwd.data)
+      points(10^bundle$bin$xmean[list],bundle$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
+      segments(10^bundle$bin$xmean[list],bundle$bin$gdf[list]*f.16,10^bundle$bin$xmean[list],bundle$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
+      segments(10^(bundle$bin$xmin+seq(0,bundle$bin$n-1)[list]*bundle$bin$dx),bundle$bin$gdf[list],
+               10^(bundle$bin$xmin+seq(1,bundle$bin$n)[list]*bundle$bin$dx),bundle$bin$gdf[list],col=col.data,lwd=lwd.data)
     } else {
-      points(df$bin$xmean[list],df$bin$phi[list],pch=20,col=col.data,cex=cex.data)
-      segments(df$bin$xmean[list],df$bin$phi[list]*f.16,df$bin$xmean[list],df$bin$phi[list]*f.84,col=col.data,lwd=lwd.data)
-      segments((df$bin$xmin+seq(0,df$bin$n-1)[list]*df$bin$dx),df$bin$phi[list],
-               (df$bin$xmin+seq(1,df$bin$n)[list]*df$bin$dx),df$bin$phi[list],col=col.data,lwd=lwd.data)
+      points(bundle$bin$xmean[list],bundle$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
+      segments(bundle$bin$xmean[list],bundle$bin$gdf[list]*f.16,bundle$bin$xmean[list],bundle$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
+      segments((bundle$bin$xmin+seq(0,bundle$bin$n-1)[list]*bundle$bin$dx),bundle$bin$gdf[list],
+               (bundle$bin$xmin+seq(1,bundle$bin$n)[list]*bundle$bin$dx),bundle$bin$gdf[list],col=col.data,lwd=lwd.data)
     }
   }
   
@@ -166,14 +167,14 @@ dfplot <- function(df,
   # plot binned data histogram
   if (show.data.histogram) {
     .plotSub(0,1,0,0.2)
-    ymax = max(df$bin$count)*1.2
+    ymax = max(bundle$bin$count)*1.2
     if (length(grep('x',log))==1) {lg='x'} else {lg=''}
     plot(1,1,type='n',log=lg,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
          xlim = xlim, ylim = c(0,ymax), xlab = '', ylab = '',bty='n')
-    xbin = rep(df$bin$xmin+seq(0,df$bin$n)*df$bin$dx,each=2)
+    xbin = rep(bundle$bin$xmin+seq(0,bundle$bin$n)*bundle$bin$dx,each=2)
     if (xpower10) xbin = 10^xbin
     xhist = c(xlim[1],xbin,xlim[2])
-    yhist = c(0,0,rep(df$bin$count,each=2),0,0)
+    yhist = c(0,0,rep(bundle$bin$count,each=2),0,0)
     polygon(xhist,yhist,col=col.hist,border = NA)
     par(xpd=TRUE)
     lines(xlim,rep(ymax,2))
@@ -191,13 +192,13 @@ dfplot <- function(df,
     par(pty = "m")
   }
   
-  invisible(df)
+  invisible(bundle)
 }
 
-.bin.data = function(df,nbins,bin.type,bin.xmin,bin.xmax) {
+.bin.data = function(bundle,nbins,bin.type,bin.xmin,bin.xmax) {
   
   # initialize
-  x = df$input$data$x
+  x = bundle$data$x
   bin = list(type = bin.type)
   n.data = length(x)
   
@@ -223,22 +224,22 @@ dfplot <- function(df,
   wx = bin$xmax-bin$xmin
   bin$dx = wx/bin$n
   bin$xcenter = bin$xmin+(seq(bin$n)-0.5)*bin$dx
-    
+  
   # fill data into bins
   if (bin$type <= 2) {
     
     if (bin$type == 1) {
       xval = x
     } else {
-      xval = df$posterior$x.rand
+      xval = bundle$posterior$x.rand
     }
-    v = df$input$selection$veff.function(xval)
+    v = bundle$selection$veff(xval)
     
-    bin$phi = bin$count = bin$xmean = array(0,bin$n)
+    bin$gdf = bin$count = bin$xmean = array(0,bin$n)
     for (i in seq(n.data)) {
       k = floor((xval[i]-bin$xmin)/wx*0.99999999*bin$n)+1
       if (k>=1 & k<=bin$n) {
-        bin$phi[k] = bin$phi[k]+1/bin$dx/v[i]
+        bin$gdf[k] = bin$gdf[k]+1/bin$dx/v[i]
         bin$count[k] = bin$count[k]+1
         bin$xmean[k] = bin$xmean[k]+xval[i]
       }
@@ -247,17 +248,17 @@ dfplot <- function(df,
     
   } else if (bin$type == 3) {
     
-    xg = df$input$options$x.grid[[1]]
+    xg = bundle$grid$x
     dx = xg[2]-xg[1]
     for (k in seq(bin$n)) {
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
-      bin$xmean[k] = sum(df$posterior$source.count.density[list]*xg[list])/sum(df$posterior$source.count.density[list])
-      bin$count[k] = sum(df$posterior$source.count.density[list])*dx
-      bin$phi[k] = sum(df$posterior$source.count.density[list]/df$input$selection$veff.function(xg[list]))/sum(list)
+      bin$xmean[k] = sum(bundle$posterior$scd[list]*xg[list])/sum(bundle$posterior$scd[list])
+      bin$count[k] = sum(bundle$posterior$scd[list])*dx
+      bin$gdf[k] = sum(bundle$posterior$scd[list]/bundle$selection$veff(xg[list]))/sum(list)
     }
   }
-  df = append(df,list(bin=bin))
-  return(df)  
+  bundle$bin = bin
+  invisible(bundle)  
 }
 
 .plotSub <- function(xleft=0.1,xright=0.3,ybottom=0.1,ytop=0.3) {

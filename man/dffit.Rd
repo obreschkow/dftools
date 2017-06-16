@@ -4,11 +4,11 @@
 \alias{dffit}
 \title{Fit a generative distribution function, such as a galaxy mass function}
 \usage{
-dffit(x, selection = NULL, x.err = NULL, distance = NULL,
-  phi = "Schechter", p.initial = NULL, n.iterations = 100,
-  n.resampling = NULL, correct.mle.bias = FALSE, correct.lss.bias = FALSE,
-  lss.sigma = NULL, write.fit = TRUE, x.grid = list(seq(4, 12, 0.01)),
-  force.no.bias.correction = FALSE)
+dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
+  p.initial = NULL, n.iterations = 100, n.resampling = NULL,
+  correct.mle.bias = FALSE, correct.lss.bias = FALSE, lss.sigma = NULL,
+  write.fit = TRUE, xmin = 4, xmax = 12, dx = 0.01,
+  keep.eddington.bias = FALSE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
@@ -17,9 +17,7 @@ dffit(x, selection = NULL, x.err = NULL, distance = NULL,
 
 \item{x.err}{Optional vector or array specifying the observational errors of \code{x}. If \code{x} is a vector then \code{x.err} must also be a vector of same length. Its elements are interpreted as the standard deviations of Gaussian uncertainties in \code{x}. If \code{x} is a \code{N-by-P} matrix representing \code{N} objects with \code{P} observables, then \code{x.err} must be either a \code{N-by-P} matrix or a \code{N-by-P-by-P} array. In the first case, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the second case, the \code{P-by-P} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{P} observed values \code{x[i,]}.}
 
-\item{distance}{Optional vector of \code{N} elements specifying the comoving distances of the \code{N} galaxies. This vector is only needed if \code{correct.lss.bias = TRUE}.}
-
-\item{phi}{Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{P=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{phi = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{phi(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{phi} is given as a function, the argument \code{p.initial} is mandatory.}
+\item{gdf}{Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{P=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.}
 
 \item{p.initial}{Initial model parameters for fitting the DF.}
 
@@ -27,7 +25,7 @@ dffit(x, selection = NULL, x.err = NULL, distance = NULL,
 
 \item{n.resampling}{Integer (>0) specifying the number of iterations for the resampling of the most likely DF used to evaluate realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.}
 
-\item{correct.mle.bias}{The maximum likelihood estimator (MLE) of a finite dataset can be biased – a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in \code{1/N}, using jackknifing.}
+\item{correct.mle.bias}{The maximum likelihood estimator (MLE) of a finite dataset can be biased – a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.}
 
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).}
 
@@ -35,44 +33,55 @@ dffit(x, selection = NULL, x.err = NULL, distance = NULL,
 
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 
-\item{x.grid}{sets the grid on which the numerical integration is performed. This grid must be specified as \code{x.grid = list(x1, ..., xp)}, where \code{xi} is an equally spaced vector with the grid values for the i-th observable. In the case of a MF (a 1-dimensional DF), \code{x.grid = list(seq(xmin,xmax,by=dx))}, where \code{xmin} and \code{xmax} are the minimum/maximum values of the log-mass considered in the numerical integratino and \code{dx} is the grid spacing.}
+\item{xmin, xmax, dx}{are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.}
 
-\item{force.no.bias.correction}{If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.}
+\item{keep.eddington.bias}{If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.}
+
+\item{distance}{Optional vector of \code{N} elements specifying the comoving distances of the \code{N} galaxies. This vector is only needed if \code{correct.lss.bias = TRUE}.}
 }
 \value{
-Returns a structured list. The sublist \code{input} contains all relevant input arguments. The sublist \code{fit} contains all the output arguments of the MLE algorithm. The output can be visualized using \code{\link{mfplot}}, \code{\link{dfplot}} and \code{\link{dfwrite}}.
+\code{dffit} returns a structured list, which can be interpreted by other functions, such as \code{\link{dfwrite}}, \code{\link{dfplot}}, \code{\link{dfplotcov}}, \code{\link{dfplotveff}}. The list contains the following sublists:
+\item{data}{is a list containing the input data, that is the array of observations \code{x}, their Gaussian uncertainties \code{x.err} and the distances if the objects \code{r}.}
+\item{selection}{is a list describing the selection function underlying the observations, namely the function \code{veff(x)}, which is derived from the input argument \code{selection}.}
+\item{model}{is a list describing the generative distribution function used to model. The main entry of this list is the function \code{gdf(xval,p)} (often written as phi(x|theta) in the literature).}
+\item{grid}{is a list of arrays representing a grid in the observables used for numerical integrations. Most importantly, the N-by-P array \code{x} contains the grid points, the N-element vector \code{gdf} gives the corresponding values of the fitted generative distribution function and the N-element vector \code{scd} representing the source count density given no measurement errors.}
+\item{fit}{is a list describing the fitted generative distribution function. It contains the array \code{p.best} giving the most likely model parameters, as well as their Gaussian uncertainties \code{p.sigma} and covariance matrix \code{p.covariance}. The list also contains the function \code{gdf(x)}, which is the model function evaluated at the parameters \code{p.best}; and the function \code{scd(x)=gdf(x)*veff(x)} representing the expected source count density.}
+\item{options}{is a list of various optional input arguments of \code{dffit}.}
 }
 \description{
 This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 }
+\details{
+For a detailed description of the method, please refer to the peer-reviewed publication linked below.
+}
 \examples{
 # basic example
 data = dfdata()
-df = dffit(data$x, data$selection)
-mfplot(df, xlim=c(2e6,5e10))
+bundle = dffit(data$x, data$selection)
+mfplot(bundle, xlim=c(2e6,5e10))
 
 # include measurement errors in fit and also plot histogram of source counts
-df = dffit(data$x, data$selection, data$x.err)
-mfplot(df, xlim=c(2e6,5e10), show.data.histogram = TRUE)
+bundle = dffit(data$x, data$selection, data$x.err)
+mfplot(bundle, xlim=c(2e6,5e10), show.data.histogram = TRUE)
 
 # show fitted parameter PDFs and covariances
-dfplotcov(df)
+dfplotcov(bundle)
 
 # show fitted effective volume function
-dfplotveff(df)
+dfplotveff(bundle)
 
 # determine Schechter function uncertainties from resampling and
 # evaluate bias-corrected MLE (plotted in red)
-df = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
-mfplot(df, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5,
+bundle = dffit(data$x, data$selection, data$x.err, n.resampling = 1e2, correct.mle.bias = TRUE)
+mfplot(bundle, uncertainty.type=3, nbins=10, bin.xmin=6.5, bin.xmax=9.5,
 #xlim=c(2e6,5e10), ylim=c(2e-3,1.5))
-lines(10^df$fit$evaluation$x,df$fit$evaluation$y.bias.corrected,col='red',lty=2)
+lines(10^bundle$fit$evaluation$x,bundle$fit$evaluation$y.bias.corrected,col='red',lty=2)
 
 # evaluate posteriors of the mass measurements and
 # visualize the change in the mass mode between observation and posterior
 # i.e. the Eddington bias correction
-df = dfposteriors(df)
-plot(data$x,df$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',
+bundle = dfposteriors(bundle)
+plot(data$x,bundle$posterior$x.mode.correction,pch=20,xlab='log10(Mass)',
 ylab='Eddington bias correction = posterior-observed log-mass mode')
 abline(h=0)
 
