@@ -72,8 +72,8 @@ dfmockdata <- function(n = 1000,
   rand = runif(n)
   for (i in seq(n)) {
     index = which.min(abs(cum-rand[i]))
-    if (index==1) stop('There are sampled values below xmin. Choose a lower value for xmin.')
-    if (index==m) stop('There are sampled values above xmax. Choose a larger value for xmax.')
+    if (index<=2) stop('There are sampled values below xmin. Choose a lower value for xmin.')
+    if (index>=(m-1)) stop('There are sampled values above xmax. Choose a larger value for xmax.')
     x[i] = xgrid[index]
   }
   
