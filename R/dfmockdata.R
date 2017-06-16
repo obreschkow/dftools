@@ -19,48 +19,53 @@
 #'
 #' @export
 
-dfmockdata <- function(n = 100,
+dfmockdata <- function(n = 1000,
                        seed = 0,
                        f = function(x,r) {mass = 10^x; rmax = sqrt(mass); f = pracma::erf((rmax-r)/(rmax+1))*0.5+0.5},
                        dVdr.scale = function(r) {r^2},
                        gdf = function(x,p) dfmodel(x, p, type = 'Schechter'),
                        p = c(-2,10,-1.3),
-                       sigma = 0.1,
+                       sigma = 0.0,
                        rmin = 0, rmax = 20,
-                       xmin = 0, xmax = 12, dx = 0.01 # must be a large enough range to contain all possible data
+                       xmin = 0, xmax = 12#, dx = 0.01 # must be a large enough range to contain all possible data
                        ) {
   
   set.seed(seed)
   
-  # make x-grid
-  xgrid = seq(xmin,xmax,dx)
-  m = length(xgrid)
-  
   # rescale observing volume to match the requested number of galaxies
-  n.expected = 0
-  for (i in seq(m)) {
-    intfct = function(r) f(xgrid[i],r)*dVdr.scale(r)
-    veff.scale = integrate(intfct,rmin,rmax)$value
-    n.expected = n.expected+veff.scale*gdf(xgrid[i],p)
+  veff.scale.elemental = function(x) {
+    fct = function(r) f(x,r)*dVdr.scale(r)
+    return(integrate(fct,rmin,rmax)$value)
   }
-  rescaling.factor = n/n.expected
+  veff.scale = function(x) sapply(x,veff.scale.elemental)
+  scd.scale = function(x) veff.scale(x)*gdf(x,p)
+  n.scale = integrate(scd.scale,xmin,xmax)$value
+  rescaling.factor = n/n.scale
   dVdr = function(r) dVdr.scale(r)*rescaling.factor
   
   # make veff.function
   veff.function.elemental = function(x) {
-    intfct = function(r) f(x,r)*dVdr.scale(r)
-    return(integrate(intfct,rmin,rmax)$value)
+    fct = function(r) f(x,r)*dVdr(r)
+    return(integrate(fct,rmin,rmax)$value)
   }
-  veff.function = function(x) {
-    sapply(x,veff.function.elemental,USE.NAMES = FALSE)
-  }
+  veff.function = Vectorize(veff.function.elemental)
   
   # make source count density function
-  scd = function(x) {
-    veff.function(x)*gdf(x,p)
-  }
+  scd = function(x) veff.function(x)*gdf(x,p)
+  
+  # sample data
+  # cum = function(x) integrate(scd,xmin,x)$value
+  # rand = runif(n,0,n)
+  # x = array(NA,c(n,1))
+  # for (i in seq(n)) {
+  #   fct = function(x) cum(x)-rand[i]
+  #   x[i] = uniroot(fct,c(xmin,xmax))$root
+  # }
     
   # sample data
+  dx = 0.001
+  xgrid = seq(xmin,xmax,dx)
+  m = length(xgrid)
   x = array(NA,c(n,1))
   cum = cumsum(scd(xgrid))
   cum = cum/cum[m]
