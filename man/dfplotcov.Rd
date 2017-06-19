@@ -4,7 +4,7 @@
 \alias{dfplotcov}
 \title{Plot parameter covariance matrix}
 \usage{
-dfplotcov(bundle, p = NULL, n.points = 500, n.standarddev = 5,
+dfplotcov(survey, p = NULL, n.points = 500, n.standarddev = 5,
   line.color = "blue", line.lwd = 2, point.color = "#bbbbff",
   point.cex = 0.1, text.size.labels = 1.1, text.size.numbers = 0.8,
   margins = c(4, 4, 0.5, 0.5), title = "")

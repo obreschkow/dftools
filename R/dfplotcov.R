@@ -24,15 +24,15 @@
 #'
 #' @export
 
-dfplotcov <- function(bundle, p = NULL, n.points = 500, n.standarddev = 5,
+dfplotcov <- function(survey, p = NULL, n.points = 500, n.standarddev = 5,
                             line.color = 'blue', line.lwd = 2,
                             point.color = '#bbbbff', point.cex = 0.1,
                             text.size.labels = 1.1, text.size.numbers = 0.8,
                             margins = c(4,4,0.5,0.5),
                             title = '') {
-  covariance = bundle$fit$p.covariance
-  .covariance.plot(bundle$fit$p.best,
-                  bundle$fit$p.covariance,
+  covariance = survey$fit$p.covariance
+  .covariance.plot(survey$fit$p.best,
+                  survey$fit$p.covariance,
                   p = p, npoints = n.points,
                   nstd = n.standarddev*2,
                   line.color = line.color, line.lwd = line.lwd,

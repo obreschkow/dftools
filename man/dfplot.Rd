@@ -4,7 +4,7 @@
 \alias{dfplot}
 \title{Display fitted generative distribution function}
 \usage{
-dfplot(bundle, xlab = "Observable x",
+dfplot(survey, xlab = "Observable x",
   ylab = expression("Generative distribution function" ~ phi), xlim = NULL,
   ylim = NULL, log = "y", xpower10 = FALSE, col = "blue", lwd = 2,
   lty = 1, show.data.points = FALSE, show.data.histogram = FALSE,
@@ -66,7 +66,7 @@ dfplot(bundle, xlab = "Observable x",
 \item{df}{List produced by \code{\link{dffit}}}
 }
 \value{
-Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
+Returns the input list \code{df} with the additional sub-list \code{survey$bin} that contains the binned data.
 }
 \description{
 This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.

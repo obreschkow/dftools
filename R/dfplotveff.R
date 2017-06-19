@@ -14,11 +14,11 @@
 #'
 #' @export
 
-dfplotveff <- function(bundle,
+dfplotveff <- function(survey,
                        xlab = 'Observable x',
                        ylab = expression('Effective volume')) {
   
-  n.dim = dim(bundle$data$x)[2]
+  n.dim = dim(survey$data$x)[2]
   if (n.dim!=1) {
     if (n.dim==2) {
       stop('Use dfplotveff2 for two-dimensional Veff functions.')
@@ -28,20 +28,21 @@ dfplotveff <- function(bundle,
   }
   
   list = c(TRUE,FALSE,FALSE)
-  x = bundle$data$x
+  x = survey$data$x
   dx = max(x)-min(x)
   par(pty = "m")
-  plot(1, 1, type='n', xlim=range(x)+dx*c(-0.1,0.1), ylim=c(1e-4,1)*1.1*max(bundle$selection$veff(x)),
+  ylim = c(1e-4,1)*1.3*max(survey$selection$veff(x))
+  plot(1, 1, type='n', xlim=range(x)+dx*c(-0.1,0.1), ylim=ylim,
        xaxs='i', yaxs='i', xaxt='n', yaxt='n',
        xlab = '', ylab = '', log='y')
-  xr = sort(c(bundle$grid$x,x))
-  lines(xr,bundle$selection$veff(xr),col='blue',lwd=3)
-  if (!is.null(bundle$selection$veff.input.function)) {
-    lines(xr,bundle$selection$veff.input.function(xr))
+  xr = sort(c(survey$grid$x,x))
+  lines(xr,pmax(ylim[1]/2,survey$selection$veff(xr)),col='blue',lwd=3)
+  if (!is.null(survey$selection$veff.input.function)) {
+    lines(xr,survey$selection$veff.input.function(xr))
     list[2] = TRUE
   }
-  if (!is.null(bundle$selection$veff.input.values)) {
-    points(x,bundle$selection$veff.input.values,pch=20)
+  if (!is.null(survey$selection$veff.input.values)) {
+    points(x,survey$selection$veff.input.values,pch=20)
     list[3] = TRUE
   }
   magicaxis::magaxis(side=1,xlab=xlab,lwd=NA,lwd.ticks=1)

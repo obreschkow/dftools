@@ -4,7 +4,7 @@
 \alias{dfplot2}
 \title{Display fitted distribution function}
 \usage{
-dfplot2(bundle, xlab = "Observable x1", ylab = "Observable x2",
+dfplot2(survey, xlab = "Observable x1", ylab = "Observable x2",
   xlim = NULL, ylim = NULL, p.ref = NULL, xpower10 = TRUE,
   ypower10 = TRUE, show.data = TRUE, show.data.err = TRUE,
   show.phi = TRUE, show.phi.contours = TRUE, show.sc.contours = TRUE,
@@ -44,7 +44,7 @@ dfplot2(bundle, xlab = "Observable x1", ylab = "Observable x2",
 \item{pch}{Line type of fit (see \code{\link{plot}})}
 }
 \value{
-Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
+Returns the input list \code{df} with the additional sub-list \code{survey$bin} that contains the binned data.
 }
 \description{
 This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.

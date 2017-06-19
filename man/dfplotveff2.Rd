@@ -4,7 +4,7 @@
 \alias{dfplotveff2}
 \title{Plot effective volume in 2D}
 \usage{
-dfplotveff2(bundle, xlab = "Observable x1", ylab = "Observable x2",
+dfplotveff2(survey, xlab = "Observable x1", ylab = "Observable x2",
   zlab = "Veff")
 }
 \arguments{

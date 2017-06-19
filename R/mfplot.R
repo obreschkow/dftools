@@ -8,14 +8,14 @@
 #'
 #' @export
 
-mfplot <- function(bundle,
+mfplot <- function(survey,
                    xlab = expression('M [M'['sun']*']'),
                    ylab = expression(phi~'[Mpc'^-3~'dex'^-1~']'),
                    log = 'xy',
                    xpower10 = TRUE,
                    show.data.points = TRUE,
                    ...) {
-  bundle = dfplot(bundle, xlab = xlab, ylab = ylab, log = log, xpower10 = xpower10,
+  survey = dfplot(survey, xlab = xlab, ylab = ylab, log = log, xpower10 = xpower10,
               show.data.points = show.data.points, ...)
-  invisible(bundle)
+  invisible(survey)
 }

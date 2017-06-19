@@ -4,7 +4,7 @@
 \alias{dfplotveff}
 \title{Plot effective volume}
 \usage{
-dfplotveff(bundle, xlab = "Observable x",
+dfplotveff(survey, xlab = "Observable x",
   ylab = expression("Effective volume"))
 }
 \arguments{

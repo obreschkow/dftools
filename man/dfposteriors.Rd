@@ -4,7 +4,7 @@
 \alias{dfposteriors}
 \title{Evaluate posterior masses}
 \usage{
-dfposteriors(bundle)
+dfposteriors(survey)
 }
 \arguments{
 \item{df}{List produced by \code{\link{dffit}}}

@@ -30,7 +30,7 @@
 #' @param col.hist Color of source count histogram
 #' @param margins Margins (bottom,left,top,right)
 #' 
-#' @return Returns the input list \code{df} with the additional sub-list \code{bundle$bin} that contains the binned data.
+#' @return Returns the input list \code{df} with the additional sub-list \code{survey$bin} that contains the binned data.
 #' 
 #' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
 #'
@@ -38,7 +38,7 @@
 #'
 #' @export
 
-dfplot <- function(bundle,
+dfplot <- function(survey,
                    xlab = 'Observable x',
                    ylab = expression('Generative distribution function'~phi),
                    xlim = NULL,
@@ -68,8 +68,8 @@ dfplot <- function(bundle,
   g = col2rgb(col)[2]/255
   b = col2rgb(col)[3]/255
   
-  n.data = dim(bundle$data$x)[1]
-  n.dim = dim(bundle$data$x)[2]
+  n.data = dim(survey$data$x)[1]
+  n.dim = dim(survey$data$x)[2]
   
   if (n.dim!=1) {
     if (n.dim==2) {
@@ -81,14 +81,14 @@ dfplot <- function(bundle,
 
   # define plot limits
   if (is.null(xlim)) {
-    xlim = range(bundle$grid$x)
+    xlim = range(survey$grid$x)
     if (xpower10) xlim = 10^xlim
   }
-  if (is.null(ylim)) ylim = c(1e-3*max(bundle$grid$gdf),2*max(bundle$grid$gdf))
+  if (is.null(ylim)) ylim = c(1e-3*max(survey$grid$gdf),2*max(survey$grid$gdf))
   
   # bin data
-  bundle = .bin.data(bundle,nbins,bin.type,bin.xmin,bin.xmax)
-  bb <<- bundle
+  survey = .bin.data(survey,nbins,bin.type,bin.xmin,bin.xmax)
+  bb <<- survey
   
   # open plot
   if (!add) {
@@ -103,58 +103,58 @@ dfplot <- function(bundle,
   }
 
   # plot uncertainty regions
-  if (show.uncertainties & bundle$fit$status$converged) {
-    poly.x = c(bundle$grid$x,rev(bundle$grid$x))
+  if (show.uncertainties & survey$fit$status$converged) {
+    poly.x = c(survey$grid$x,rev(survey$grid$x))
     if (xpower10) poly.x = 10^poly.x
     if (is.null(uncertainty.type)) {
-      if (length(bundle$grid$gdf.quantile.16)>0) {
+      if (length(survey$grid$gdf.quantile.16)>0) {
         uncertainty.type = 2
       } else {
         uncertainty.type = 1
       }
     }
-    if ((uncertainty.type>1) & (!length(bundle$grid$gdf.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
+    if ((uncertainty.type>1) & (!length(survey$grid$gdf.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
     if (uncertainty.type == 3) {
-      poly.y.95 = pmax(ylim[1],c(bundle$grid$gdf.quantile.02,rev(bundle$grid$gdf.quantile.98)))
+      poly.y.95 = pmax(ylim[1],c(survey$grid$gdf.quantile.02,rev(survey$grid$gdf.quantile.98)))
       polygon(poly.x,poly.y.95,col=rgb(r,g,b,0.15),border=NA)
     }
     if (uncertainty.type >= 2) {
-      poly.y.68 = pmax(ylim[1],c(bundle$grid$gdf.quantile.16,rev(bundle$grid$gdf.quantile.84)))
+      poly.y.68 = pmax(ylim[1],c(survey$grid$gdf.quantile.16,rev(survey$grid$gdf.quantile.84)))
       polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
     }
     if (uncertainty.type == 1) {
-      poly.y.68 = pmax(ylim[1],c(bundle$grid$gdf-bundle$grid$gdf.error.neg,
-                                 rev(bundle$grid$gdf+bundle$grid$gdf.error.pos)))
+      poly.y.68 = pmax(ylim[1],c(survey$grid$gdf-survey$grid$gdf.error.neg,
+                                 rev(survey$grid$gdf+survey$grid$gdf.error.pos)))
       polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
     }
   }
 
   # plot central fit
-  x = bundle$grid$x[bundle$grid$gdf>0]
+  x = survey$grid$x[survey$grid$gdf>0]
   if (xpower10) x = 10^x
-  if (show.bias.correction & bundle$fit$status$converged) {
-    if (length(bundle$fit$parameters$p.optimal.bias.corrected)==0) stop('Bias corrected MLE parameters not available. Use bias.correction in dffit.')
-    lines(x,bundle$input$distribution.function$phi(bundle$grid$x[bundle$grid$gdf>0],
-                                               bundle$fit$parameters$p.optimal.bias.corrected),col=col,lwd=lwd,lty=lty)
+  if (show.bias.correction & survey$fit$status$converged) {
+    if (length(survey$fit$parameters$p.optimal.bias.corrected)==0) stop('Bias corrected MLE parameters not available. Use bias.correction in dffit.')
+    lines(x,survey$input$distribution.function$phi(survey$grid$x[survey$grid$gdf>0],
+                                               survey$fit$parameters$p.optimal.bias.corrected),col=col,lwd=lwd,lty=lty)
   } else {
-    lines(x,bundle$grid$gdf[bundle$grid$gdf>0],col=col,lwd=lwd,lty=lty)
+    lines(x,survey$grid$gdf[survey$grid$gdf>0],col=col,lwd=lwd,lty=lty)
   }
 
   # plot binned data points
   if (show.data.points) {
-    list = bundle$bin$gdf>0
-    f.16 = pmax(1e-3,qpois(0.16,bundle$bin$count[list])/bundle$bin$count[list])
-    f.84 = qpois(0.84,bundle$bin$count[list])/bundle$bin$count[list]
+    list = survey$bin$gdf>0
+    f.16 = pmax(1e-3,qpois(0.16,survey$bin$count[list])/survey$bin$count[list])
+    f.84 = qpois(0.84,survey$bin$count[list])/survey$bin$count[list]
     if (xpower10) {
-      points(10^bundle$bin$xmean[list],bundle$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
-      segments(10^bundle$bin$xmean[list],bundle$bin$gdf[list]*f.16,10^bundle$bin$xmean[list],bundle$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
-      segments(10^(bundle$bin$xmin+seq(0,bundle$bin$n-1)[list]*bundle$bin$dx),bundle$bin$gdf[list],
-               10^(bundle$bin$xmin+seq(1,bundle$bin$n)[list]*bundle$bin$dx),bundle$bin$gdf[list],col=col.data,lwd=lwd.data)
+      points(10^survey$bin$xmean[list],survey$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
+      segments(10^survey$bin$xmean[list],survey$bin$gdf[list]*f.16,10^survey$bin$xmean[list],survey$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
+      segments(10^(survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),survey$bin$gdf[list],
+               10^(survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),survey$bin$gdf[list],col=col.data,lwd=lwd.data)
     } else {
-      points(bundle$bin$xmean[list],bundle$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
-      segments(bundle$bin$xmean[list],bundle$bin$gdf[list]*f.16,bundle$bin$xmean[list],bundle$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
-      segments((bundle$bin$xmin+seq(0,bundle$bin$n-1)[list]*bundle$bin$dx),bundle$bin$gdf[list],
-               (bundle$bin$xmin+seq(1,bundle$bin$n)[list]*bundle$bin$dx),bundle$bin$gdf[list],col=col.data,lwd=lwd.data)
+      points(survey$bin$xmean[list],survey$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
+      segments(survey$bin$xmean[list],survey$bin$gdf[list]*f.16,survey$bin$xmean[list],survey$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
+      segments((survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),survey$bin$gdf[list],
+               (survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),survey$bin$gdf[list],col=col.data,lwd=lwd.data)
     }
   }
   
@@ -167,14 +167,14 @@ dfplot <- function(bundle,
   # plot binned data histogram
   if (show.data.histogram) {
     .plotSub(0,1,0,0.2)
-    ymax = max(bundle$bin$count)*1.2
+    ymax = max(survey$bin$count)*1.2
     if (length(grep('x',log))==1) {lg='x'} else {lg=''}
     plot(1,1,type='n',log=lg,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
          xlim = xlim, ylim = c(0,ymax), xlab = '', ylab = '',bty='n')
-    xbin = rep(bundle$bin$xmin+seq(0,bundle$bin$n)*bundle$bin$dx,each=2)
+    xbin = rep(survey$bin$xmin+seq(0,survey$bin$n)*survey$bin$dx,each=2)
     if (xpower10) xbin = 10^xbin
     xhist = c(xlim[1],xbin,xlim[2])
-    yhist = c(0,0,rep(bundle$bin$count,each=2),0,0)
+    yhist = c(0,0,rep(survey$bin$count,each=2),0,0)
     polygon(xhist,yhist,col=col.hist,border = NA)
     par(xpd=TRUE)
     lines(xlim,rep(ymax,2))
@@ -192,13 +192,19 @@ dfplot <- function(bundle,
     par(pty = "m")
   }
   
-  invisible(bundle)
+  if (show.data.histogram) {
+    .plotSub(0,1,0,1)
+    plot(1,1,type='n',log=log,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
+         xlim = xlim, ylim = c(exp(log(ylim[1])-(log(ylim[2])-log(ylim[1]))*0.25),ylim[2]), xlab = '', ylab = '',bty='n')
+  }
+  
+  invisible(survey)
 }
 
-.bin.data = function(bundle,nbins,bin.type,bin.xmin,bin.xmax) {
+.bin.data = function(survey,nbins,bin.type,bin.xmin,bin.xmax) {
   
   # initialize
-  x = bundle$data$x
+  x = survey$data$x
   bin = list(type = bin.type)
   n.data = length(x)
   
@@ -231,9 +237,9 @@ dfplot <- function(bundle,
     if (bin$type == 1) {
       xval = x
     } else {
-      xval = bundle$posterior$x.rand
+      xval = survey$posterior$x.rand
     }
-    v = bundle$selection$veff(xval)
+    v = survey$selection$veff(xval)
     
     bin$gdf = bin$count = bin$xmean = array(0,bin$n)
     for (i in seq(n.data)) {
@@ -248,17 +254,17 @@ dfplot <- function(bundle,
     
   } else if (bin$type == 3) {
     
-    xg = bundle$grid$x
+    xg = survey$grid$x
     dx = xg[2]-xg[1]
     for (k in seq(bin$n)) {
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
-      bin$xmean[k] = sum(bundle$posterior$scd[list]*xg[list])/sum(bundle$posterior$scd[list])
-      bin$count[k] = sum(bundle$posterior$scd[list])*dx
-      bin$gdf[k] = sum(bundle$posterior$scd[list]/bundle$selection$veff(xg[list]))/sum(list)
+      bin$xmean[k] = sum(survey$posterior$scd[list]*xg[list])/sum(survey$posterior$scd[list])
+      bin$count[k] = sum(survey$posterior$scd[list])*dx
+      bin$gdf[k] = sum(survey$posterior$scd[list]/survey$selection$veff(xg[list]))/sum(list)
     }
   }
-  bundle$bin = bin
-  invisible(bundle)  
+  survey$bin = bin
+  invisible(survey)  
 }
 
 .plotSub <- function(xleft=0.1,xright=0.3,ybottom=0.1,ytop=0.3) {

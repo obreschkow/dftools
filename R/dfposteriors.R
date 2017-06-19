@@ -12,20 +12,20 @@
 #'
 #' @export
 
-dfposteriors <- function(bundle) {
+dfposteriors <- function(survey) {
   
-  if (is.null(bundle$data$x.err)) stop('Posterior data PDFs can only be produced if the data is uncertain, i.e. if x.err is given.')
+  if (is.null(survey$data$x.err)) stop('Posterior data PDFs can only be produced if the data is uncertain, i.e. if x.err is given.')
   
   # Input handling
-  x = bundle$data$x
-  x.err = bundle$data$x.err
-  x.mesh = bundle$grid$x
-  x.mesh.dv = bundle$grid$dvolume
+  x = survey$data$x
+  x.err = survey$data$x.err
+  x.mesh = survey$grid$x
+  x.mesh.dv = survey$grid$dvolume
   n.data = dim(x)[1]
   n.dim = dim(x)[2]
   
   # Make prior
-  prior = bundle$grid$scd
+  prior = survey$grid$scd
   prior[!is.finite(prior)] = 0
   prior = pmax(0,prior)
   
@@ -78,8 +78,8 @@ dfposteriors <- function(bundle) {
     md[i,] = x.mesh[which.max(rho.corrected),]
   }
   
-  bundle$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)),
+  survey$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)),
                           scd = rho.unbiased)
   
-  invisible(bundle)
+  invisible(survey)
 }

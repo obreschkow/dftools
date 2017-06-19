@@ -90,20 +90,20 @@ dfexample2 = function(p.true = c(-2,10,-1.3,2/3,7,0.3), seed = 3,
   # fit model to sample
   cat('Fit six parameters:\n')
   if (corr.xy==0) {x.err = cbind(rep(sigma.x,n),rep(sigma.y,n))} # just to try if everything works well in this mode, too
-  bundle = dffit(x, veff, x.err, gdf = gdf, p.initial = p.true, xmin = c(mrange[1],jrange[1]), xmax = c(mrange[2],jrange[2]), dx = c(0.1,0.1))
+  survey = dffit(x, veff, x.err, gdf = gdf, p.initial = p.true, xmin = c(mrange[1],jrange[1]), xmax = c(mrange[2],jrange[2]), dx = c(0.1,0.1))
   
   # plot parameter covariances and initial parameters
-  dfplotcov(bundle, p = p.true)
+  dfplotcov(survey, p = p.true)
   
   # plot DF
-  dfplot2(bundle, p.ref = p.true, xlab = 'log10(Mass/Msun)', ylab = 'log10(j/[kpc km/s])')
+  dfplot2(survey, p.ref = p.true, xlab = 'log10(Mass/Msun)', ylab = 'log10(j/[kpc km/s])')
   legend(1.3e8,8e3,c('Mock observations','Observational uncertainties','Input distribution function (DF)','Fitted DF','Source count model from fitted DF'),
          pch=c(20,NA,NA,15,NA),col=c('black','grey','red','blue','purple'),lty=c(NA,1,2,2,1),bty='n')
   
   # console output
-  cat(sprintf('Total computation time       = %.2fs\n',bundle$fit$status$walltime.total))
-  cat(sprintf('Computation time for fitting = %.2fs\n',bundle$fit$status$walltime.fitting))
+  cat(sprintf('Total computation time       = %.2fs\n',survey$fit$status$walltime.total))
+  cat(sprintf('Computation time for fitting = %.2fs\n',survey$fit$status$walltime.fitting))
   
-  invisible(bundle)
+  invisible(survey)
   
 }
