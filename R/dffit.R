@@ -20,7 +20,7 @@
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
 #' 
 #' @details
-#' For a detailed description of the method, please refer to the peer-reviewed publication linked below.
+#' For a detailed description of the method, please refer to the peer-reviewed publication by Obreschkow et al. 2017 (in prep.).
 #'
 #' @return \code{dffit} returns a structured list, which can be interpreted by other functions, such as \code{\link{dfwrite}}, \code{\link{dfplot}}, \code{\link{dfplotcov}}, \code{\link{dfplotveff}}. The list contains the following sublists:
 #' \item{data}{is a list containing the input data, that is the array of observations \code{x}, their Gaussian uncertainties \code{x.err} and the distances if the objects \code{r}.}

@@ -52,7 +52,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 }
 \details{
-For a detailed description of the method, please refer to the peer-reviewed publication linked below.
+For a detailed description of the method, please refer to the peer-reviewed publication by Obreschkow et al. 2017 (in prep.).
 }
 \examples{
 # full example in 1D (subject to non-trivial Eddington bias)
