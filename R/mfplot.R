@@ -2,7 +2,7 @@
 #'
 #' This function displays the galaxy mass function (MF) fitted using \code{\link{dffit}}, by calling \code{\link{dfplot}} with appropriate parameters.
 #'
-#' @seealso See examples in \code{\link{dffit}}.
+#' @seealso As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

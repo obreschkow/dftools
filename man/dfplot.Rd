@@ -15,6 +15,8 @@ dfplot(survey, xlab = "Observable x",
   4.1, 2.1))
 }
 \arguments{
+\item{survey}{List produced by \code{\link{dffit}}}
+
 \item{xlab}{x-axis label}
 
 \item{ylab}{y-axis label}
@@ -62,17 +64,15 @@ dfplot(survey, xlab = "Observable x",
 \item{col.hist}{Color of source count histogram}
 
 \item{margins}{Margins (bottom,left,top,right)}
-
-\item{df}{List produced by \code{\link{dffit}}}
 }
 \value{
-Returns the input list \code{df} with the additional sub-list \code{survey$bin} that contains the binned data.
+Returns the input list \code{survey} with the additional sub-list \code{survey$bin} that contains the binned data.
 }
 \description{
 This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.
 }
 \seealso{
-For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
+For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
 }
 \author{
 Danail Obreschkow

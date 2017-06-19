@@ -4,10 +4,9 @@
 #' 
 #' @importFrom pracma erf
 #'
-#' @param n Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f}, \code{g}, \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.
+#' @param n Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.
 #' @param seed An interger number used as seed for the random number generator. If you wish to generate different realizations, with the same survey specifications, it suffices to vary this number.
 #' @param f is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey.
-#' @param g is the cosmic large-scale-structure (LSS) function \code{g(r)}, specifying the excess of galaxies as a function of \code{r} due to LSS. \code{g(r)} is defined as the expected number of galaxies, divided by the expected number of galaxies in the absence of LSS. Hence, values between 0 and 1 denote underdensities, while values large than 1 denote overdensities. The default is \code{g(r)=1}, meaning that the mock survey does not have any LSS.
 #' @param dVdr is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default uses \code{Omega=2.439568e-2} [sterradians], such that the expected number of galaxies is exactly 1000.
 #' @param gdf is the 'generative distribution function', i.e. the underlying mass function, from which the galaxies are drawn. This function is a function of log-mass \code{x} and model parameters \code{p}. It returns the expected number of galaxies per unit of cosmic volume \code{V} and log-mass \code{x}. The default is a Schechter function.
 #' @param p model parameters for the \code{gdf}.
@@ -67,7 +66,6 @@
 dfmockdata <- function(n = NULL,
                        seed = 3,
                        f = function(x,r) {rmax=1e-2*sqrt(10^x); pracma::erf((rmax-r)/rmax*20)*0.5+0.5},
-                       g = function(r) 1,
                        dVdr = function(r) 2.439568e-2*r^2,
                        gdf = function(x,p) dfmodel(x,p,type='Schechter'),
                        p = c(-2,10,-1.3),
@@ -119,17 +117,17 @@ dfmockdata <- function(n = NULL,
   qnf = approxfun(cdf,xgrid) # quantile function of source count density
   x = qnf(runif(n,cdf[1],cdf[length(xgrid)]))
   
-  # find maximum of f(x,r)*g(r)
+  # find maximum of f(x,r)
   xg = seq(xmin,xmax,length=100)
   rg = seq(rmin,rmax,length=100)
   pg = cbind(rep(xg,10),rep(rg,each=10))
-  fct = function(p) -f(p[1],p[2])*g(p[2])
+  fct = function(p) -f(p[1],p[2])
   if (max(apply(pg,1,fct))>0) stop('f*g can never by smaller than 0.')
   p = pg[which.min(apply(pg,1,fct)),]
   opt = optim(p,fct,method="L-BFGS-B",lower=c(xmin,rmin),upper=c(xmax,rmax))
   fgmax = -opt$value
   if (fgmax>2 & verbose) {
-    cat(sprintf('The maximum of f*g (%f) is significantly larger than 1. Check if this is intended.\n',fgmax))
+    cat(sprintf('The maximum of f (%f) is significantly larger than 1. Check if this is intended.\n',fgmax))
   }
   
   # sample distances (r) using cumsum algorithm
@@ -144,7 +142,7 @@ dfmockdata <- function(n = NULL,
   while (m>0 & count<100) {
     count = count+1
     r[list] = qnf(runif(m,cdf[1],cdf[length(rgrid)]))
-    rejected = f(x[list],r[list])*g(r[list])<runif(m)*fgmax
+    rejected = f(x[list],r[list])<runif(m)*fgmax
     list = list[rejected]
     m = length(list)
   }
@@ -152,7 +150,7 @@ dfmockdata <- function(n = NULL,
   # sample distances (r) using deterministic uniroot algorithm
   if (m>0) {
     get_random_r = function(x) { 
-      fg = function(r) f(x,r)*g(r)
+      fg = function(r) f(x,r)
       FG = function(r) {integrate(fg,rmin,r)$value}
       FGv = Vectorize(FG)
       FG.inv = function(y){uniroot(function(x){FGv(x)-y},interval=c(rmin,rmax))$root}

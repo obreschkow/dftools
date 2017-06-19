@@ -5,9 +5,9 @@
 #' @param df List produced by \code{\link{dffit}}
 #'
 #' @examples
-#' data = mfdata()
-#' df = dffit(data$x, data$selection, write.fit = FALSE)
-#' dfwrite(df)
+#' dat = dfmockdata()
+#' survey = dffit(dat$x, dat$veff, write.fit = FALSE)
+#' dfwrite(survey)
 #'
 #' @seealso See examples in \code{\link{dffit}}.
 #'

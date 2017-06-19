@@ -1,6 +1,6 @@
 #' Plot effective volume in 2D
 #'
-#' This function plots the 2D function \code{Veff(x)}, where \code{x} is a 2-element vector.
+#' This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a two-dimensional generative distribution function (GDF). Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.
 #'
 #' @importFrom rgl open3d decorate3d surface3d
 #'
@@ -8,7 +8,7 @@
 #' @param xlab Label on x-axis (e.g. logarithm of mass).
 #' @param ylab Label on y-axis (e.g. logarithm of size or angular momentum).
 #'
-#' @seealso See examples in \code{\link{dffit}}.
+#' @seealso See examples in \code{\link{dffit}}. To display \code{Veff(x)} of one-dimensional distribution functions use \code{\link{dfplotveff}}.
 #'
 #' @author Danail Obreschkow
 #'

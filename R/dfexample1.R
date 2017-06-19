@@ -1,6 +1,6 @@
 #' Example of using dftools
 #'
-#' This function generates n mock galaxies with observing errors, drawn from a Schechter function with predefined parameters, using a predefined effective volume function. It then uses \code{\link{dffit}} to recover the input function.
+#' This function generates n mock galaxies with masses and observing errors, drawn from a custom Schechter function and predefined effective volume function. It then uses \code{\link{dffit}} to recover the inpu Schechter function from the noisy data.
 #'
 #' @param n Number of gtalaxies
 #' @param seed Random number seed

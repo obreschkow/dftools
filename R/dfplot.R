@@ -4,7 +4,7 @@
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
-#' @param df List produced by \code{\link{dffit}}
+#' @param survey List produced by \code{\link{dffit}}
 #' @param xlab x-axis label
 #' @param ylab y-axis label
 #' @param xlim 2-element vector with x-axis plotting limits
@@ -30,9 +30,9 @@
 #' @param col.hist Color of source count histogram
 #' @param margins Margins (bottom,left,top,right)
 #' 
-#' @return Returns the input list \code{df} with the additional sub-list \code{survey$bin} that contains the binned data.
+#' @return Returns the input list \code{survey} with the additional sub-list \code{survey$bin} that contains the binned data.
 #' 
-#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
+#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'
@@ -81,10 +81,14 @@ dfplot <- function(survey,
 
   # define plot limits
   if (is.null(xlim)) {
-    xlim = range(survey$grid$x)
+    xlim = range(survey$data$x)
+    xlim = xlim+c(-0.1,0.1)*(xlim[2]-xlim[1])
     if (xpower10) xlim = 10^xlim
   }
-  if (is.null(ylim)) ylim = c(1e-3*max(survey$grid$gdf),2*max(survey$grid$gdf))
+  if (is.null(ylim)) {
+    ylim = max(survey$fit$gdf(survey$data$x))*c(1e-4,10)
+    #ylim = ylim+c(-0.1,0.1)*(ylim[2]-ylim[1])
+  }
   
   # bin data
   survey = .bin.data(survey,nbins,bin.type,bin.xmin,bin.xmax)

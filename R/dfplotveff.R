@@ -1,6 +1,6 @@
 #' Plot effective volume
 #'
-#' This function plots the function \code{Veff(x)} used for the mass function fit, as stored in the sublist \code{fit} of the output produced by \code{\link{dffit}}.
+#' This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a one-dimensional generative distribution function (GDF), such as a galaxy mass function. Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
@@ -8,7 +8,7 @@
 #' @param xlab Label on x-axis (logarithmic mass or luminosity scale).
 #' @param ylab Label on y-axis (volume scale).
 #'
-#' @seealso See examples in \code{\link{dffit}}.
+#' @seealso See examples in \code{\link{dffit}}. To display \code{Veff(x)} of two-dimensional distribution functions use \code{\link{dfplotveff2}}.
 #'
 #' @author Danail Obreschkow
 #'
@@ -31,7 +31,7 @@ dfplotveff <- function(survey,
   x = survey$data$x
   dx = max(x)-min(x)
   par(pty = "m")
-  ylim = c(1e-4,1)*1.3*max(survey$selection$veff(x))
+  ylim = c(1e-4,1)*2*max(survey$selection$veff(x))
   plot(1, 1, type='n', xlim=range(x)+dx*c(-0.1,0.1), ylim=ylim,
        xaxs='i', yaxs='i', xaxt='n', yaxt='n',
        xlab = '', ylab = '', log='y')

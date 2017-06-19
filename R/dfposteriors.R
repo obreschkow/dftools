@@ -1,12 +1,23 @@
 #' Evaluate posterior masses
 #'
-#' Given a fitted df, this function computes posterior masses.
+#' This function is called after fitting a generative distribution function usnig \code{\link{dffit}}. It uses the output list of \code{dffit} to deterine the posterior probability distributions of the uncertain data, given the fitted generative distribution function (such as a galaxy mass function). \code{dfposteriors} works for models of any dimension.
 #'
-#' @param df List produced by \code{\link{dffit}}
+#' @param survey List produced by \code{\link{dffit}}
 #'
-#' @return Returns a structured list, which, in addition to the input argument, also contains the sublist \code{posteriors}. Note that the posteriors can be visualized using \code{\link{dfplot}} with the argument \code{bin.use.posteriors = TRUE}.
+#' @return Returns a structured list containing the input list \code{survey} with an additional sublist \code{posteriors}. This sublist contains several measures of the posterior data: means, standard deviations and modes, as well as a random value drawn from the actual posterior distribution. This random value can be used to plot unbiased distribution functions, such as mass functions. The output also contains the array \code{$grid$scd.posterior} giving the posterior source count density of the input data evaluated on the grid \code{$grid$x}.
+#' 
+#' @examples
+#' dat = dfmockdata()
+#' survey = dffit(dat$x,dat$veff,dat$x.err)
+#' survey = dfposteriors(survey)
+#' # plot mass function (MF) of raw data:
+#' mfplot(survey,bin.type=1,col.data='grey',xlim=c(1e6,1e12))
+#' # add MF using random values from posterior data PDFs:
+#' mfplot(survey,bin.type=2,col.data='orange',add=TRUE)
+#' # add MF using the full posterior PDFs of all data points:
+#' mfplot(survey,bin.type=3,col.data='black',add=TRUE)
 #'
-#' @seealso See examples in \code{\link{dffit}}.
+#' @seealso Note that the posteriors can be visualized using \code{\link{dfplot}} with the argument \code{bin.use.posteriors = TRUE}. See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'
@@ -78,8 +89,8 @@ dfposteriors <- function(survey) {
     md[i,] = x.mesh[which.max(rho.corrected),]
   }
   
-  survey$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)),
-                          scd = rho.unbiased)
+  survey$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)))
+  survey$grid$scd.posterior = rho.unbiased
   
   invisible(survey)
 }

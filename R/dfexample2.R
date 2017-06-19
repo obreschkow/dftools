@@ -1,8 +1,12 @@
-#' Example of using mftools
+#' Example of fitting a two-dimensional distribution function
 #'
-#' This function generates n mock galaxies with observing errors, drawn from a predefined mass function and effective observing volume. It then uses \code{\link{dffit}} to recover the input function
+#' This function generates mock galaxies with masses and specific angular momenta, plus observing errors, drawn from a predefined generative distribution function and effective observing volume. It then uses \code{\link{dffit}} to recover the input function
 #'
-#' @param n Number of gtalaxies
+#' @param p.true 6-element vector specifying the input model of the generative distribution function, from which the galaxies are drawn. The first three parameters are the standard Schechter function parameters (normalization, break-mass, faint-end slope), the next two parameters define the power-law between mass and specific angular momentum (slope and zero-point), and the last parameter is the vertical scatter in this power-law relation.
+#' @param seed An interger number used as seed for the random number generator.
+#' @param sigma.x Observing error of the data along the x-axis (log-mass).
+#' @param sigma.y Observing error of the data along the y-axis (log-specific angular momentum).
+#' @param corr.xy Correlation coefficient between the x- and y-errors of the mock data.
 #'
 #' @examples
 #' dfexample2()

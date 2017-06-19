@@ -19,7 +19,7 @@ dfexample1(n = 10000, seed = 1, sigma = 0.5, p.true = c(-2, 10, -1.3),
 \item{include.mrp}{If \code{TRUE}, an MRP function will also be fitted}
 }
 \description{
-This function generates n mock galaxies with observing errors, drawn from a Schechter function with predefined parameters, using a predefined effective volume function. It then uses \code{\link{dffit}} to recover the input function.
+This function generates n mock galaxies with masses and observing errors, drawn from a custom Schechter function and predefined effective volume function. It then uses \code{\link{dffit}} to recover the inpu Schechter function from the noisy data.
 }
 \examples{
 dfexample1()

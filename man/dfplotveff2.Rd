@@ -15,10 +15,10 @@ dfplotveff2(survey, xlab = "Observable x1", ylab = "Observable x2",
 \item{df}{List produced by \code{\link{dffit}}}
 }
 \description{
-This function plots the 2D function \code{Veff(x)}, where \code{x} is a 2-element vector.
+This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a two-dimensional generative distribution function (GDF). Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.
 }
 \seealso{
-See examples in \code{\link{dffit}}.
+See examples in \code{\link{dffit}}. To display \code{Veff(x)} of one-dimensional distribution functions use \code{\link{dfplotveff}}.
 }
 \author{
 Danail Obreschkow

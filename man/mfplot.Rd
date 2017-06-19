@@ -12,7 +12,7 @@ mfplot(survey, xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi
 This function displays the galaxy mass function (MF) fitted using \code{\link{dffit}}, by calling \code{\link{dfplot}} with appropriate parameters.
 }
 \seealso{
-See examples in \code{\link{dffit}}.
+As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
 }
 \author{
 Danail Obreschkow

@@ -15,10 +15,10 @@ dfplotveff(survey, xlab = "Observable x",
 \item{df}{List produced by \code{\link{dffit}}}
 }
 \description{
-This function plots the function \code{Veff(x)} used for the mass function fit, as stored in the sublist \code{fit} of the output produced by \code{\link{dffit}}.
+This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a one-dimensional generative distribution function (GDF), such as a galaxy mass function. Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.
 }
 \seealso{
-See examples in \code{\link{dffit}}.
+See examples in \code{\link{dffit}}. To display \code{Veff(x)} of two-dimensional distribution functions use \code{\link{dfplotveff2}}.
 }
 \author{
 Danail Obreschkow

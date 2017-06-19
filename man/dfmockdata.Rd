@@ -6,19 +6,17 @@
 \usage{
 dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
   sqrt(10^x)     pracma::erf((rmax - r)/rmax * 20) * 0.5 + 0.5 },
-  g = function(r) 1, dVdr = function(r) 0.02439568 * r^2,
-  gdf = function(x, p) dfmodel(x, p, type = "Schechter"), p = c(-2, 10,
-  -1.3), sigma = 0.5, rmin = 0, rmax = 100, xmin = 2, xmax = 12,
-  shot.noise = FALSE, verbose = FALSE)
+  dVdr = function(r) 0.02439568 * r^2, gdf = function(x, p) dfmodel(x, p,
+  type = "Schechter"), p = c(-2, 10, -1.3), sigma = 0.5, rmin = 0,
+  rmax = 100, xmin = 2, xmax = 12, shot.noise = FALSE,
+  verbose = FALSE)
 }
 \arguments{
-\item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f}, \code{g}, \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}
+\item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}
 
 \item{seed}{An interger number used as seed for the random number generator. If you wish to generate different realizations, with the same survey specifications, it suffices to vary this number.}
 
 \item{f}{is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey.}
-
-\item{g}{is the cosmic large-scale-structure (LSS) function \code{g(r)}, specifying the excess of galaxies as a function of \code{r} due to LSS. \code{g(r)} is defined as the expected number of galaxies, divided by the expected number of galaxies in the absence of LSS. Hence, values between 0 and 1 denote underdensities, while values large than 1 denote overdensities. The default is \code{g(r)=1}, meaning that the mock survey does not have any LSS.}
 
 \item{dVdr}{is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default uses \code{Omega=2.439568e-2} [sterradians], such that the expected number of galaxies is exactly 1000.}
 

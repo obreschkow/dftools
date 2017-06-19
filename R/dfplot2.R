@@ -4,23 +4,40 @@
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
-#' @param df List produced by \code{\link{dffit}}
-#' @param xlab x-axis label
-#' @param ylab y-axis label
-#' @param xlim 2-element vector with x-axis plotting limits
-#' @param ylim 2-element vector with y-axis plotting limits
-#' @param xpower10 If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.
-#' @param ypower10 If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.
-#' @param col Color of fit (see \code{\link{plot}})
-#' @param cex Line width of fit (see \code{\link{plot}})
-#' @param pch Line type of fit (see \code{\link{plot}})
-#' @param show.data If \code{TRUE}, binned data points are displayed.
-#' @param show.data.err If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.
+#' @param survey List produced by \code{\link{dffit}}
+#' @param xlab,ylab axis labels
+#' @param xlim,ylim 2-element vectors with plotting ranges
+#' @param p.ref Optional vector of parameters of a reference mdeol to be displayed.
+#' @param xpower10 If \code{TRUE}, the 1st model argument is elevated to the power of 10 in the plots.
+#' @param ypower10 If \code{TRUE}, the 2nd model argument is elevated to the power of 10 in the plots.
+#' @param show.data Logical flag to show/hide the observed data.
+#' @param show.data.err Logical flag to show/hide the measurement errors of the
+#' @param show.gdf Logical flag to show/hide the best fitting model of the generative distribution function as gradual shading.
+#' @param show.gdf.contours Logical flag to show/hide the best fitting model of the generative distribution function as iso-contours.
+#' @param show.scd.contours Logical flag to show/hide the source count density (for data with no measurement errors) predicted by the best fitting model.
+#' @param contour.levels Vector specifying the fractions of the integrated densities contained inside the contours of the gdf and scd.
+#' @param col.data Color (see \code{\link{plot}}) of data points.
+#' @param cex.data Size (see \code{\link{plot}}) of data points.
+#' @param pch.data Point type (see \code{\link{plot}}) of data points.
+#' @param col.data.err Color (see \code{\link{plot}}) of error ellipses of data.
+#' @param lwd.data.err Line width (see \code{\link{plot}}) of error ellipses of data.
+#' @param lty.data.err Line type (see \code{\link{plot}}) of error ellipses of data.
+#' @param col.gdf Color (see \code{\link{plot}}) of best fitting generative distribution function.
+#' @param col.gdf Color (see \code{\link{plot}}) of best fitting generative distribution function contours.
+#' @param lwd.gdf Line width (see \code{\link{plot}}) of best fitting generative distribution function contours.
+#' @param lty.gdf Line type (see \code{\link{plot}}) of best fitting generative distribution function contours.
+#' @param gamma.gdf Scalar value >0 specifying the brightness-scale of the best fitting generative distribution function.
+#' @param col.gdf Color (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
+#' @param lwd.gdf Line width (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
+#' @param lty.gdf Line type (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
+#' @param col.ref Color (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
+#' @param lwd.ref Line width (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
+#' @param lty.ref Line type (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
 #' @param margins Margins (bottom,left,top,right)
 #' 
-#' @return Returns the input list \code{df} with the additional sub-list \code{survey$bin} that contains the binned data.
+#' @return Returns the input list \code{survey}.
 #' 
-#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. See examples in \code{\link{dffit}}.
+#' @seealso For an full example of \code{dfplot2} run \code{\link{dfexample2()}}.
 #'
 #' @author Danail Obreschkow
 #'
@@ -36,24 +53,24 @@ dfplot2 <- function(survey,
                    ypower10 = TRUE,
                    show.data = TRUE,
                    show.data.err = TRUE,
-                   show.phi = TRUE,
-                   show.phi.contours = TRUE,
-                   show.sc.contours = TRUE,
+                   show.gdf = TRUE,
+                   show.gdf.contours = TRUE,
+                   show.scd.contours = TRUE,
                    contour.levels = c(0.5,0.2,0.1),
-                   gamma = 0.2,
                    col.data = 'black',
                    cex.data = 0.5,
                    pch.data = 20,
                    col.data.err = '#00000030',
                    lwd.data.err = 1,
                    lty.data.err = 1,
-                   col.phi = 'blue',
-                   col.phi.contours = col.phi,
-                   lwd.phi.contours = 1,
-                   lty.phi.contours = 2,
-                   col.sc.contours = 'purple',
-                   lwd.sc.contours = 1,
-                   lty.sc.contours = 1,
+                   col.gdf = 'blue',
+                   col.gdf.contours = col.gdf,
+                   lwd.gdf.contours = 1,
+                   lty.gdf.contours = 2,
+                   gamma.gdf = 0.2,
+                   col.scd.contours = 'purple',
+                   lwd.scd.contours = 1,
+                   lty.scd.contours = 1,
                    col.ref.contours = 'red',
                    lwd.ref.contours = 1,
                    lty.ref.contours = 2,
@@ -108,17 +125,17 @@ dfplot2 <- function(survey,
   }
   
   # make model DF field
-  r = col2rgb(col.phi)[1]/255
-  g = col2rgb(col.phi)[2]/255
-  b = col2rgb(col.phi)[3]/255
+  r = col2rgb(col.gdf)[1]/255
+  g = col2rgb(col.gdf)[2]/255
+  b = col2rgb(col.gdf)[3]/255
   nx = length(x.grid[[1]])
   ny = length(x.grid[[2]])
   img = array(survey$grid$gdf,c(nx,ny))
   img = img/max(img)
   rgb = array(NA,c(nx,ny,3))
-  rgb[,,1] = 1-img^gamma*0.7*(1-r)
-  rgb[,,2] = 1-img^gamma*0.7*(1-g)
-  rgb[,,3] = 1-img^gamma*(1-b)
+  rgb[,,1] = 1-img^gamma.gdf*0.7*(1-r)
+  rgb[,,2] = 1-img^gamma.gdf*0.7*(1-g)
+  rgb[,,3] = 1-img^gamma.gdf*(1-b)
   
   # make model source count field
   imgsc = array(survey$grid$scd,c(nx,ny))
@@ -138,11 +155,11 @@ dfplot2 <- function(survey,
          xlim = xlim, ylim = ylim, xlab = '', ylab = '',bty='n')
   
   # plot central fit
-  if (show.phi) {
+  if (show.gdf) {
     rasterImage(aperm(rgb[,ny:1,],c(2,1,3)),xlim[1],ylim[1],xlim[2],ylim[2])
   }
-  if (show.phi.contours) {
-    contour(cx,cy,img,add=TRUE,lwd=lwd.phi.contours,lty=lty.phi.contours,col=col.phi.contours,drawlabels=FALSE,levels=contour.levels)
+  if (show.gdf.contours) {
+    contour(cx,cy,img,add=TRUE,lwd=lwd.gdf.contours,lty=lty.gdf.contours,col=col.gdf.contours,drawlabels=FALSE,levels=contour.levels)
   }
   
   # plot reference
@@ -151,8 +168,8 @@ dfplot2 <- function(survey,
   }
   
   # plot source counts
-  if (show.sc.contours) {
-    contour(cx,cy,imgsc,add=TRUE,lwd=lwd.sc.contours,lty=lty.sc.contours,col=col.sc.contours,drawlabels=FALSE,levels=contour.levels)
+  if (show.scd.contours) {
+    contour(cx,cy,imgsc,add=TRUE,lwd=lwd.scd.contours,lty=lty.scd.contours,col=col.scd.contours,drawlabels=FALSE,levels=contour.levels)
   }
   
   # plot data points
