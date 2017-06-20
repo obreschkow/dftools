@@ -24,7 +24,7 @@ dfexample1 <- function(n = 1e4, seed = 1, sigma = 0.5, p.true = c(-2,10,-1.3), i
   veff.scale = function(x) {1e-9*10^(0.8*x)}
 
   # make rescaled Veff(x)
-  dat = dfmockdata(n = n, seed = seed, p = p.true)
+  dat = dfmockdata(n = n, seed = seed, sigma = sigma, p = p.true)
 
   # fit
   cat('Fit a Schechter function to the observed data (grey points)\n')
@@ -49,7 +49,7 @@ dfexample1 <- function(n = 1e4, seed = 1, sigma = 0.5, p.true = c(-2,10,-1.3), i
   # plot main plot
   x = seq(2,12,0.01)
   nbins = max(4,round(sqrt(n)/2))
-  mfplot(survey, xlim=c(1e6,2e11), ylim=c(1e-4,2), nbins = nbins, bin.xmin=6, bin.xmax=11, col.data = 'grey')
+  mfplot(survey, xlim=c(1e6,2e11), ylim=c(1e-4,2), nbins = nbins, bin.xmin=7, bin.xmax=11, col.data = 'grey')
   mfplot(survey, nbins = nbins, bin.xmin=6, bin.xmax=11, bin.type = 3, add = TRUE, show.uncertainties = FALSE, col.data='black')
   lines(10^x,pmax(1e-10,dfmodel(x,p.true)),col='black',lty=2)
   lines(10^x,dat$veff(x)/max(dat$veff.values),col='orange')

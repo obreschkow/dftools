@@ -69,7 +69,7 @@ dfmockdata <- function(n = NULL,
                        dVdr = function(r) 2.439568e-2*r^2,
                        gdf = function(x,p) dfmodel(x,p,type='Schechter'),
                        p = c(-2,10,-1.3),
-                       sigma = 0.5,
+                       sigma = 0.0,
                        rmin = 0, rmax = 100,
                        xmin = 2, xmax = 12,
                        shot.noise = FALSE,
@@ -139,7 +139,7 @@ dfmockdata <- function(n = NULL,
   list = seq(n)
   m = n
   count = 0
-  while (m>0 & count<100) {
+  while (m>0 & count<Inf) {
     count = count+1
     r[list] = qnf(runif(m,cdf[1],cdf[length(rgrid)]))
     rejected = f(x[list],r[list])<runif(m)*fgmax

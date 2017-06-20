@@ -262,9 +262,9 @@ dfplot <- function(survey,
     dx = xg[2]-xg[1]
     for (k in seq(bin$n)) {
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
-      bin$xmean[k] = sum(survey$posterior$scd[list]*xg[list])/sum(survey$posterior$scd[list])
-      bin$count[k] = sum(survey$posterior$scd[list])*dx
-      bin$gdf[k] = sum(survey$posterior$scd[list]/survey$selection$veff(xg[list]))/sum(list)
+      bin$xmean[k] = sum(survey$grid$scd.posterior[list]*xg[list])/sum(survey$grid$scd.posterior[list])
+      bin$count[k] = sum(survey$grid$scd.posterior[list])*dx
+      bin$gdf[k] = sum(survey$grid$scd.posterior[list]/survey$selection$veff(xg[list]))/sum(list)
     }
   }
   survey$bin = bin

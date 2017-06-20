@@ -6,9 +6,9 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, n.resampling = NULL,
-  correct.mle.bias = FALSE, correct.lss.bias = FALSE, lss.sigma = NULL,
-  write.fit = TRUE, xmin = 4, xmax = 12, dx = 0.01,
-  keep.eddington.bias = FALSE)
+  correct.mle.bias = FALSE, correct.lss.bias = FALSE,
+  lss.normalization = 1, write.fit = TRUE, xmin = 4, xmax = 12,
+  dx = 0.01, keep.eddington.bias = FALSE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
@@ -29,7 +29,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).}
 
-\item{lss.sigma}{Cosmic variance of survey volume. Explicitly, \code{lss.sigma} is interpreted as the expected relative RMS on the total number of galaxies in the survey volume. This value must be determined from a cosmological model.}
+\item{lss.normalization}{Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} to conserve the mass (sum of 10^x) in the survey; \code{lss.normalization=2} to conserve the sum of exp(x) in the survey; \code{lss.normalization=3} to conserve the number of objects (galaxies) in the survey.}
 
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 

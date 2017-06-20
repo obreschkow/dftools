@@ -14,7 +14,7 @@
 #' @param n.resampling Integer (>0) specifying the number of iterations for the resampling of the most likely DF used to evaluate realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
 #' @param correct.mle.bias The maximum likelihood estimator (MLE) of a finite dataset can be biased – a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).
-#' @param lss.sigma Cosmic variance of survey volume. Explicitly, \code{lss.sigma} is interpreted as the expected relative RMS on the total number of galaxies in the survey volume. This value must be determined from a cosmological model.
+#' @param lss.normalization Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} to conserve the mass (sum of 10^x) in the survey; \code{lss.normalization=2} to conserve the sum of exp(x) in the survey; \code{lss.normalization=3} to conserve the number of objects (galaxies) in the survey.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
@@ -93,7 +93,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   n.resampling = NULL,
                   correct.mle.bias = FALSE,
                   correct.lss.bias = FALSE,
-                  lss.sigma = NULL,
+                  lss.normalization = 1,
                   write.fit = TRUE,
                   xmin = 4,
                   xmax = 12,
@@ -111,7 +111,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                 fit = list(),
                 options = list(p.initial = p.initial, n.iterations = n.iterations, n.resampling = n.resampling,
                                keep.eddington.bias = keep.eddington.bias,  correct.lss.bias = correct.lss.bias,
-                               lss.sigma = lss.sigma, correct.mle.bias = correct.mle.bias),
+                               lss.normalization = lss.normalization, correct.mle.bias = correct.mle.bias),
                 tmp = list(selection = selection, gdf = gdf))
   
   # Check and pre-process input arguments
@@ -130,9 +130,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Resample to determine more accurate uncertainties with quantiles
   if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) {survey = .resample(survey)}
   
-  # LSS bias correction
-  if (survey$fit$status$converged & survey$options$correct.lss.bias) {survey = .correct.lss.bias(survey)}
-  
   # Estimator bias correction
   if (survey$fit$status$converged & survey$options$correct.mle.bias) {survey = .correct.mle.bias(survey)}
 
@@ -140,6 +137,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   survey$fit$status$walltime.total = as.double(Sys.time())-as.double(tStart)
   invisible(survey)
 
+}
+
+.correct.lss.bias = function(survey) {
+  invisible(survey)
 }
 
 .handle.input <- function(survey) {
@@ -185,8 +186,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Handle correct.lss.bias
   if (survey$options$correct.lss.bias) {
     if (is.null(survey$data$r)) stop('Distances must be given of correct.lss.bias = TRUE.')
-    if (is.null(survey$options$lss.sigma)) stop('lss.sigma must be given of correct.lss.bias = TRUE.')
-    if (survey$options$lss.sigma<0) stop('lss.sigma cannot be negative.')
+    if (is.null(survey$options$lss.normalization)) stop('lss.normalization must be 1, 2 or 3.')
+    if (survey$options$lss.normalization<1 | survey$options$lss.normalization>3) stop('lss.normalization must be 1, 2 or 3.')
     if (survey$data$n.dim>1) stop('Currently correct.lss.bias can only be TRUE for one-dimensional DFs.')
   }
   
@@ -237,7 +238,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   veff.values = NULL
   veff.userfct = NULL
   veff.function = NULL
-  veff.function.lss = NULL
   
   # Mode 1: Constant effective volume inside observed domain
   if (is.double(s)) {
@@ -356,44 +356,13 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         if (!is.double(test)) stop('In the argument selection = list(f, dVdr, ...), the functions f(xval,r) and dVdr(r) must work if r is a vector.')
         veff.function.elemental = function(xval) {
           f = function(r) {s[[1]](xval,r)*s[[2]](r)}
-          return(integrate(f,rmin,rmax)$value)
-        }
-        
-        # make Veff for LSS bias correction
-        if (survey$options$correct.lss.bias) {
-          veff.function.lss.elemental = function(xval,p) {
-            f = function(x,r) {s[[1]](x,r)*s[[2]](r)}
-            s = 0
-            for (i in seq(n.data)) {
-              if (distance[i]>=rmin & distance[i]<=rmax & f(xval,distance[i])>0) {
-                s = s+f(xval,distance[i])/integrate(f,0,Inf,distance[i])
-              }
-            }
-            return(s)
-          }
+          return(integrate(f,rmin,rmax,stop.on.error=FALSE)$value)
         }
       }
     }
   }
   
   if (is.null(mode)) stop('Unknown selection format.')
-  
-  if (mode!=5 & survey$options$correct.lss.bias) {
-    # make Veff for LSS bias correction in the approximation of a binary selection function
-    xmin = array(NA,n.data)
-    for (i in seq(n.data)) {
-      xmin[i] = min(x[distance>=distance[i]])
-    }
-    veff.function.lss.elemental = function(xval,p) {
-      s = 0
-      for (i in seq(n.data)) {
-        if (xval>=xmin[i]) {
-          s = s+1/integrate(survey$model$gdf,xmin[i],Inf,p)
-        }
-      }
-      return(s)
-    }
-  }
   
   # apply to all elements
   if (is.null(veff.function)) {
@@ -412,23 +381,80 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       }
     }
   }
-  if (survey$options$correct.lss.bias) {
-    veff.function.lss = function(xval,p) {
-      if (length(dim(xval))==2) {
-        return(apply(xval,1,veff.function.lss.elemental))
-      } else if (length(dim(xval))==0) {
-        if (n.dim==1) {
-          return(sapply(xval,veff.function.lss.elemental))
-        } else {
-          stop('Incorrect argument.')
-        }
-      } else {
-        stop('Incorrect argument.')
-      }
+  
+  survey$selection = list(veff = veff.function,
+                          veff.input.values = veff.values, veff.input.function = veff.userfct,
+                          rmin = rmin, rmax = rmax,
+                          mode = mode)
+  invisible(survey)
+}
+
+.make.veff.lss = function(survey,p) {
+  
+  s = survey$tmp$selection
+  x = survey$data$x
+  r = survey$data$r
+  n.dim = survey$data$n.dim
+  if (n.dim>1) stop('Currently LSS can only be corrected in one-dimensional distribution functions.')
+  n.data = survey$data$n.data
+  rmin = survey$selection$rmin
+  rmax = survey$selection$rmax
+  
+  # decided not to implement this
+  # if (survey$selection$mode==5) {
+  #   integrand.lss = function(x,r,p) {s[[1]](x,r)*survey$model$gdf(x,p)}
+  #   veff.lss.function.elemental = function(xval) {
+  #     sm = 0
+  #     i = 1
+  #     for (i in seq(n.data)) {
+  #       if (r[i]>=rmin & r[i]<=rmax & s[[1]](xval,r[i])>0) {
+  #         sm = sm+s[[1]](xval,r[i])/integrate(integrand.lss,survey$grid$xmin,survey$grid$xmax,r[i],p,stop.on.error=FALSE)$value
+  #       }
+  #     }
+  #     return(sm)
+  #   }
+  # }
+  
+  # determine minimum log-mass, which would be detected at distance r[i] for each i
+  if (is.null(survey$selection$xlim)) {
+    survey$selection$xmin = array(NA,n.data)
+    for (i in seq(n.data)) {
+      survey$selection$xmin[i] = min(x[r>=r[i]])
     }
   }
+  #survey$selection$xmin = 2*log10(survey$data$r)+6
   
-  survey$selection = list(veff = veff.function, veff.lss = veff.function.lss, veff.input.values = veff.values, veff.input.function = veff.userfct)
+  # evaluate integrals
+  integral = array(NA,n.data)
+  for (i in seq(n.data)) {
+    integral[i] = integrate(survey$model$gdf,survey$selection$xmin[i],survey$grid$xmax,p,stop.on.error=FALSE)$value
+  }
+  
+  # make veff.lss function
+  veff.lss.function.elemental = function(xval) sum(1/integral[xval>=survey$selection$xmin])
+  veff.lss.scale = Vectorize(veff.lss.function.elemental)
+  
+  # renormalize veff
+  #veff.lss.scale = veff.lss.theory
+  if (survey$options$lss.normalization == 1) {
+    integrand = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*10^x
+    expectation = integrate(integrand,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    normalization.factor = sum(10^x)/expectation
+  } else if (survey$options$lss.normalization == 2) {
+    integrand = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*exp(x)
+    expectation = integrate(integrand,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    normalization.factor = sum(exp(x))/expectation
+  } else if (survey$options$lss.normalization == 3) {
+    integrand = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)
+    expectation = integrate(integrand,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    normalization.factor = n.data/expectation
+  } else {
+    stop('unknown LSS normalization')
+  }
+  veff.lss = function(x) veff.lss.scale(x)*normalization.factor
+  
+  # return output
+  survey$selection$veff = veff.lss
   invisible(survey)
 }
 
@@ -470,7 +496,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # simplify input
   x = survey$data$x
   x.err = survey$data$x.err
-  veff.mesh = survey$grid$veff
   gdf = survey$model$gdf
   p.initial = survey$options$p.initial
   x.mesh = survey$grid$x
@@ -482,7 +507,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
   # Input handling
   n.mesh = dim(x.mesh)[1]
-  veff.mesh = c(veff.mesh)
+  if (!survey$options$correct.lss.bias) veff.mesh = c(survey$grid$veff)
   if (is.null(x.err)) n.iterations = 1
 
   if (!is.null(x.err)) {
@@ -530,6 +555,12 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   while (running) {
 
     k = k+1
+    
+    # determine veff LSS
+    if (survey$options$correct.lss.bias) {
+      survey = .make.veff.lss(survey,p.initial)
+      veff.mesh = c(survey$selection$veff(survey$grid$x))
+    }
 
     # make unbiased source density function
     rho.unbiased = array(0,n.mesh)
@@ -616,6 +647,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     cov = solve(opt$hessian)
   }
   
+  # finalize output
+  if (survey$options$correct.lss.bias) {survey = .make.veff.lss(survey,p.initial)}
   survey$fit$p.best = opt$par
   survey$fit$p.sigma = sqrt(diag(cov))
   survey$fit$p.covariance = cov

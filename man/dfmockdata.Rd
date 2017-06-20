@@ -7,7 +7,7 @@
 dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
   sqrt(10^x)     pracma::erf((rmax - r)/rmax * 20) * 0.5 + 0.5 },
   dVdr = function(r) 0.02439568 * r^2, gdf = function(x, p) dfmodel(x, p,
-  type = "Schechter"), p = c(-2, 10, -1.3), sigma = 0.5, rmin = 0,
+  type = "Schechter"), p = c(-2, 10, -1.3), sigma = 0, rmin = 0,
   rmax = 100, xmin = 2, xmax = 12, shot.noise = FALSE,
   verbose = FALSE)
 }
