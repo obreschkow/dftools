@@ -29,7 +29,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).}
 
-\item{lss.normalization}{Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} to conserve the mass (sum of 10^x) in the survey; \code{lss.normalization=2} to conserve the sum of exp(x) in the survey; \code{lss.normalization=3} to conserve the number of objects (galaxies) in the survey.}
+\item{lss.normalization}{Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} (default) to conserve the mass in the survey, relative to the effective volume not corrected for LSS; \code{lss.normalization=2} to conserve the number of objects (galaxies) in the survey, relative to the uncorrected effective volume.}
 
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 

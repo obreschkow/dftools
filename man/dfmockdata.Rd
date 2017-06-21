@@ -7,8 +7,8 @@
 dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
   sqrt(10^x)     pracma::erf((rmax - r)/rmax * 20) * 0.5 + 0.5 },
   dVdr = function(r) 0.02439568 * r^2, gdf = function(x, p) dfmodel(x, p,
-  type = "Schechter"), p = c(-2, 10, -1.3), sigma = 0, rmin = 0,
-  rmax = 100, xmin = 2, xmax = 12, shot.noise = FALSE,
+  type = "Schechter"), p = c(-2, 10, -1.3), g = function(r) 1, sigma = 0,
+  rmin = 0, rmax = 100, xmin = 2, xmax = 12, shot.noise = FALSE,
   verbose = FALSE)
 }
 \arguments{
@@ -33,6 +33,8 @@ dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
 \item{shot.noise}{Logical flag. If set to \code{TRUE}, the number of galaxies in the survey can differ from the expected number, following a Poisson distribution.}
 
 \item{verbose}{Logical flag. If set to \code{TRUE}, some information will be displayed in the console while generating the mock survey.}
+
+\item{total.mass}{Total mass of the source count density function from which the galaxies are drawn. This mass can differ from the actual total mass of the galaxies in the realization. Note that \code{n} and \code{total.mass} cannot be specified at the same time.}
 }
 \description{
 This function produces a mock survey with observed log-masses \code{x.obs} with Gaussian uncertainties \code{x.err} and distances \code{r}, using a custom mass function (MF) and selection function.

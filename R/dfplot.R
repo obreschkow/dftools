@@ -211,6 +211,7 @@ dfplot <- function(survey,
   x = survey$data$x
   bin = list(type = bin.type)
   n.data = length(x)
+  if (bin.type>1 & is.null(survey$posterior)) stop('To display bin of bin.type>1, first make posterior PDFs by calling dfposteriors().')
   
   # determine number of bins
   if (is.null(nbins)) {
@@ -244,7 +245,6 @@ dfplot <- function(survey,
       xval = survey$posterior$x.rand
     }
     v = survey$selection$veff(xval)
-    
     bin$gdf = bin$count = bin$xmean = array(0,bin$n)
     for (i in seq(n.data)) {
       k = floor((xval[i]-bin$xmin)/wx*0.99999999*bin$n)+1

@@ -14,7 +14,7 @@
 #' @param n.resampling Integer (>0) specifying the number of iterations for the resampling of the most likely DF used to evaluate realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
 #' @param correct.mle.bias The maximum likelihood estimator (MLE) of a finite dataset can be biased – a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).
-#' @param lss.normalization Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} to conserve the mass (sum of 10^x) in the survey; \code{lss.normalization=2} to conserve the sum of exp(x) in the survey; \code{lss.normalization=3} to conserve the number of objects (galaxies) in the survey.
+#' @param lss.normalization Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} (default) to conserve the mass in the survey, relative to the effective volume not corrected for LSS; \code{lss.normalization=2} to conserve the number of objects (galaxies) in the survey, relative to the uncorrected effective volume.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
@@ -186,8 +186,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Handle correct.lss.bias
   if (survey$options$correct.lss.bias) {
     if (is.null(survey$data$r)) stop('Distances must be given of correct.lss.bias = TRUE.')
-    if (is.null(survey$options$lss.normalization)) stop('lss.normalization must be 1, 2 or 3.')
-    if (survey$options$lss.normalization<1 | survey$options$lss.normalization>3) stop('lss.normalization must be 1, 2 or 3.')
+    if (is.null(survey$options$lss.normalization)) stop('lss.normalization must be a positive integer.')
     if (survey$data$n.dim>1) stop('Currently correct.lss.bias can only be TRUE for one-dimensional DFs.')
   }
   
@@ -238,6 +237,9 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   veff.values = NULL
   veff.userfct = NULL
   veff.function = NULL
+  f.function = NULL
+  rmin = NULL
+  rmax = NULL
   
   # Mode 1: Constant effective volume inside observed domain
   if (is.double(s)) {
@@ -351,9 +353,14 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
           rmin = 0
           rmax = Inf
         }
+        if (!is.null(r)) {
+          if (rmin>min(r)) stop('rmin cannot in selection = list(f, dVdr, c(rmin,rmax)) cannot be larger than minimal observed r')
+          if (rmax<max(r)) stop('rmax cannot in selection = list(f, dVdr, c(rmin,rmax)) cannot be smaller than maximal observed r')
+        }
         mode = 5
         test = try(s[[1]](NA,NA)*s[[2]](NA),silent=TRUE)
         if (!is.double(test)) stop('In the argument selection = list(f, dVdr, ...), the functions f(xval,r) and dVdr(r) must work if r is a vector.')
+        f.function = s[[1]]
         veff.function.elemental = function(xval) {
           f = function(r) {s[[1]](xval,r)*s[[2]](r)}
           return(integrate(f,rmin,rmax,stop.on.error=FALSE)$value)
@@ -382,8 +389,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     }
   }
   
-  survey$selection = list(veff = veff.function,
-                          veff.input.values = veff.values, veff.input.function = veff.userfct,
+  survey$selection = list(veff = veff.function, veff.no.lss = veff.function,
+                          veff.input.values = veff.values,
+                          veff.input.function = veff.userfct,
+                          f = f.function,
                           rmin = rmin, rmax = rmax,
                           mode = mode)
   invisible(survey)
@@ -391,7 +400,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
 .make.veff.lss = function(survey,p) {
   
-  s = survey$tmp$selection
   x = survey$data$x
   r = survey$data$r
   n.dim = survey$data$n.dim
@@ -400,58 +408,63 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   rmin = survey$selection$rmin
   rmax = survey$selection$rmax
   
-  # decided not to implement this
-  # if (survey$selection$mode==5) {
-  #   integrand.lss = function(x,r,p) {s[[1]](x,r)*survey$model$gdf(x,p)}
-  #   veff.lss.function.elemental = function(xval) {
-  #     sm = 0
-  #     i = 1
-  #     for (i in seq(n.data)) {
-  #       if (r[i]>=rmin & r[i]<=rmax & s[[1]](xval,r[i])>0) {
-  #         sm = sm+s[[1]](xval,r[i])/integrate(integrand.lss,survey$grid$xmin,survey$grid$xmax,r[i],p,stop.on.error=FALSE)$value
-  #       }
-  #     }
-  #     return(sm)
-  #   }
-  # }
-  
-  # determine minimum log-mass, which would be detected at distance r[i] for each i
-  if (is.null(survey$selection$xlim)) {
-    survey$selection$xmin = array(NA,n.data)
+  if (survey$selection$mode==5) {
+    
+    # evaluate integrals
+    integrand.lss = function(x,r,p) {survey$selection$f(x,r)*survey$model$gdf(x,p)}
+    integral = array(NA,n.data)
     for (i in seq(n.data)) {
-      survey$selection$xmin[i] = min(x[r>=r[i]])
+      integral[i] = integrate(integrand.lss,survey$grid$xmin,survey$grid$xmax,r[i],p,stop.on.error=FALSE)$value
     }
-  }
-  #survey$selection$xmin = 2*log10(survey$data$r)+6
+    
+    # make veff elemental
+    veff.lss.function.elemental = function(xval) {
+      list = survey$selection$f(xval,r)>0
+      return(sum(survey$selection$f(xval,r[list])/integral[list]))
+    }
+    
+  } else {
   
-  # evaluate integrals
-  integral = array(NA,n.data)
-  for (i in seq(n.data)) {
-    integral[i] = integrate(survey$model$gdf,survey$selection$xmin[i],survey$grid$xmax,p,stop.on.error=FALSE)$value
+    # determine minimum log-mass, which would be detected at distance r[i] for each i
+    if (is.null(survey$selection$xlim)) {
+      survey$selection$xmin = array(NA,n.data)
+      for (i in seq(n.data)) {
+        survey$selection$xmin[i] = min(x[r>=r[i]])
+      }
+    }
+    #survey$selection$xmin = 2*log10(survey$data$r)+6
+    
+    # evaluate integrals
+    integral = array(NA,n.data)
+    for (i in seq(n.data)) {
+      integral[i] = integrate(survey$model$gdf,survey$selection$xmin[i],survey$grid$xmax,p,stop.on.error=FALSE)$value
+    }
+    
+    # make veff elemental
+    veff.lss.function.elemental = function(xval) sum(1/integral[xval>=survey$selection$xmin])
   }
   
-  # make veff.lss function
-  veff.lss.function.elemental = function(xval) sum(1/integral[xval>=survey$selection$xmin])
+  # make vectorized veff.lss function
   veff.lss.scale = Vectorize(veff.lss.function.elemental)
   
   # renormalize veff
-  #veff.lss.scale = veff.lss.theory
   if (survey$options$lss.normalization == 1) {
-    integrand = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*10^x
-    expectation = integrate(integrand,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    normalization.factor = sum(10^x)/expectation
+    int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)*10^x
+    reference = integrate(int.ref,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*10^x
+    expectation = integrate(int.exp,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    normalization.factor = reference/expectation
   } else if (survey$options$lss.normalization == 2) {
-    integrand = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*exp(x)
-    expectation = integrate(integrand,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    normalization.factor = sum(exp(x))/expectation
-  } else if (survey$options$lss.normalization == 3) {
-    integrand = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)
-    expectation = integrate(integrand,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    normalization.factor = n.data/expectation
+    int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)
+    reference = integrate(int.ref,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)
+    expectation = integrate(int.exp,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
+    normalization.factor = reference/expectation
   } else {
-    stop('unknown LSS normalization')
+    stop('unknown LSS normalization type')
   }
   veff.lss = function(x) veff.lss.scale(x)*normalization.factor
+  #veff.lss = veff.lss.theory
   
   # return output
   survey$selection$veff = veff.lss
@@ -508,7 +521,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Input handling
   n.mesh = dim(x.mesh)[1]
   if (!survey$options$correct.lss.bias) veff.mesh = c(survey$grid$veff)
-  if (is.null(x.err)) n.iterations = 1
+  if (is.null(x.err) & !survey$options$correct.lss.bias) n.iterations = 1
 
   if (!is.null(x.err)) {
     
@@ -558,8 +571,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     
     # determine veff LSS
     if (survey$options$correct.lss.bias) {
-      survey = .make.veff.lss(survey,p.initial)
-      veff.mesh = c(survey$selection$veff(survey$grid$x))
+      tmp = .make.veff.lss(survey,p.initial)
+      veff.mesh = c(tmp$selection$veff(survey$grid$x))
     }
 
     # make unbiased source density function
@@ -601,7 +614,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     chain[k,] = c(opt$par,opt$value)
     
     # assess convergence
-    if (is.null(x.err) | keep.eddington.bias) { # exist without extra iterations
+    if ((is.null(x.err) & !survey$options$correct.lss.bias)| keep.eddington.bias) { # exist without extra iterations
       converged = opt$convergence==0
       running = FALSE
     } else {

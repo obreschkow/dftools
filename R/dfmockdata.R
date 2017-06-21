@@ -5,6 +5,7 @@
 #' @importFrom pracma erf
 #'
 #' @param n Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.
+#' @param total.mass Total mass of the source count density function from which the galaxies are drawn. This mass can differ from the actual total mass of the galaxies in the realization. Note that \code{n} and \code{total.mass} cannot be specified at the same time.
 #' @param seed An interger number used as seed for the random number generator. If you wish to generate different realizations, with the same survey specifications, it suffices to vary this number.
 #' @param f is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey.
 #' @param dVdr is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default uses \code{Omega=2.439568e-2} [sterradians], such that the expected number of galaxies is exactly 1000.
@@ -69,6 +70,7 @@ dfmockdata <- function(n = NULL,
                        dVdr = function(r) 2.439568e-2*r^2,
                        gdf = function(x,p) dfmodel(x,p,type='Schechter'),
                        p = c(-2,10,-1.3),
+                       g = function(r) 1,
                        sigma = 0.0,
                        rmin = 0, rmax = 100,
                        xmin = 2, xmax = 12,
@@ -76,15 +78,30 @@ dfmockdata <- function(n = NULL,
                        verbose = FALSE
                        ) {
   
-  # evaluate effective volume and source count density
+  # evaluate effective volume and source count density without LSS
   veff.elemental = function(x) {
     fct = function(r) f(x,r)*dVdr(r)
     return(integrate(fct,rmin,rmax,stop.on.error=FALSE)$value)
   }
   veff = Vectorize(veff.elemental)
   scd = function(x) veff(x)*gdf(x,p)
-  n.expected = integrate(scd,xmin,xmax,stop.on.error=FALSE)$value
-  n.expected.large = integrate(scd,2*xmin-xmax,2*xmax-xmin,stop.on.error=FALSE)$value
+  
+  # renormalize function g(r), such that the average value of g in the survey volume is 1
+  integrand = function(r) dVdr(r)*g(r)
+  gnorm = integrate(integrand,rmin,rmax,stop.on.error=FALSE)$value/integrate(dVdr,rmin,rmax,stop.on.error=FALSE)$value
+  tmp.g = g; g = function(r) tmp.g(r)/gnorm
+  
+  # evaluate effective volume and source count density with LSS
+  veff.lss.elemental = function(x) {
+    fct = function(r) f(x,r)*g(r)*dVdr(r)
+    return(integrate(fct,rmin,rmax,stop.on.error=FALSE)$value)
+  }
+  veff.lss = Vectorize(veff.lss.elemental)
+  scd.lss = function(x) veff.lss(x)*gdf(x,p)
+  
+  # compute expected number of galaxies, accounting for lss
+  n.expected = integrate(scd.lss,xmin,xmax,stop.on.error=FALSE)$value
+  n.expected.large = integrate(scd.lss,2*xmin-xmax,2*xmax-xmin,stop.on.error=FALSE)$value
   if (n.expected.large>1.001*n.expected) stop('A non-negligible number of galaxies lies outside the range xmin-xmax. Please change this range.')
   
   # rescale observing volume to match the (optional) requested number of galaxies
@@ -94,7 +111,7 @@ dfmockdata <- function(n = NULL,
   } else {
     if (n<2) stop('Number of source must be at least 2.')
     rescaling.factor = n/n.expected
-    tmp = dVdr; dVdr = function(r) tmp(r)*rescaling.factor
+    tmp.dVdr = dVdr; dVdr = function(r) tmp.dVdr(r)*rescaling.factor
     n.expected = n
   }
   
@@ -113,21 +130,22 @@ dfmockdata <- function(n = NULL,
   set.seed(seed)
   dx = min(0.005,(xmax-xmin)/1000)
   xgrid = seq(xmin,xmax,dx)
-  cdf = cumsum(scd(xgrid)) # cumulative distribution function of source count density
+  cdf = cumsum(scd.lss(xgrid)) # cumulative distribution function of source count density
   qnf = approxfun(cdf,xgrid) # quantile function of source count density
   x = qnf(runif(n,cdf[1],cdf[length(xgrid)]))
   
-  # find maximum of f(x,r)
+  # find maximum of h(x,r) = f(x,r)*g(r)
+  h = function(x,r) f(x,r)*g(r)
   xg = seq(xmin,xmax,length=100)
   rg = seq(rmin,rmax,length=100)
   pg = cbind(rep(xg,10),rep(rg,each=10))
-  fct = function(p) -f(p[1],p[2])
+  fct = function(p) -h(p[1],p[2])
   if (max(apply(pg,1,fct))>0) stop('f*g can never by smaller than 0.')
-  p = pg[which.min(apply(pg,1,fct)),]
-  opt = optim(p,fct,method="L-BFGS-B",lower=c(xmin,rmin),upper=c(xmax,rmax))
+  para = pg[which.min(apply(pg,1,fct)),]
+  opt = optim(para,fct,method="L-BFGS-B",lower=c(xmin,rmin),upper=c(xmax,rmax))
   fgmax = -opt$value
-  if (fgmax>2 & verbose) {
-    cat(sprintf('The maximum of f (%f) is significantly larger than 1. Check if this is intended.\n',fgmax))
+  if (fgmax>5 & verbose) {
+    cat(sprintf('The maximum of f*g (%f) is significantly larger than 1. Check if this is intended.\n',fgmax))
   }
   
   # sample distances (r) using cumsum algorithm
@@ -142,12 +160,13 @@ dfmockdata <- function(n = NULL,
   while (m>0 & count<Inf) {
     count = count+1
     r[list] = qnf(runif(m,cdf[1],cdf[length(rgrid)]))
-    rejected = f(x[list],r[list])<runif(m)*fgmax
+    rejected = h(x[list],r[list])<runif(m)*fgmax
     list = list[rejected]
     m = length(list)
   }
   
   # sample distances (r) using deterministic uniroot algorithm
+  # something wrong here
   if (m>0) {
     get_random_r = function(x) { 
       fg = function(r) f(x,r)
@@ -174,9 +193,12 @@ dfmockdata <- function(n = NULL,
   
   # return
   return(list(x = x.obs, x.err = x.err, x.true = x, r = r,
-              f = f, dVdr = dVdr, veff = veff, 
-              veff.values = veff.values, scd = scd, rmin = rmin, rmax = rmax,
+              f = f, dVdr = dVdr, veff = veff, veff.lss = veff.lss,
+              veff.values = veff.values, scd = scd,
+              gdf = gdf, p = p, g = g,
+              rmin = rmin, rmax = rmax,
               xmin = xmin, xmax = xmax,
-              rescaling.factor = rescaling.factor))
+              rescaling.factor = rescaling.factor,
+              n = n, n.expected = n.expected))
   
 }
