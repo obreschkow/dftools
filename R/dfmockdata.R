@@ -158,7 +158,7 @@ dfmockdata <- function(n = NULL,
   list = seq(n)
   m = n
   count = 0
-  while (m>0 & count<Inf) {
+  while (m>0 & count<500) {
     count = count+1
     r[list] = qnf(runif(m,cdf[1],cdf[length(rgrid)]))
     rejected = h(x[list],r[list])<runif(m)*fgmax
@@ -166,15 +166,14 @@ dfmockdata <- function(n = NULL,
     m = length(list)
   }
   
-  # sample distances (r) using deterministic uniroot algorithm
-  # something wrong here
+  # sample distances (r) using deterministic uniroot algorithm to avoid iterating forever
   if (m>0) {
     get_random_r = function(x) { 
-      fg = function(r) f(x,r)
+      fg = function(r) f(x,r)*g(r)
       FG = function(r) {integrate(fg,rmin,r)$value}
       FGv = Vectorize(FG)
       FG.inv = function(y){uniroot(function(x){FGv(x)-y},interval=c(rmin,rmax))$root}
-      return(FG.inv(runif(1)))
+      return(FG.inv(runif(1)*FG(rmax)))
     }
     for (i in list) {
       r[i] = get_random_r(x[i])

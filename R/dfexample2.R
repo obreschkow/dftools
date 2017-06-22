@@ -48,9 +48,9 @@ dfexample2 = function(seed = 3, sigma = 0.3) {
   # plot effective volumes
   x = seq(6,12,0.01)
   dfplotveff(survey3,xlab='log10(M/Msun)',legend=FALSE)
-  lines(x,dat$veff.lss(x),type='l',ylim=c(0,6),col='orange')
-  legend('bottomright',c('Recovered model used for fit','Input model used to generate the data','Input model without without LSS'),
-         lwd=c(2,2,2),col=c('blue','orange','red'),bty='n')
+  lines(x,dat$veff.lss(x),type='l',ylim=c(0,6),col='black')
+  legend('bottomright',c('Recovered model from data used for fit','Input model with LSS used to generate the data','Input model without without LSS'),
+         lwd=c(2,2,2),col=c('blue','black','red'),bty='n')
   
   # plot MFs
   mfplot(survey1,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col='orange',col.data='orange')
