@@ -3,6 +3,7 @@
 #' This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
 #'
 #' @importFrom magicaxis magaxis magplot
+#' @importFrom graphics contour box rasterImage
 #'
 #' @param survey List produced by \code{\link{dffit}}
 #' @param xlab,ylab axis labels
@@ -23,21 +24,21 @@
 #' @param lwd.data.err Line width (see \code{\link{plot}}) of error ellipses of data.
 #' @param lty.data.err Line type (see \code{\link{plot}}) of error ellipses of data.
 #' @param col.gdf Color (see \code{\link{plot}}) of best fitting generative distribution function.
-#' @param col.gdf Color (see \code{\link{plot}}) of best fitting generative distribution function contours.
-#' @param lwd.gdf Line width (see \code{\link{plot}}) of best fitting generative distribution function contours.
-#' @param lty.gdf Line type (see \code{\link{plot}}) of best fitting generative distribution function contours.
+#' @param col.gdf.contours Color (see \code{\link{plot}}) of best fitting generative distribution function contours.
+#' @param lwd.gdf.contours Line width (see \code{\link{plot}}) of best fitting generative distribution function contours.
+#' @param lty.gdf.contours Line type (see \code{\link{plot}}) of best fitting generative distribution function contours.
 #' @param gamma.gdf Scalar value >0 specifying the brightness-scale of the best fitting generative distribution function.
-#' @param col.gdf Color (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
-#' @param lwd.gdf Line width (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
-#' @param lty.gdf Line type (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
-#' @param col.ref Color (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
-#' @param lwd.ref Line width (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
-#' @param lty.ref Line type (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
+#' @param col.scd.contours Color (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
+#' @param lwd.scd.contours Line width (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
+#' @param lty.scd.contours Line type (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.
+#' @param col.ref.contours Color (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
+#' @param lwd.ref.contours Line width (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
+#' @param lty.ref.contours Line type (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.
 #' @param margins Margins (bottom,left,top,right)
 #' 
 #' @return Returns the input list \code{survey}.
 #' 
-#' @seealso For an full example of \code{dfplot2} run \code{\link{dfexample2()}}.
+#' @seealso For an full example of \code{dfplot2} run \code{\link{dfexample3}}.
 #'
 #' @author Danail Obreschkow
 #'

@@ -4,12 +4,11 @@
 \alias{dfmockdata}
 \title{Generate mock data}
 \usage{
-dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
-  sqrt(10^x)     pracma::erf((rmax - r)/rmax * 20) * 0.5 + 0.5 },
-  dVdr = function(r) 0.02439568 * r^2, gdf = function(x, p) dfmodel(x, p,
-  type = "Schechter"), p = c(-2, 10, -1.3), g = function(r) 1, sigma = 0,
-  rmin = 0, rmax = 100, xmin = 2, xmax = 12, shot.noise = FALSE,
-  verbose = FALSE)
+dfmockdata(n = NULL, seed = 2, f = function(x, r) pracma::erf((1 - 100 *
+  r/sqrt(10^x)) * 20) * 0.5 + 0.5, dVdr = function(r) 0.02439568 * r^2,
+  gdf = function(x, p) dfmodel(x, p, type = "Schechter"), p = c(-2, 10,
+  -1.3), g = function(r) 1, sigma = 0, rmin = 0, rmax = 100, xmin = 2,
+  xmax = 12, shot.noise = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}
@@ -24,6 +23,8 @@ dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
 
 \item{p}{model parameters for the \code{gdf}.}
 
+\item{g}{function of distance \code{r} descibing the number-density variation of galaxies due to cosmic large-scale structure (LSS). Explicitly, \code{g(r)>0} is the number-density at \code{r}, relative to the number-density without LSS. Values between 0 and 1 are underdense regions, values larger than 1 are overdense regions. In the absence of LSS, \code{g(r)=1}. Note that g is automatically rescaled, such that its average value in the survey volume is 1.}
+
 \item{sigma}{Gaussian observing errors in log-mass \code{x}, which are automatically added to the survey.}
 
 \item{rmin, rmax}{Minimum and maximum distance of the survey. Outside these limits the function \code{f(x,r)} will automatically be assumed to be 0.}
@@ -33,14 +34,28 @@ dfmockdata(n = NULL, seed = 3, f = function(x, r) {     rmax = 0.01 *
 \item{shot.noise}{Logical flag. If set to \code{TRUE}, the number of galaxies in the survey can differ from the expected number, following a Poisson distribution.}
 
 \item{verbose}{Logical flag. If set to \code{TRUE}, some information will be displayed in the console while generating the mock survey.}
-
-\item{total.mass}{Total mass of the source count density function from which the galaxies are drawn. This mass can differ from the actual total mass of the galaxies in the realization. Note that \code{n} and \code{total.mass} cannot be specified at the same time.}
+}
+\value{
+\code{dfmockdata} returns a list of arrays and scalars:
+\item{x}{Array of observed log-mass.}
+\item{x.err}{Gaussian uncertainties on x.}
+\item{x.true}{Array of true log-masses, i.e. the values of \code{x} before they were perturbed by random uncertainties \code{x.err}.}
+\item{r}{Array of comoving distances.}
+\item{f}{Selection function provided as input argument.}
+\item{g}{Cosmic LSS function provided as input argument.}
+\item{dVdr}{Derivative of survey volume provided as input argument, but rescaled to the requested number of galaxies \code{n}.}
+\item{veff}{Function returning the effective volume as a function of log-mass \code{x}.}
+\item{veff.values}{Array of effective volumes for each galaxy.}
+\item{scd}{Function returning the expected source count density as a function of log-mass \code{x}.}
+\item{rmin,rmax}{Range of comoving distances \code{r}, spanned by the survey. Same as input arguments.}
+\item{xmin,xmax}{Range of log-masses \code{x} provided as input argument. This range is generally larger than the range spanned by the values of \code{x} and is meant to span the maximally conceivable range of \code{x} given the survey specifications.}
+\item{rescaling.factor}{Value of rescaling factor applied to the cosmic volume to match the requested number of galaxies \code{n}.}
 }
 \description{
 This function produces a mock survey with observed log-masses \code{x.obs} with Gaussian uncertainties \code{x.err} and distances \code{r}, using a custom mass function (MF) and selection function.
 }
 \examples{
-dat = dfmockdata()
+dat = dfmockdata(sigma = 0.3)
 plot(dat$r,dat$x,col='blue')
 points(dat$r,dat$x.true,pch=20)
 x = seq(5,11,0.01)
@@ -53,17 +68,17 @@ survey = dffit(dat$x, selection, dat$x.err)
 
 # or assuming that Veff is known only on a galaxy-by-galaxy basis
 selection = dat$veff.values
-survey = dffit(dat$x, selection, dat$x.err)
+dffit(dat$x, selection, dat$x.err)
 
 # or assuming that Veff is known on a galaxy-by-balaxy basis, but approximate analytically
 # outside the range of observed galaxy masses
 selection = list(dat$veff.values, dat$veff)
-survey = dffit(dat$x, selection, dat$x.err)
+dffit(dat$x, selection, dat$x.err)
 
 # or assuming that the full selection function f(x,r) and the observing volume
 # derivative dVdr(r) are known
-selection = list(dat$f, dat$dVdr, c(dat$rmin,dat$rmax))
-survey = dffit(dat$x, selection, dat$x.err)
+selection = list(dat$f, dat$dVdr, dat$rmin,dat$rmax)
+dffit(dat$x, selection, dat$x.err)
 
 }
 \seealso{

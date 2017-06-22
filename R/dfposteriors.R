@@ -7,13 +7,22 @@
 #' @return Returns a structured list containing the input list \code{survey} with an additional sublist \code{posteriors}. This sublist contains several measures of the posterior data: means, standard deviations and modes, as well as a random value drawn from the actual posterior distribution. This random value can be used to plot unbiased distribution functions, such as mass functions. The output also contains the array \code{$grid$scd.posterior} giving the posterior source count density of the input data evaluated on the grid \code{$grid$x}.
 #' 
 #' @examples
-#' dat = dfmockdata()
+#' # make a mock survey drawn from a Schechter function, where masses have 0.3 dex observing errors
+#' dat = dfmockdata(sigma = 0.3)
+#' 
+#' # fit a Schechter function to the noisy data
 #' survey = dffit(dat$x,dat$veff,dat$x.err)
+#' 
+#' # make posterior masses
 #' survey = dfposteriors(survey)
-#' # plot mass function (MF) of raw data:
+#' 
+#' # plot mass function (MF) of raw data and input model as dashed line
 #' mfplot(survey,bin.type=1,col.data='grey',xlim=c(1e6,1e12))
+#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)),lty=2)
+#' 
 #' # add MF using random values from posterior data PDFs:
 #' mfplot(survey,bin.type=2,col.data='orange',add=TRUE)
+#' 
 #' # add MF using the full posterior PDFs of all data points:
 #' mfplot(survey,bin.type=3,col.data='black',add=TRUE)
 #'
@@ -69,7 +78,7 @@ dfposteriors <- function(survey) {
     
   # produce posteriors
   m0 = m1 = md = array(NA,c(n.data,n.dim))
-  rho.unbiased = array(0,dim(x.mesh))
+  rho.unbiased = rho.unbiased.sqr = array(0,dim(x.mesh))
   for (i in seq(n.data)) {
     
     # make prior PDF for data point i
@@ -80,6 +89,7 @@ dfposteriors <- function(survey) {
     rho.corrected = rho.observed*prior
     s = sum(rho.corrected)
     rho.unbiased = rho.unbiased+rho.corrected/(s*x.mesh.dv)
+    rho.unbiased.sqr = rho.unbiased.sqr+(rho.corrected/(s*x.mesh.dv))^2
     
     # mean, standard deviation and mode
     for (j in seq(n.dim)) {
@@ -91,6 +101,8 @@ dfposteriors <- function(survey) {
   
   survey$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)))
   survey$grid$scd.posterior = rho.unbiased
+  survey$grid$effective.counts = rho.unbiased^2/rho.unbiased.sqr # this equation gives the effective number of sources per bin
+  survey$grid$effective.counts[!is.finite(survey$grid$effective.counts)] = 0
   
   invisible(survey)
 }

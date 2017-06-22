@@ -4,9 +4,10 @@
 #'
 #' @importFrom rgl open3d decorate3d surface3d
 #'
-#' @param df List produced by \code{\link{dffit}}
-#' @param xlab Label on x-axis (e.g. logarithm of mass).
-#' @param ylab Label on y-axis (e.g. logarithm of size or angular momentum).
+#' @param survey List produced by \code{\link{dffit}}
+#' @param xlab Label on x-axis, associated with the first observable (\code{x[1,]}) in the 2D data (\code{survey$data$x}).
+#' @param ylab Label on y-axis, associated with the first observable (\code{x[2,]}) in the 2D data (\code{survey$data$x}).
+#' @param zlab Label on z-axis, displaying the GDF as a function of x and y.
 #'
 #' @seealso See examples in \code{\link{dffit}}. To display \code{Veff(x)} of one-dimensional distribution functions use \code{\link{dfplotveff}}.
 #'

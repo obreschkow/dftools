@@ -5,14 +5,26 @@
 \title{Display fitted galaxy mass function}
 \usage{
 mfplot(survey, xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi
-  ~ "[Mpc"^-3 ~ "dex"^-1 ~ "]"), log = "xy", xpower10 = TRUE,
-  show.data.points = TRUE, ...)
+  ~ "[Mpc"^-3 ~ "dex"^-1 ~ "]"), log = "xy", xpower10 = TRUE, ...)
+}
+\arguments{
+\item{survey}{List produced by \code{\link{dffit}}}
+
+\item{xlab}{x-axis label}
+
+\item{ylab}{y-axis label}
+
+\item{log}{String specifying the log-axes as in \code{\link{plot}}.}
+
+\item{xpower10}{If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.}
+
+\item{...}{Other of \code{\link{dfplot}}.}
 }
 \description{
 This function displays the galaxy mass function (MF) fitted using \code{\link{dffit}}, by calling \code{\link{dfplot}} with appropriate parameters.
 }
 \seealso{
-As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
+As an example run \code{\link{dfexample1}}. See examples in \code{\link{dffit}}.
 }
 \author{
 Danail Obreschkow

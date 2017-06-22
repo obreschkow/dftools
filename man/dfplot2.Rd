@@ -55,27 +55,27 @@ dfplot2(survey, xlab = "Observable x1", ylab = "Observable x2",
 
 \item{col.gdf}{Color (see \code{\link{plot}}) of best fitting generative distribution function.}
 
+\item{col.gdf.contours}{Color (see \code{\link{plot}}) of best fitting generative distribution function contours.}
+
+\item{lwd.gdf.contours}{Line width (see \code{\link{plot}}) of best fitting generative distribution function contours.}
+
+\item{lty.gdf.contours}{Line type (see \code{\link{plot}}) of best fitting generative distribution function contours.}
+
 \item{gamma.gdf}{Scalar value >0 specifying the brightness-scale of the best fitting generative distribution function.}
 
+\item{col.scd.contours}{Color (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.}
+
+\item{lwd.scd.contours}{Line width (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.}
+
+\item{lty.scd.contours}{Line type (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.}
+
+\item{col.ref.contours}{Color (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.}
+
+\item{lwd.ref.contours}{Line width (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.}
+
+\item{lty.ref.contours}{Line type (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.}
+
 \item{margins}{Margins (bottom,left,top,right)}
-
-\item{col.gdf}{Color (see \code{\link{plot}}) of best fitting generative distribution function contours.}
-
-\item{lwd.gdf}{Line width (see \code{\link{plot}}) of best fitting generative distribution function contours.}
-
-\item{lty.gdf}{Line type (see \code{\link{plot}}) of best fitting generative distribution function contours.}
-
-\item{col.gdf}{Color (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.}
-
-\item{lwd.gdf}{Line width (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.}
-
-\item{lty.gdf}{Line type (see \code{\link{plot}}) of the source count density contours predicted by the best fitting model.}
-
-\item{col.ref}{Color (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.}
-
-\item{lwd.ref}{Line width (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.}
-
-\item{lty.ref}{Line type (see \code{\link{plot}}) of the reference model contours specified by \code{p.ref}.}
 }
 \value{
 Returns the input list \code{survey}.
@@ -84,7 +84,7 @@ Returns the input list \code{survey}.
 This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
 }
 \seealso{
-For an full example of \code{dfplot2} run \code{\link{dfexample2()}}.
+For an full example of \code{dfplot2} run \code{\link{dfexample3}}.
 }
 \author{
 Danail Obreschkow

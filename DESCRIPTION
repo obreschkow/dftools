@@ -12,7 +12,11 @@ Imports:
     mvtnorm,
     akima,
     MASS,
-    pracma
+    rgl,
+    pracma,
+    graphics,
+    grDevices,
+    stats
 License: GPL-3
 LazyData: true
 RoxygenNote: 6.0.1

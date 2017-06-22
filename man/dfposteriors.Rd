@@ -16,13 +16,22 @@ Returns a structured list containing the input list \code{survey} with an additi
 This function is called after fitting a generative distribution function usnig \code{\link{dffit}}. It uses the output list of \code{dffit} to deterine the posterior probability distributions of the uncertain data, given the fitted generative distribution function (such as a galaxy mass function). \code{dfposteriors} works for models of any dimension.
 }
 \examples{
-dat = dfmockdata()
+# make a mock survey drawn from a Schechter function, where masses have 0.3 dex observing errors
+dat = dfmockdata(sigma = 0.3)
+
+# fit a Schechter function to the noisy data
 survey = dffit(dat$x,dat$veff,dat$x.err)
+
+# make posterior masses
 survey = dfposteriors(survey)
-# plot mass function (MF) of raw data:
+
+# plot mass function (MF) of raw data and input model as dashed line
 mfplot(survey,bin.type=1,col.data='grey',xlim=c(1e6,1e12))
+lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)),lty=2)
+
 # add MF using random values from posterior data PDFs:
 mfplot(survey,bin.type=2,col.data='orange',add=TRUE)
+
 # add MF using the full posterior PDFs of all data points:
 mfplot(survey,bin.type=3,col.data='black',add=TRUE)
 

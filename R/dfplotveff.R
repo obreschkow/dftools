@@ -4,9 +4,10 @@
 #'
 #' @importFrom magicaxis magaxis magplot
 #'
-#' @param df List produced by \code{\link{dffit}}
+#' @param survey List produced by \code{\link{dffit}}
 #' @param xlab Label on x-axis (logarithmic mass or luminosity scale).
 #' @param ylab Label on y-axis (volume scale).
+#' @param legend Logical flag determining whether the legend will be plotted.
 #'
 #' @seealso See examples in \code{\link{dffit}}. To display \code{Veff(x)} of two-dimensional distribution functions use \code{\link{dfplotveff2}}.
 #'
@@ -16,7 +17,8 @@
 
 dfplotveff <- function(survey,
                        xlab = 'Observable x',
-                       ylab = expression('Effective volume')) {
+                       ylab = expression('Effective volume'),
+                       legend = TRUE) {
   
   n.dim = dim(survey$data$x)[2]
   if (n.dim!=1) {
@@ -27,11 +29,11 @@ dfplotveff <- function(survey,
     }
   }
   
-  list = c(TRUE,FALSE,FALSE)
+  list = c(TRUE,FALSE,FALSE,FALSE)
   x = survey$data$x
   dx = max(x)-min(x)
   par(pty = "m")
-  ylim = c(1e-4,1)*2*max(survey$selection$veff(x))
+  ylim = c(1e-5,1)*2*max(survey$selection$veff(x))
   plot(1, 1, type='n', xlim=range(x)+dx*c(-0.1,0.1), ylim=ylim,
        xaxs='i', yaxs='i', xaxt='n', yaxt='n',
        xlab = '', ylab = '', log='y')
@@ -45,10 +47,17 @@ dfplotveff <- function(survey,
     points(x,survey$selection$veff.input.values,pch=20)
     list[3] = TRUE
   }
+  if (survey$options$correct.lss.bias) {
+    lines(xr,survey$selection$veff.no.lss(xr),col='red')
+    list[4] = TRUE
+  }
   magicaxis::magaxis(side=1,xlab=xlab,lwd=NA,lwd.ticks=1)
   magicaxis::magaxis(side=2,ylab=ylab,lwd=NA,lwd.ticks=1)
   magicaxis::magaxis(side=3,labels=FALSE,lwd=NA,lwd.ticks=1)
   magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=1)
-  legend('bottomright',c('Model used for DF fit (veff.function)','Input model (veff.fct)','Input values (veff.values)')[list],
-         lwd=c(3,1,NA)[list],pch=c(NA,NA,20)[list],col=c('blue','black','black')[list],bty='n')
+  if (legend) {
+    legend('bottomright',c('Model used for DF fit (veff)','Input function (veff.input.function)',
+                           'Input values (veff.input.values)','Model without LSS (veff.no.lss)')[list],
+           lwd=c(3,1,NA,1)[list],pch=c(NA,NA,20,NA)[list],col=c('blue','black','black','red')[list],bty='n')
+  }
 }

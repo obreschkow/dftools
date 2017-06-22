@@ -7,7 +7,7 @@
 dfplot(survey, xlab = "Observable x",
   ylab = expression("Generative distribution function" ~ phi), xlim = NULL,
   ylim = NULL, log = "y", xpower10 = FALSE, col = "blue", lwd = 2,
-  lty = 1, show.data.points = FALSE, show.data.histogram = FALSE,
+  lty = 1, show.data.points = TRUE, show.data.histogram = FALSE,
   show.uncertainties = TRUE, uncertainty.type = NULL,
   show.bias.correction = FALSE, add = FALSE, nbins = NULL,
   bin.xmin = NULL, bin.xmax = NULL, bin.type = 1, col.data = "black",
@@ -72,7 +72,7 @@ Returns the input list \code{survey} with the additional sub-list \code{survey$b
 This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.
 }
 \seealso{
-For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
+For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1}}. See examples in \code{\link{dffit}}.
 }
 \author{
 Danail Obreschkow

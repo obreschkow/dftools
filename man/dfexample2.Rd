@@ -2,24 +2,17 @@
 % Please edit documentation in R/dfexample2.R
 \name{dfexample2}
 \alias{dfexample2}
-\title{Example of fitting a two-dimensional distribution function}
+\title{Example of fitting a galaxy mass function in the presence of large-scale structure}
 \usage{
-dfexample2(p.true = c(-2, 10, -1.3, 2/3, 7, 0.3), seed = 3,
-  sigma.x = 0.25, sigma.y = 0.1, corr.xy = 0.7)
+dfexample2(seed = 3, sigma = 0.3)
 }
 \arguments{
-\item{p.true}{6-element vector specifying the input model of the generative distribution function, from which the galaxies are drawn. The first three parameters are the standard Schechter function parameters (normalization, break-mass, faint-end slope), the next two parameters define the power-law between mass and specific angular momentum (slope and zero-point), and the last parameter is the vertical scatter in this power-law relation.}
+\item{seed}{A positive integer used as seed for the random number generator.}
 
-\item{seed}{An interger number used as seed for the random number generator.}
-
-\item{sigma.x}{Observing error of the data along the x-axis (log-mass).}
-
-\item{sigma.y}{Observing error of the data along the y-axis (log-specific angular momentum).}
-
-\item{corr.xy}{Correlation coefficient between the x- and y-errors of the mock data.}
+\item{sigma}{Gaussian observing error in log10(mass).}
 }
 \description{
-This function generates mock galaxies with masses and specific angular momenta, plus observing errors, drawn from a predefined generative distribution function and effective observing volume. It then uses \code{\link{dffit}} to recover the input function
+This function generates n mock galaxies with masses, mass errors and distances. The mock sample is drawn from a custom Schechter function, predefined selection function and predefined large-scale structure density \code{f(r)}. The function then runs \code{\link{dffit}} to recover the inpu Schechter function from these noisy and LSS-biased data.
 }
 \examples{
 dfexample2()

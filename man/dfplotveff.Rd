@@ -5,14 +5,16 @@
 \title{Plot effective volume}
 \usage{
 dfplotveff(survey, xlab = "Observable x",
-  ylab = expression("Effective volume"))
+  ylab = expression("Effective volume"), legend = TRUE)
 }
 \arguments{
+\item{survey}{List produced by \code{\link{dffit}}}
+
 \item{xlab}{Label on x-axis (logarithmic mass or luminosity scale).}
 
 \item{ylab}{Label on y-axis (volume scale).}
 
-\item{df}{List produced by \code{\link{dffit}}}
+\item{legend}{Logical flag determining whether the legend will be plotted.}
 }
 \description{
 This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a one-dimensional generative distribution function (GDF), such as a galaxy mass function. Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.

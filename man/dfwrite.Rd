@@ -7,7 +7,7 @@
 dfwrite(survey)
 }
 \arguments{
-\item{df}{List produced by \code{\link{dffit}}}
+\item{survey}{List produced by \code{\link{dffit}}}
 }
 \description{
 This function displays the best-fitting model parameters of a mass function previously fitted using \code{\link{dffit}}.

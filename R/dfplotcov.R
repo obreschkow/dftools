@@ -4,8 +4,9 @@
 #'
 #' @importFrom ellipse ellipse
 #' @importFrom mvtnorm rmvnorm
+#' @importFrom graphics par rect lines points plot axis
 #'
-#' @param df List produced by \code{\link{dffit}}
+#' @param survey List produced by \code{\link{dffit}}
 #' @param p Reference parameters to be plotted as crosses.
 #' @param n.points Number of random points drawn from the multivariate Gaussian.
 #' @param n.standarddev Number of standard-deviations shown to the left and right of the mean.
@@ -126,17 +127,17 @@ dfplotcov <- function(survey, p = NULL, n.points = 500, n.standarddev = 5,
     if (i==1 & j>1) {
       axis(2, at = yoffset+tickpos,labels=sprintf('%4.1f',E[2]+ylength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = 0.8)
       if (is.null(name)) {
-        axis(2, at = yoffset+0.5,pos=-0.1,label=bquote(p [.(j)]),cex.axis=text.size.labels,tick=F)
+        axis(2, at = yoffset+0.5,pos=-0.1,labels=bquote(p [.(j)]),cex.axis=text.size.labels,tick=F)
       } else {
-        axis(2, at = yoffset+0.5,pos=-0.1,label=name[j],cex.axis=text.size.labels,tick=F)
+        axis(2, at = yoffset+0.5,pos=-0.1,labels=name[j],cex.axis=text.size.labels,tick=F)
       }
     }
     if (j==n) {
       axis(1, at = xoffset+tickpos,labels=sprintf('%4.1f',E[1]+xlength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = -0.8)
       if (is.null(name)) {
-        axis(1, at = xoffset+0.5,pos=-0.1,label=bquote(p [.(i)]),cex.axis=text.size.labels,tick=F)
+        axis(1, at = xoffset+0.5,pos=-0.1,labels=bquote(p [.(i)]),cex.axis=text.size.labels,tick=F)
       } else {
-        axis(1, at = xoffset+0.5,pos=-0.1,label=name[i],cex.axis=text.size.labels,tick=F)
+        axis(1, at = xoffset+0.5,pos=-0.1,labels=name[i],cex.axis=text.size.labels,tick=F)
       }
     }
   }

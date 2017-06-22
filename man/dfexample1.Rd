@@ -2,15 +2,15 @@
 % Please edit documentation in R/dfexample1.R
 \name{dfexample1}
 \alias{dfexample1}
-\title{Example of using dftools}
+\title{Example of fitting a galaxy mass function}
 \usage{
-dfexample1(n = 10000, seed = 1, sigma = 0.5, p.true = c(-2, 10, -1.3),
+dfexample1(n = 1000, seed = 4, sigma = 0.5, p.true = c(-2, 10, -1.3),
   include.mrp = FALSE)
 }
 \arguments{
 \item{n}{Number of gtalaxies}
 
-\item{seed}{Random number seed}
+\item{seed}{A positive integer used as seed for the random number generator.}
 
 \item{sigma}{Observational uncertainty, defined as standard-deviation in log10(Mass)}
 
@@ -22,7 +22,11 @@ dfexample1(n = 10000, seed = 1, sigma = 0.5, p.true = c(-2, 10, -1.3),
 This function generates n mock galaxies with masses and observing errors, drawn from a custom Schechter function and predefined effective volume function. It then uses \code{\link{dffit}} to recover the inpu Schechter function from the noisy data.
 }
 \examples{
+# Run basic example
 dfexample1()
+
+# Run basic example and also fit an MRP function
+dfexample1(include.mrp = TRUE)
 
 }
 \seealso{

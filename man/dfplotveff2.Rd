@@ -8,11 +8,13 @@ dfplotveff2(survey, xlab = "Observable x1", ylab = "Observable x2",
   zlab = "Veff")
 }
 \arguments{
-\item{xlab}{Label on x-axis (e.g. logarithm of mass).}
+\item{survey}{List produced by \code{\link{dffit}}}
 
-\item{ylab}{Label on y-axis (e.g. logarithm of size or angular momentum).}
+\item{xlab}{Label on x-axis, associated with the first observable (\code{x[1,]}) in the 2D data (\code{survey$data$x}).}
 
-\item{df}{List produced by \code{\link{dffit}}}
+\item{ylab}{Label on y-axis, associated with the first observable (\code{x[2,]}) in the 2D data (\code{survey$data$x}).}
+
+\item{zlab}{Label on z-axis, displaying the GDF as a function of x and y.}
 }
 \description{
 This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a two-dimensional generative distribution function (GDF). Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.

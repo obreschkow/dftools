@@ -3,6 +3,9 @@
 #' This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.
 #'
 #' @importFrom magicaxis magaxis magplot
+#' @importFrom graphics plot lines points polygon box
+#' @importFrom grDevices col2rgb rgb
+#' @importFrom stats qpois
 #'
 #' @param survey List produced by \code{\link{dffit}}
 #' @param xlab x-axis label
@@ -32,7 +35,7 @@
 #' 
 #' @return Returns the input list \code{survey} with the additional sub-list \code{survey$bin} that contains the binned data.
 #' 
-#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1()}}. See examples in \code{\link{dffit}}.
+#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1}}. See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'
@@ -48,7 +51,7 @@ dfplot <- function(survey,
                    col = 'blue',
                    lwd = 2,
                    lty = 1,
-                   show.data.points = FALSE,
+                   show.data.points = TRUE,
                    show.data.histogram = FALSE,
                    show.uncertainties = TRUE,
                    uncertainty.type = NULL,
@@ -87,12 +90,10 @@ dfplot <- function(survey,
   }
   if (is.null(ylim)) {
     ylim = max(survey$fit$gdf(survey$data$x))*c(1e-4,10)
-    #ylim = ylim+c(-0.1,0.1)*(ylim[2]-ylim[1])
   }
   
   # bin data
   survey = .bin.data(survey,nbins,bin.type,bin.xmin,bin.xmax)
-  bb <<- survey
   
   # open plot
   if (!add) {
@@ -147,16 +148,21 @@ dfplot <- function(survey,
   # plot binned data points
   if (show.data.points) {
     list = survey$bin$gdf>0
-    f.16 = pmax(1e-3,qpois(0.16,survey$bin$count[list])/survey$bin$count[list])
-    f.84 = qpois(0.84,survey$bin$count[list])/survey$bin$count[list]
+    pm = 0.05
+    f.16 = qpois(0.16,survey$bin$count)/survey$bin$count
+    f.84 = qpois(0.84,survey$bin$count)/survey$bin$count
+    upper = f.16<pm
+    f.16 = pmax(f.16,pm)
     if (xpower10) {
       points(10^survey$bin$xmean[list],survey$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
-      segments(10^survey$bin$xmean[list],survey$bin$gdf[list]*f.16,10^survey$bin$xmean[list],survey$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
+      segments(10^survey$bin$xmean[list],survey$bin$gdf[list]*f.16[list],10^survey$bin$xmean[list],survey$bin$gdf[list]*f.84[list],col=col.data,lwd=lwd.data)
+      points(10^survey$bin$xmean[upper],survey$bin$gdf[upper]*pm,pch=25,cex=cex.data*0.7,col=col.data,bg=col.data)
       segments(10^(survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),survey$bin$gdf[list],
                10^(survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),survey$bin$gdf[list],col=col.data,lwd=lwd.data)
     } else {
       points(survey$bin$xmean[list],survey$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
-      segments(survey$bin$xmean[list],survey$bin$gdf[list]*f.16,survey$bin$xmean[list],survey$bin$gdf[list]*f.84,col=col.data,lwd=lwd.data)
+      segments(survey$bin$xmean[list],survey$bin$gdf[list]*f.16[list],survey$bin$xmean[list],survey$bin$gdf[list]*f.84[list],col=col.data,lwd=lwd.data)
+      points(survey$bin$xmean[upper],survey$bin$gdf[upper]*pm,pch=25,cex=cex.data,bg=col.data)
       segments((survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),survey$bin$gdf[list],
                (survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),survey$bin$gdf[list],col=col.data,lwd=lwd.data)
     }
@@ -171,14 +177,14 @@ dfplot <- function(survey,
   # plot binned data histogram
   if (show.data.histogram) {
     .plotSub(0,1,0,0.2)
-    ymax = max(survey$bin$count)*1.2
+    ymax = max(survey$bin$histogram)*1.2
     if (length(grep('x',log))==1) {lg='x'} else {lg=''}
     plot(1,1,type='n',log=lg,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
          xlim = xlim, ylim = c(0,ymax), xlab = '', ylab = '',bty='n')
     xbin = rep(survey$bin$xmin+seq(0,survey$bin$n)*survey$bin$dx,each=2)
     if (xpower10) xbin = 10^xbin
     xhist = c(xlim[1],xbin,xlim[2])
-    yhist = c(0,0,rep(survey$bin$count,each=2),0,0)
+    yhist = c(0,0,rep(survey$bin$histogram,each=2),0,0)
     polygon(xhist,yhist,col=col.hist,border = NA)
     par(xpd=TRUE)
     lines(xlim,rep(ymax,2))
@@ -263,16 +269,25 @@ dfplot <- function(survey,
     for (k in seq(bin$n)) {
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
       bin$xmean[k] = sum(survey$grid$scd.posterior[list]*xg[list])/sum(survey$grid$scd.posterior[list])
-      bin$count[k] = sum(survey$grid$scd.posterior[list])*dx
+      bin$count[k] = mean(survey$grid$effective.counts[list])
       bin$gdf[k] = sum(survey$grid$scd.posterior[list]/survey$selection$veff(xg[list]))/sum(list)
     }
   }
+  
+  # make historgram counts
+  bin$histogram = array(0,bin$n)
+  for (i in seq(n.data)) {
+    k = floor((x[i]-bin$xmin)/wx*0.99999999*bin$n)+1
+    if (k>=1 & k<=bin$n) {
+      bin$histogram[k] = bin$histogram[k]+1
+    }
+  }
+  
   survey$bin = bin
   invisible(survey)  
 }
 
 .plotSub <- function(xleft=0.1,xright=0.3,ybottom=0.1,ytop=0.3) {
-  pomdglobal <<- par(no.readonly = T)
   par(omd=c(0,1,0,1))
   xmarg = sum(par()$mai[c(2,4)])
   xplot = par()$pin[1]

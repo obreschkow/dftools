@@ -2,7 +2,7 @@
 #'
 #' This function displays the best-fitting model parameters of a mass function previously fitted using \code{\link{dffit}}.
 #'
-#' @param df List produced by \code{\link{dffit}}
+#' @param survey List produced by \code{\link{dffit}}
 #'
 #' @examples
 #' dat = dfmockdata()
