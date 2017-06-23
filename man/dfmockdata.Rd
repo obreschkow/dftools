@@ -4,11 +4,11 @@
 \alias{dfmockdata}
 \title{Generate mock data}
 \usage{
-dfmockdata(n = NULL, seed = 2, f = function(x, r) pracma::erf((1 - 100 *
-  r/sqrt(10^x)) * 20) * 0.5 + 0.5, dVdr = function(r) 0.02439568 * r^2,
+dfmockdata(n = NULL, seed = 3, f = function(x, r) pracma::erf((1 - 100 *
+  r/sqrt(10^x)) * 10) * 0.5 + 0.5, dVdr = function(r) 0.02439568 * r^2,
   gdf = function(x, p) dfmodel(x, p, type = "Schechter"), p = c(-2, 10,
   -1.3), g = function(r) 1, sigma = 0, rmin = 0, rmax = 100, xmin = 2,
-  xmax = 12, shot.noise = FALSE, verbose = FALSE)
+  xmax = 13, shot.noise = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}
@@ -55,7 +55,11 @@ dfmockdata(n = NULL, seed = 2, f = function(x, r) pracma::erf((1 - 100 *
 This function produces a mock survey with observed log-masses \code{x.obs} with Gaussian uncertainties \code{x.err} and distances \code{r}, using a custom mass function (MF) and selection function.
 }
 \examples{
+# draw 1000 galaxies with mass errors of 0.3 dex from a Schechter function
+# with parameters (-2,10,-1.3) and a preset selection function
 dat = dfmockdata(sigma = 0.3)
+
+# plot the distance-log(mass) relation of observed data, true data, and approximate survey limit
 plot(dat$r,dat$x,col='blue')
 points(dat$r,dat$x.true,pch=20)
 x = seq(5,11,0.01)

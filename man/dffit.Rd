@@ -6,9 +6,8 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, n.resampling = NULL,
-  correct.mle.bias = FALSE, correct.lss.bias = FALSE,
-  lss.normalization = 1, write.fit = TRUE, xmin = 4, xmax = 12,
-  dx = 0.01, keep.eddington.bias = FALSE)
+  correct.mle.bias = FALSE, correct.lss.bias = FALSE, write.fit = TRUE,
+  xmin = 4, xmax = 12, dx = 0.01, keep.eddington.bias = FALSE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
@@ -29,9 +28,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{correct.mle.bias}{The maximum likelihood estimator (MLE) of a finite dataset can be biased - a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.}
 
-\item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).}
-
-\item{lss.normalization}{Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} (default) to conserve the mass in the survey, relative to the effective volume not corrected for LSS; \code{lss.normalization=2} to conserve the number of objects (galaxies) in the survey, relative to the uncorrected effective volume.}
+\item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
 
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 
@@ -69,6 +66,9 @@ dfexample3()
 # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors
 dat = dfmockdata(sigma=0.5)
 
+# show the observed and true log-masses (x and x.true) as a function of distance r
+plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
+
 # fit a Schechter function to the mock sample without accounting for errors
 survey = dffit(dat$x, dat$veff)
 
@@ -76,7 +76,7 @@ survey = dffit(dat$x, dat$veff)
 mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)),lty=2)
 
-# include measurement errors in fit and produce posterior data
+# now account for measurement errors in fit and produce posterior data
 survey = dffit(dat$x, dat$veff, dat$x.err)
 survey = dfposteriors(survey)
 

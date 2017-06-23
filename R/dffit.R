@@ -3,7 +3,7 @@
 #' This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 #'
 #' @importFrom akima interp
-#' @importFrom stats optim rpois quantile approxfun optim
+#' @importFrom stats optim rpois quantile approxfun
 #'
 #' @param x Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.
 #' @param selection Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(veff.values, veff.userfct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rmin, rmax)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The scalars \code{rmin} and \code{rmax} (can be \code{0} and \code{Inf}) are the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.
@@ -14,8 +14,7 @@
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param n.resampling Integer (>0) specifying the number of iterations for the resampling of the most likely DF used to evaluate realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
 #' @param correct.mle.bias The maximum likelihood estimator (MLE) of a finite dataset can be biased - a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.
-#' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure).
-#' @param lss.normalization Integer value, determining the type of normalization used when accounting for cosmic large scale structure. Use \code{lss.normalization=1} (default) to conserve the mass in the survey, relative to the effective volume not corrected for LSS; \code{lss.normalization=2} to conserve the number of objects (galaxies) in the survey, relative to the uncorrected effective volume.
+#' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
@@ -50,6 +49,9 @@
 #' # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors
 #' dat = dfmockdata(sigma=0.5)
 #' 
+#' # show the observed and true log-masses (x and x.true) as a function of distance r
+#' plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
+#' 
 #' # fit a Schechter function to the mock sample without accounting for errors
 #' survey = dffit(dat$x, dat$veff)
 #' 
@@ -57,7 +59,7 @@
 #' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 #' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)),lty=2)
 #' 
-#' # include measurement errors in fit and produce posterior data
+#' # now account for measurement errors in fit and produce posterior data
 #' survey = dffit(dat$x, dat$veff, dat$x.err)
 #' survey = dfposteriors(survey)
 #' 
@@ -103,7 +105,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   n.resampling = NULL,
                   correct.mle.bias = FALSE,
                   correct.lss.bias = FALSE,
-                  lss.normalization = 1,
                   write.fit = TRUE,
                   xmin = 4,
                   xmax = 12,
@@ -120,8 +121,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                 grid = list(xmin = xmin, xmax = xmax, dx = dx),
                 fit = list(),
                 options = list(p.initial = p.initial, n.iterations = n.iterations, n.resampling = n.resampling,
-                               keep.eddington.bias = keep.eddington.bias,  correct.lss.bias = correct.lss.bias,
-                               lss.normalization = lss.normalization, correct.mle.bias = correct.mle.bias),
+                               keep.eddington.bias = keep.eddington.bias, correct.lss.bias = correct.lss.bias,
+                               correct.mle.bias = correct.mle.bias),
                 tmp = list(selection = selection, gdf = gdf))
   
   # Check and pre-process input arguments
@@ -173,6 +174,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   }
   survey$data$n.data = dim(survey$data$x)[1]
   survey$data$n.dim = dim(survey$data$x)[2]
+  for (i in seq(survey$data$n.dim)) {
+    if (any(survey$data$x[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x.')
+    if (any(survey$data$x[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x.')
+  }
   
   # Handle x.err
   if (!is.null(survey$data$x.err)) {
@@ -194,6 +199,17 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         stop('x.err cannot have more than three dimensions.')
       }
       if (min(survey$data$x.err)<=0) stop('All values of x.err must be positive.')
+      if (length(survey$data$x)==2) {
+        for (i in seq(survey$data$n.dim)) {
+          if (any(survey$data$x[,i]-survey$data$x.err[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
+          if (any(survey$data$x[,i]+survey$data$x.err[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+        }
+      } else if (length(survey$data$x)==3) {
+        for (i in seq(survey$data$n.dim)) {
+          if (any(survey$data$x[,i]-sqrt(survey$data$x.err[,i,i])<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
+          if (any(survey$data$x[,i]+sqrt(survey$data$x.err[,i,i])>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+        }
+      }
     }
   }
   
@@ -207,8 +223,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Handle correct.lss.bias
   if (survey$options$correct.lss.bias) {
     if (is.null(survey$data$r)) stop('Distances must be given of correct.lss.bias = TRUE.')
-    if (is.null(survey$options$lss.normalization)) stop('lss.normalization must be a positive integer.')
-    if (survey$data$n.dim>1) stop('Currently correct.lss.bias can only be TRUE for one-dimensional DFs.')
   }
   
   # Handle gdf
@@ -408,25 +422,32 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
 .get.veff.lss = function(survey,p) {
   
-  x = survey$data$x
-  r = survey$data$r
-  n.dim = survey$data$n.dim
-  if (n.dim>1) stop('Currently LSS can only be corrected in one-dimensional distribution functions.')
-  n.data = survey$data$n.data
-  rmin = survey$selection$rmin
-  rmax = survey$selection$rmax
-  
   if (survey$selection$mode!=5) {
     cat('To correct LSS bias, the selection must be specified in the format\n')
     cat('selection = list(f, dVdr, rmin, rmax)\n')
     stop()
   }
-    
+  
+  # initialize input
+  x = survey$data$x
+  r = survey$data$r
+  n.dim = survey$data$n.dim
+  n.data = survey$data$n.data
+  rmin = survey$selection$rmin
+  rmax = survey$selection$rmax
+  simpson.integration = n.dim==1
+  
   # evaluate integrals
   integrand.lss = function(x,r) {survey$selection$f(x,r)*survey$model$gdf(x,p)}
   integral = array(NA,n.data)
-  for (i in seq(n.data)) {
-    integral[i] = integrate(integrand.lss,survey$grid$xmin,survey$grid$xmax,r[i],stop.on.error=FALSE)$value
+  if (simpson.integration) {
+    for (i in seq(n.data)) {
+      integral[i] = integrate(integrand.lss,survey$grid$xmin,survey$grid$xmax,r[i],stop.on.error=FALSE)$value
+    }
+  } else {
+    for (i in seq(n.data)) {
+      integral[i] = sum(integrand.lss(survey$grid$x,r[i]))*survey$grid$dvolume
+    }
   }
   
   # make veff.lss function
@@ -437,21 +458,16 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   veff.lss.scale = Vectorize(veff.lss.function.elemental)
   
   # renormalize veff
-  if (survey$options$lss.normalization == 1) {
-    int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)*10^x
+  int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)*10^x
+  int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*10^x
+  if (simpson.integration) {
     reference = integrate(int.ref,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*10^x
     expectation = integrate(int.exp,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    normalization.factor = reference/expectation
-  } else if (survey$options$lss.normalization == 2) {
-    int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)
-    reference = integrate(int.ref,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)
-    expectation = integrate(int.exp,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
-    normalization.factor = reference/expectation
   } else {
-    stop('unknown LSS normalization type')
+    reference = sum(int.ref(survey$grid$x))*survey$grid$dvolume
+    expectation = sum(int.exp(survey$grid$x))*survey$grid$dvolume
   }
+  normalization.factor = reference/expectation
   veff.lss = function(x) veff.lss.scale(x)*normalization.factor
   
   # return output
@@ -643,7 +659,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # finalize output
   fit = list(p.best = opt$par, p.covariance = cov, lnL = function(p) -neglogL(p),
-             status = list(n.fit.and.debias = k, converged = converged, chain = chain[1:k,]))
+             status = list(n.iterations = k, converged = converged, chain = chain[1:k,]))
   return(fit)
 
 }
@@ -756,8 +772,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # set up survey to resample
   b = survey
   b$options$correct.lss.bias = FALSE
-  b$options$n.iterations = 1
-  b$data$x.err = NULL
+  x.err.mean = mean(b$data$x.err)
   
   # randomly resample and refit the DF
   cum = cumsum(survey$grid$scd/sum(survey$grid$scd))
@@ -770,8 +785,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       index = which.min(abs(cum-r[i]))
       x.obs[i] = survey$grid$x[index]
     }
+    x.obs = x.obs+rnorm(n.new)*x.err.mean
     b$data$n.data = n.new
     b$data$x = cbind(x.obs)
+    b$data$x.err = cbind(rep(x.err.mean,n.new))
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
   }
 
@@ -779,7 +796,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   q = c(0.02,0.16,0.84,0.98)
   p.quant = array(NA,c(length(q),np))
   for (i in seq(np)) {
-    p.quant[,i] = quantile(p.new[,i],q,names=FALSE)
+    p.quant[,i] = quantile(p.new[,i],q,names=FALSE,na.rm=TRUE)
   }
   survey$fit$p.quantile.02 = p.quant[1,]
   survey$fit$p.quantile.16 = p.quant[2,]

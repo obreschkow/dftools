@@ -30,6 +30,7 @@ dfexample2 = function(seed = 3, sigma = 0.3) {
   # make data
   cat('Generate mock data with observing errors and large-scale structure (LSS):\n')
   dat = dfmockdata(seed = seed, sigma = sigma, p = p, f = f, g = g, dVdr = dVdr, rmax = rmax)
+  dat <<- dat
   cat(sprintf('=> %d galaxies\n',dat$n))
   
   # fit data

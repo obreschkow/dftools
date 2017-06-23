@@ -34,7 +34,11 @@
 #' \item{rescaling.factor}{Value of rescaling factor applied to the cosmic volume to match the requested number of galaxies \code{n}.}
 #' 
 #' @examples
+#' # draw 1000 galaxies with mass errors of 0.3 dex from a Schechter function
+#' # with parameters (-2,10,-1.3) and a preset selection function
 #' dat = dfmockdata(sigma = 0.3)
+#' 
+#' # plot the distance-log(mass) relation of observed data, true data, and approximate survey limit
 #' plot(dat$r,dat$x,col='blue')
 #' points(dat$r,dat$x.true,pch=20)
 #' x = seq(5,11,0.01)
@@ -66,15 +70,15 @@
 #' @export
 
 dfmockdata <- function(n = NULL,
-                       seed = 2,
-                       f = function(x,r) pracma::erf((1-1e2*r/sqrt(10^x))*20)*0.5+0.5,
+                       seed = 3,
+                       f = function(x,r) pracma::erf((1-1e2*r/sqrt(10^x))*10)*0.5+0.5,
                        dVdr = function(r) 2.439568e-2*r^2,
                        gdf = function(x,p) dfmodel(x,p,type='Schechter'),
                        p = c(-2,10,-1.3),
                        g = function(r) 1,
                        sigma = 0.0,
                        rmin = 0, rmax = 100,
-                       xmin = 2, xmax = 12,
+                       xmin = 2, xmax = 13,
                        shot.noise = FALSE,
                        verbose = FALSE
                        ) {

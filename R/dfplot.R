@@ -121,16 +121,19 @@ dfplot <- function(survey,
     if ((uncertainty.type>1) & (!length(survey$grid$gdf.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
     if (uncertainty.type == 3) {
       poly.y.95 = pmax(ylim[1],c(survey$grid$gdf.quantile.02,rev(survey$grid$gdf.quantile.98)))
-      polygon(poly.x,poly.y.95,col=rgb(r,g,b,0.15),border=NA)
+      list = is.finite(poly.x) & is.finite(poly.y.95)
+      polygon(poly.x[list],poly.y.95[list],col=rgb(r,g,b,0.15),border=NA)
     }
     if (uncertainty.type >= 2) {
       poly.y.68 = pmax(ylim[1],c(survey$grid$gdf.quantile.16,rev(survey$grid$gdf.quantile.84)))
-      polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
+      list = is.finite(poly.x) & is.finite(poly.y.68)
+      polygon(poly.x[list],poly.y.68[list],col=rgb(r,g,b,0.25),border=NA)
     }
     if (uncertainty.type == 1) {
       poly.y.68 = pmax(ylim[1],c(survey$grid$gdf-survey$grid$gdf.error.neg,
                                  rev(survey$grid$gdf+survey$grid$gdf.error.pos)))
-      polygon(poly.x,poly.y.68,col=rgb(r,g,b,0.25),border=NA)
+      list = is.finite(poly.x) & is.finite(poly.y.68)
+      polygon(poly.x[list],poly.y.68[list],col=rgb(r,g,b,0.25),border=NA)
     }
   }
 

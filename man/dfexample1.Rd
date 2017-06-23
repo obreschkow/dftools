@@ -4,7 +4,7 @@
 \alias{dfexample1}
 \title{Example of fitting a galaxy mass function}
 \usage{
-dfexample1(n = 1000, seed = 4, sigma = 0.5, p.true = c(-2, 10, -1.3),
+dfexample1(n = 1000, seed = 3, sigma = 0.5, p.true = c(-2, 10, -1.3),
   include.mrp = FALSE)
 }
 \arguments{
