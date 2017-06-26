@@ -171,7 +171,7 @@ dfmockdata <- function(n = NULL,
   list = seq(n)
   m = n
   count = 0
-  while (m>0 & count<1) {
+  while (m>0 & count<100) {
     count = count+1
     r[list] = qnf(runif(m,cdf[1],cdf[length(rgrid)]))
     rejected = fg(x[list],r[list])<runif(m)*fgmax

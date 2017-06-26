@@ -106,7 +106,7 @@ dfplot <- function(survey,
     plot(1,1,type='n',log=log,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
            xlim = xlim, ylim = ylim, xlab = '', ylab = '',bty='n')
   }
-
+  
   # plot uncertainty regions
   if (show.uncertainties & survey$fit$status$converged) {
     poly.x = c(survey$grid$x,rev(survey$grid$x))
@@ -273,8 +273,9 @@ dfplot <- function(survey,
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
       bin$xmean[k] = sum(survey$grid$scd.posterior[list]*xg[list])/sum(survey$grid$scd.posterior[list])
       bin$count[k] = mean(survey$grid$effective.counts[list])
-      bin$gdf[k] = sum(survey$grid$scd.posterior[list]/survey$selection$veff(xg[list]))/sum(list)
+      bin$gdf[k] = sum(survey$grid$scd.posterior[list]/survey$grid$veff[list])/sum(list)
     }
+    
   }
   
   # make historgram counts
@@ -285,9 +286,9 @@ dfplot <- function(survey,
       bin$histogram[k] = bin$histogram[k]+1
     }
   }
-  
   survey$bin = bin
-  invisible(survey)  
+  
+  invisible(survey)
 }
 
 .plotSub <- function(xleft=0.1,xright=0.3,ybottom=0.1,ytop=0.3) {

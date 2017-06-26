@@ -5,9 +5,9 @@
 \title{Fit a generative distribution function, such as a galaxy mass function}
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
-  p.initial = NULL, n.iterations = 100, n.resampling = NULL,
-  correct.mle.bias = FALSE, correct.lss.bias = FALSE, write.fit = TRUE,
-  xmin = 4, xmax = 12, dx = 0.01, keep.eddington.bias = FALSE)
+  p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
+  n.uncertainties = NULL, n.mle.bias = NULL, write.fit = TRUE, xmin = 4,
+  xmax = 12, dx = 0.01, keep.eddington.bias = FALSE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
@@ -24,11 +24,11 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{n.iterations}{Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.}
 
-\item{n.resampling}{Integer (>0) specifying the number of iterations for the resampling of the most likely DF used to evaluate realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.}
-
-\item{correct.mle.bias}{The maximum likelihood estimator (MLE) of a finite dataset can be biased - a general property of the ML approach. If \code{TRUE}, \code{dffit} also outputs the parameters, where this estimator bias has been corrected, to first order in 1/N, using jackknifing.}
-
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
+
+\item{n.uncertainties}{If \code{n.uncertainties} is an integer larger than one, the data is resampled \code{n.uncertainties} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.uncertainties = NULL}, no resampling is performed.}
+
+\item{n.mle.bias}{If \code{n.mle.bias} is an integer larger than one, the data is jackknife-resampled \code{n.mle.bias} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.mle.bias} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.mle.bias = NULL}, no sucm parameters are deterimed.}
 
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 
@@ -94,7 +94,7 @@ dfplotveff(survey)
 dat = dfmockdata(30, sigma=0.5)
 
 # fit a Schechter function and determine uncertainties by resampling the best fit
-survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 1e2)
+survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 1e2)
 
 # make posterior masses
 survey = dfposteriors(survey)
