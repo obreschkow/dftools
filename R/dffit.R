@@ -673,37 +673,22 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   np = survey$model$n.para
   nx = survey$grid$n.points
   index = 0
-  nsteps.tot.max = 216
+  nsteps.tot.max = 64
   nsteps = max(2,round(nsteps.tot.max^(1/np))) # a larger number of steps leads to a more accurate sampling of the covariance ellipsoid
   y.new = array(NA,c(nx,nsteps^np))
-  k = seq(-1,1,length=nsteps)
-  step = array(1,np)
-  step[1] = 0
+  k = atan(seq(-pi/2,pi/2,length=nsteps))
+  kv = array(NA,c(nsteps^np,np))
+  for (i in seq(np)) {
+    kv[,i] = rep(k,nsteps^(i-1),each=nsteps^(np-i))
+  }
   
   # sample surface of covariance ellipsoid
   for (i in seq(nsteps^np)) {
-
-    # next step
-    overflow = TRUE
-    j = 1
-    while (overflow) {
-      step[j] = step[j]+1
-      if (step[j]>nsteps) {
-        step[j] = 1
-        j = j+1
-      } else {
-        overflow = FALSE
-      }
-    }
-
-    # evaluate DF
-    if (any(k[step]!=0)) {
-      e = k[step]/sqrt(sum(k[step]^2))
-      v = c(eig$vectors%*%(sqrt(eig$values)*e))
-      p.new = survey$fit$p.best+v
-      y.new[,i] = survey$model$gdf(survey$grid$x,p.new)
-      if (any(!is.finite(y.new[,i])) | any(y.new[,i]<0)) y.new[,i] = NA
-    }
+    e = kv[i,]#/sqrt(sum(k[vstep,]^2))
+    v = c(eig$vectors%*%(sqrt(eig$values)*e))
+    p.new = survey$fit$p.best+v
+    y.new[,i] = survey$model$gdf(survey$grid$x,p.new)
+    if (any(!is.finite(y.new[,i])) | any(y.new[,i]<0)) y.new[,i] = NA
   }
 
   survey$grid$gdf.error.neg = array(NA,nx)

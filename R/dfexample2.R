@@ -17,7 +17,7 @@
 #' @export
 
 
-dfexample2 = function(seed = 3, sigma = 0.3) {
+dfexample2 = function(seed = 1, sigma = 0.3) {
 
   # survey model
   rmax = 100

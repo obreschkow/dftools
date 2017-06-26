@@ -4,7 +4,7 @@
 \alias{dfexample2}
 \title{Example of fitting a galaxy mass function in the presence of large-scale structure}
 \usage{
-dfexample2(seed = 3, sigma = 0.3)
+dfexample2(seed = 1, sigma = 0.3)
 }
 \arguments{
 \item{seed}{A positive integer used as seed for the random number generator.}

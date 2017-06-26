@@ -70,8 +70,8 @@
 #' @export
 
 dfmockdata <- function(n = NULL,
-                       seed = 3,
-                       f = function(x,r) pracma::erf((1-1e2*r/sqrt(10^x))*10)*0.5+0.5,
+                       seed = 1,
+                       f = function(x,r) pracma::erf((1-1e2*r/sqrt(10^x))*20)*0.5+0.5,
                        dVdr = function(r) 2.439568e-2*r^2,
                        gdf = function(x,p) dfmodel(x,p,type='Schechter'),
                        p = c(-2,10,-1.3),
@@ -137,16 +137,25 @@ dfmockdata <- function(n = NULL,
   xgrid = seq(xmin,xmax,dx)
   cdf = cumsum(scd.lss(xgrid)) # cumulative distribution function of source count density
   qnf = approxfun(cdf,xgrid) # quantile function of source count density
-  x = qnf(runif(n,cdf[1],cdf[length(xgrid)]))
+  x = qnf(runif(n,cdf[1],cdf[length(cdf)]))
   
-  # find maximum of h(x,r) = f(x,r)*g(r)
-  h = function(x,r) f(x,r)*g(r)
-  xg = seq(xmin,xmax,length=100)
-  rg = seq(rmin,rmax,length=100)
-  pg = cbind(rep(xg,10),rep(rg,each=10))
-  fct = function(p) -h(p[1],p[2])
-  if (max(apply(pg,1,fct))>0) stop('f*g can never by smaller than 0.')
-  para = pg[which.min(apply(pg,1,fct)),]
+  # add mass observing errors (x.err)
+  if (!is.null(sigma)) {
+    x.obs = x+rnorm(n)*sigma
+    x.err = rep(sigma,n)
+  } else {
+    x.err = NULL
+  }
+  
+  # find maximum of fg(x,r) = f(x,r)*g(r)
+  fg = function(x,r) f(x,r)*g(r)
+  xseq = seq(xmin,xmax,length=100)
+  rseq = seq(rmin,rmax,length=100)
+  xrgrid = cbind(rep(xseq,10),rep(rseq,each=10))
+  fct = function(p) -fg(p[1],p[2])
+  q = apply(xrgrid,1,fct)
+  if (max(q)>0) stop('f*g can never by smaller than 0.')
+  para = xrgrid[which.min(q),]
   opt = optim(para,fct,method="L-BFGS-B",lower=c(xmin,rmin),upper=c(xmax,rmax))
   fgmax = -opt$value
   if (fgmax>5 & verbose) {
@@ -162,10 +171,10 @@ dfmockdata <- function(n = NULL,
   list = seq(n)
   m = n
   count = 0
-  while (m>0 & count<500) {
+  while (m>0 & count<1) {
     count = count+1
     r[list] = qnf(runif(m,cdf[1],cdf[length(rgrid)]))
-    rejected = h(x[list],r[list])<runif(m)*fgmax
+    rejected = fg(x[list],r[list])<runif(m)*fgmax
     list = list[rejected]
     m = length(list)
   }
@@ -173,23 +182,14 @@ dfmockdata <- function(n = NULL,
   # sample distances (r) using deterministic uniroot algorithm to avoid iterating forever
   if (m>0) {
     get_random_r = function(x) { 
-      fg = function(r) f(x,r)*g(r)
-      FG = function(r) {integrate(fg,rmin,r)$value}
-      FGv = Vectorize(FG)
-      FG.inv = function(y){uniroot(function(x){FGv(x)-y},interval=c(rmin,rmax))$root}
-      return(FG.inv(runif(1)*FG(rmax)))
+      h = function(r) fg(x,r)*dVdr(r)
+      H = Vectorize(function(r) {integrate(h,rmin,r)$value})
+      H.inv = function(y){uniroot(function(x){H(x)-y},interval=c(rmin,rmax))$root}
+      return(H.inv(runif(1)*H(rmax)))
     }
     for (i in list) {
       r[i] = get_random_r(x[i])
     }
-  }
-  
-  # add mass observing errors (x.err)
-  if (!is.null(sigma)) {
-    x.obs = x+rnorm(n)*sigma
-    x.err = rep(sigma,n)
-  } else {
-    x.err = NULL
   }
   
   # make effective volumes for each observation, that an observer would assign, not knowning the observational error in x

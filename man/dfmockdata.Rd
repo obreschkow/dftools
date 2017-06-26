@@ -4,8 +4,8 @@
 \alias{dfmockdata}
 \title{Generate mock data}
 \usage{
-dfmockdata(n = NULL, seed = 3, f = function(x, r) pracma::erf((1 - 100 *
-  r/sqrt(10^x)) * 10) * 0.5 + 0.5, dVdr = function(r) 0.02439568 * r^2,
+dfmockdata(n = NULL, seed = 1, f = function(x, r) pracma::erf((1 - 100 *
+  r/sqrt(10^x)) * 20) * 0.5 + 0.5, dVdr = function(r) 0.02439568 * r^2,
   gdf = function(x, p) dfmodel(x, p, type = "Schechter"), p = c(-2, 10,
   -1.3), g = function(r) 1, sigma = 0, rmin = 0, rmax = 100, xmin = 2,
   xmax = 13, shot.noise = FALSE, verbose = FALSE)

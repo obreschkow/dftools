@@ -23,7 +23,7 @@
 #'
 #' @export
 
-dfexample1 <- function(n = 1e3, seed = 3, sigma = 0.5, p.true = c(-2,10,-1.3), include.mrp = FALSE) {
+dfexample1 <- function(n = 1e3, seed = 1, sigma = 0.5, p.true = c(-2,10,-1.3), include.mrp = FALSE) {
 
   # user parameters
   set.seed(seed)
