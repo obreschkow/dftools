@@ -100,7 +100,7 @@ dfexample3 = function(seed = 3, p.true = c(-2,10,-1.3,2/3,7,0.3),
   survey = dffit(x, veff, x.err, gdf = gdf, p.initial = p.true, xmin = c(mrange[1],jrange[1]), xmax = c(mrange[2],jrange[2]), dx = c(0.1,0.1))
   
   # plot parameter covariances and initial parameters
-  dfplotcov(survey, p = p.true)
+  dfplotcov(survey, reference = p.true)
   
   # plot DF
   dfplot2(survey, p.ref = p.true, xlab = 'log10(Mass/Msun)', ylab = 'log10(j/[kpc km/s])')

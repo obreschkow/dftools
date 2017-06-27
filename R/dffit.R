@@ -3,7 +3,7 @@
 #' This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 #'
 #' @importFrom akima interp
-#' @importFrom stats optim rpois quantile approxfun
+#' @importFrom stats optim rpois quantile approxfun cov
 #'
 #' @param x Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.
 #' @param selection Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(veff.values, veff.userfct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rmin, rmax)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The scalars \code{rmin} and \code{rmax} (can be \code{0} and \code{Inf}) are the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.
@@ -68,7 +68,7 @@
 #' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)), lty=2)
 #'
 #' # show fitted parameter PDFs and covariances with true input parameters as black points
-#' dfplotcov(survey, p = c(-2,10,-1.3))
+#' dfplotcov(survey, reference = c(-2,10,-1.3))
 #'
 #' # show effective volume function
 #' dfplotveff(survey)
@@ -77,7 +77,7 @@
 #' dat = dfmockdata(30, sigma=0.5)
 #' 
 #' # fit a Schechter function and determine uncertainties by resampling the best fit
-#' survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 1e2)
+#' survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 30)
 #' 
 #' # make posterior masses
 #' survey = dfposteriors(survey)
@@ -520,11 +520,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   n.data = dim(x)[1]
   n.dim = dim(x)[2]
   n.mesh = dim(x.mesh)[1]
-
+  
   # Input handling
   if (!survey$options$correct.lss.bias) veff.mesh = c(survey$grid$veff)
   if (is.null(x.err) & !survey$options$correct.lss.bias) n.iterations = 1
-
+  
   if (!is.null(x.err)) {
     
     # Make inverse covariances
@@ -561,23 +561,14 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       rho.observed[[i]] = exp(-colSums(d*(invC[i,,]%*%d))/2)
     }
   }
- 
+  
   # Iterative algorithm
   running = TRUE
   k = 0
   chain = array(NA,c(n.iterations,length(p.initial)+1))
   
-  while (running) {
-
-    k = k+1
-    
-    # determine veff LSS
-    if (survey$options$correct.lss.bias) {
-      veff.lss = .get.veff.lss(survey,p.initial)
-      veff.mesh = c(veff.lss(survey$grid$x))
-    }
-
-    # make unbiased source density function
+  # definie debiasing function
+  debias = function(p) {
     rho.unbiased = array(0,n.mesh)
     if (is.null(x.err)) {
       for (i in seq(n.data)) {
@@ -590,7 +581,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         prior = array(1,n.mesh)
       } else {
         # predicted source counts (up to a factor x.mesh.dv)
-        prior = gdf(x.mesh,p.initial)*veff.mesh
+        prior = gdf(x.mesh,p)*veff.mesh
         prior[!is.finite(prior)] = 0
         prior = pmax(0,prior)
       }
@@ -600,7 +591,22 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         rho.unbiased = rho.unbiased+rho.corrected
       }
     }
-
+    return(rho.unbiased)
+  }
+  
+  while (running) {
+    
+    k = k+1
+    
+    # determine veff LSS
+    if (survey$options$correct.lss.bias) {
+      veff.lss = .get.veff.lss(survey,p.initial)
+      veff.mesh = c(veff.lss(survey$grid$x))
+    }
+    
+    # make unbiased source density function
+    rho.unbiased = debias(p.initial)
+    
     # make -ln(L)
     neglogL = function(p) {
       phi = gdf(x.mesh,p)
@@ -610,9 +616,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       # end safety operations
       return(sum(phi*veff.mesh-log(phi)*rho.unbiased)*x.mesh.dv)
     }
-
+    # NB: Full likelihood expression
+    #     sum(lambda-log(lambda*x.mesh.dv)*rho.unbiased)*x.mesh.dv+sum(log(factorial(round(rho.unbiased*x.mesh.dv))))
+    
     # maximize ln(L)
-    opt = optim(p.initial,neglogL,hessian=TRUE,control=list(parscale=rep(1,length(p.initial)),reltol=1e-10,abstol=1e-10,maxit=1e4))
+    opt = optim(p.initial,neglogL,hessian=TRUE)#,control=list(reltol=1e-20,abstol=1e-20,maxit=1e4))
     chain[k,] = c(opt$par,opt$value)
     
     # assess convergence
@@ -630,7 +638,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         d.old = d
       }
       value.old = opt$value
-
+      
       if (converged) {
         running = FALSE
       } else if (k == n.iterations) {
@@ -640,7 +648,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
           cat('WARNING: Maximum number of iteration reached. Consider increasing n.iterations and/or providing better initial parameters.\n')
         }
       }
-
+      
       # prepare initial values for next iteration
       p.initial = opt$par
     }
@@ -661,7 +669,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   fit = list(p.best = opt$par, p.covariance = cov, lnL = function(p) -neglogL(p),
              status = list(n.iterations = k, converged = converged, chain = chain[1:k,]))
   return(fit)
-
+  
 }
 
 .add.Gaussian.errors <- function(survey) {
@@ -734,6 +742,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   }
   cat('\r')
   
+  # estimate covariance
+  ok = !is.na(rowSums(p.new))
+  survey$fit$p.covariance.jackknife = cov(p.new[ok,])*(n.data-1)
+  
   # correct estimator bias
   p.reduced = apply(p.new, 2, mean, na.rm = T)
   survey$fit$p.best.mle.bias.corrected = n.data*survey$fit$p.best-(n.data-1)*p.reduced
@@ -759,7 +771,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   jackknife = survey
   jackknife$options$p.initial = survey$fit$p.best
   
-  # run jackknifing resampling
+  # run resampling
   p.new = array(NA,c(n.jackknife,np))
   for (i in seq(n.jackknife)) {
     cat(sprintf('\rResample data to determine uncertainties: %4.2f%%',100*i/n.jackknife))

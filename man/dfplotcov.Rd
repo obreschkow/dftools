@@ -4,35 +4,83 @@
 \alias{dfplotcov}
 \title{Plot parameter covariance matrix}
 \usage{
-dfplotcov(survey, p = NULL, n.points = 500, n.standarddev = 5,
-  line.color = "blue", line.lwd = 2, point.color = "#bbbbff",
-  point.cex = 0.1, text.size.labels = 1.1, text.size.numbers = 0.8,
-  margins = c(4, 4, 0.5, 0.5), title = "")
+dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
+  expectation2 = NULL, covariance2 = NULL, chain = NULL,
+  reference = NULL, name = NULL, title = "", nstd = 10, lower = TRUE,
+  upper = FALSE, margins = c(4, 4, 0.5, 0.5), model.col = "blue",
+  model.lwd = 2, model.lty = 1, model.cex = 1, model2.col = "black",
+  model2.lwd = 2, model2.lty = 1, model2.cex = 1, chain.col = "purple",
+  chain.lwd = 2, chain.lty = 1, chain.cex = 1, chain.point.cex = 0.1,
+  chain.point.alpha = 0.2, reference.col = "black", reference.lwd = 1,
+  reference.lty = 2, reference.cex = 1, text.size.labels = 1.1,
+  text.size.numbers = 0.8)
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}
 
-\item{p}{Reference parameters to be plotted as crosses.}
+\item{expectation}{Vector of expected parameters}
 
-\item{n.points}{Number of random points drawn from the multivariate Gaussian.}
+\item{covariance}{Matrix of parameter covariances}
 
-\item{n.standarddev}{Number of standard-deviations shown to the left and right of the mean.}
+\item{expectation2}{Vector of expected parameters of an optional 2nd model}
 
-\item{line.color}{Line color}
+\item{covariance2}{Matrix of parameter covariances of an optional 2nd model}
 
-\item{line.lwd}{Line width}
+\item{chain}{Matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud.}
 
-\item{point.color}{Point color}
+\item{reference}{Reference parameters to be plotted as points and crosses.}
 
-\item{point.cex}{Point size}
+\item{name}{Optional list of parameter names}
+
+\item{title}{Optional plot title}
+
+\item{nstd}{Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.}
+
+\item{lower}{Logical flag indicating whether the lower triangle is shown.}
+
+\item{upper}{Logical flag indicating whether the lower triangle is shown.}
+
+\item{margins}{Plot margins (bottom,left,top,right)}
+
+\item{model.col}{Model color}
+
+\item{model.lwd}{Model line width}
+
+\item{model.lty}{Model line type}
+
+\item{model.cex}{Model point size}
+
+\item{model2.col}{Second model color}
+
+\item{model2.lwd}{Second model line width}
+
+\item{model2.lty}{Second model line type}
+
+\item{model2.cex}{Second model point size}
+
+\item{chain.col}{Color of point cloud}
+
+\item{chain.lwd}{Line width of point cloud ellipses}
+
+\item{chain.lty}{Line type of point cloud ellipses}
+
+\item{chain.cex}{Point size at the center of point cloud}
+
+\item{chain.point.cex}{Point size of cloud points}
+
+\item{chain.point.alpha}{Transparency of cloud points}
+
+\item{reference.col}{Color of reference point}
+
+\item{reference.lwd}{Line width of reference lines}
+
+\item{reference.lty}{Line type of reference lines}
+
+\item{reference.cex}{Size of reference point}
 
 \item{text.size.labels}{Text size of parameter names}
 
-\item{text.size.numbers}{Text size of parameter values}
-
-\item{margins}{Margins (bottom,left,top,right)}
-
-\item{title}{Title text}
+\item{text.size.numbers}{Text size of numbers}
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.

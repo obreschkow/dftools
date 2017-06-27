@@ -37,7 +37,7 @@ dfexample1 <- function(n = 1e3, seed = 1, sigma = 0.5, p.true = c(-2,10,-1.3), i
   # fit
   cat('Fit a Schechter function to the mock data:\n')
   survey = dffit(dat$x, dat$veff, dat$x.err, write.fit = T,
-                 xmin = dat$xmin, xmax = dat$xmax, p.initial = dat$p.true)
+                 xmin = dat$xmin, xmax = dat$xmax, p.initial = c(-2.07,10.07,-1.32))#dat$p)
   p.fit = survey$fit$parameters$p.optimal
 
   # make posterior masses
@@ -50,8 +50,8 @@ dfexample1 <- function(n = 1e3, seed = 1, sigma = 0.5, p.true = c(-2,10,-1.3), i
   }
   
   # plot covariances
-  dfplotcov(survey,p.true,title='Schechter parameter covariances')
-  if (include.mrp) dfplotcov(survey2,c(p.true,1),line.color='red',point.color='#ffbbbb',title='MRP parameter covariances')
+  dfplotcov(survey,reference=p.true,title='Schechter parameter covariances',model.col='blue')
+  if (include.mrp) dfplotcov(survey2,reference=c(p.true,1),model.col='red',title='MRP parameter covariances')
 
   # plot main plot
   x = seq(2,12,0.01)

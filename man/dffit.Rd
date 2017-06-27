@@ -85,7 +85,7 @@ mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE, bin
 lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)), lty=2)
 
 # show fitted parameter PDFs and covariances with true input parameters as black points
-dfplotcov(survey, p = c(-2,10,-1.3))
+dfplotcov(survey, reference = c(-2,10,-1.3))
 
 # show effective volume function
 dfplotveff(survey)
@@ -94,7 +94,7 @@ dfplotveff(survey)
 dat = dfmockdata(30, sigma=0.5)
 
 # fit a Schechter function and determine uncertainties by resampling the best fit
-survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 1e2)
+survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 30)
 
 # make posterior masses
 survey = dfposteriors(survey)
