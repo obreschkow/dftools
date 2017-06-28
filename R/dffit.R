@@ -13,8 +13,8 @@
 #' @param p.initial Initial model parameters for fitting the DF.
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
-#' @param n.uncertainties If \code{n.uncertainties} is an integer larger than one, the data is resampled \code{n.uncertainties} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.uncertainties = NULL}, no resampling is performed.
-#' @param n.mle.bias If \code{n.mle.bias} is an integer larger than one, the data is jackknife-resampled \code{n.mle.bias} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.mle.bias} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.mle.bias = NULL}, no sucm parameters are deterimed.
+#' @param n.resampling If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
+#' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
@@ -77,7 +77,7 @@
 #' dat = dfmockdata(30, sigma=0.5)
 #' 
 #' # fit a Schechter function and determine uncertainties by resampling the best fit
-#' survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 30)
+#' survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
 #' 
 #' # make posterior masses
 #' survey = dfposteriors(survey)
@@ -103,8 +103,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   p.initial = NULL,
                   n.iterations = 100,
                   correct.lss.bias = FALSE,
-                  n.uncertainties = NULL,
-                  n.mle.bias = NULL,
+                  n.resampling = NULL,
+                  n.jackknife = NULL,
                   write.fit = TRUE,
                   xmin = 4,
                   xmax = 12,
@@ -121,7 +121,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                 grid = list(xmin = xmin, xmax = xmax, dx = dx),
                 fit = list(),
                 options = list(p.initial = p.initial, n.iterations = n.iterations,
-                               n.uncertainties = n.uncertainties, n.mle.bias = n.mle.bias,
+                               n.resampling = n.resampling, n.jackknife = n.jackknife,
                                keep.eddington.bias = keep.eddington.bias, correct.lss.bias = correct.lss.bias),
                 tmp = list(selection = selection, gdf = gdf))
   
@@ -140,17 +140,17 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                      lnL = fit$lnL,
                      status = fit$status)
   survey$grid$gdf = c(survey$fit$gdf(survey$grid$x))
-  survey$grid$scd = c(survey$fit$scd(survey$grid$x))
   survey$grid$veff = c(survey$selection$veff(survey$grid$x))
+  survey$grid$scd = survey$grid$gdf*survey$grid$veff
   
   # Determine Gaussian uncertainties
   survey = .add.Gaussian.errors(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
-  if (survey$fit$status$converged & !is.null(survey$options$n.uncertainties)) {survey = .jackknife.uncertainties(survey)}
+  if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) {survey = .resample(survey)}
   
   # Resample to determine more accurate uncertainties with quantiles
-  if (survey$fit$status$converged & !is.null(survey$options$n.mle.bias)) {survey = .jackknife.mle.bias(survey)}
+  if (survey$fit$status$converged & !is.null(survey$options$n.jackknife)) {survey = .jackknife(survey)}
   
   # Write best fitting parameters
   if (write.fit) dfwrite(survey)
@@ -241,14 +241,14 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   if (is.null(survey$options$n.iterations)) stop('n.iterations must be a positive integer.')
   if (survey$options$n.iterations<1) stop('n.iterations must be a positive integer.')
   
-  # Handle n.uncertainties
-  if (!is.null(survey$options$n.uncertainties)) {
-    if (survey$options$n.uncertainties<2) stop('n.uncertainties must be 2 or larger.')
+  # Handle n.resampling
+  if (!is.null(survey$options$n.resampling)) {
+    if (survey$options$n.resampling<2) stop('n.resampling must be 2 or larger.')
   }
   
-  # Handle n.mle.bias
-  if (!is.null(survey$options$n.mle.bias)) {
-    if (survey$options$n.mle.bias<2) stop('n.mle.bias must be 2 or larger.')
+  # Handle n.jackknife
+  if (!is.null(survey$options$n.jackknife)) {
+    if (survey$options$n.jackknife<2) stop('n.jackknife must be 2 or larger.')
   }
   
   invisible(survey)
@@ -565,6 +565,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # Iterative algorithm
   running = TRUE
   k = 0
+  offset = 0
   chain = array(NA,c(n.iterations,length(p.initial)+1))
   
   # definie debiasing function
@@ -614,13 +615,14 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       phi[!is.finite(phi)] = 0
       phi = pmax(.Machine$double.xmin,phi) # also vectorizes the array
       # end safety operations
-      return(sum(phi*veff.mesh-log(phi)*rho.unbiased)*x.mesh.dv)
+      return(sum(phi*veff.mesh-log(phi)*rho.unbiased)*x.mesh.dv-offset)
+      #lambda = pmax(.Machine$double.xmin,phi*veff.mesh)
+      #return(sum(lambda-log(lambda)*rho.unbiased)*x.mesh.dv-offset)
     }
-    # NB: Full likelihood expression
-    #     sum(lambda-log(lambda*x.mesh.dv)*rho.unbiased)*x.mesh.dv+sum(log(factorial(round(rho.unbiased*x.mesh.dv))))
     
     # maximize ln(L)
     opt = optim(p.initial,neglogL,hessian=TRUE)#,control=list(reltol=1e-20,abstol=1e-20,maxit=1e4))
+    offset = opt$value+offset
     chain[k,] = c(opt$par,opt$value)
     
     # assess convergence
@@ -709,36 +711,36 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   invisible(survey)
 }
 
-.jackknife.mle.bias = function(survey) {
+.jackknife = function(survey) {
   
   # input handling
   n.data = survey$data$n.data
   np = survey$model$n.para
   if (n.data<2) stop('Jackknifing requires at least two objects.')
-  n.jackknife = min(n.data,survey$options$n.mle.bias)
-  if (survey$options$n.mle.bias<2) stop('n.mle.bias must be at least 2.')
+  n.jn = min(n.data,survey$options$n.jackknife)
+  if (survey$options$n.jackknife<2) stop('n.jackknife must be at least 2.')
   
   # set up jackknife survey
-  jackknife = survey
-  jackknife$options$p.initial = survey$fit$p.best
-  jackknife$grid$veff = survey$grid$veff*(n.data-1)/n.data
-  jackknife$data$n.data = n.data-1
+  jn = survey
+  jn$options$p.initial = survey$fit$p.best
+  jn$grid$veff = survey$grid$veff*(n.data-1)/n.data
+  jn$data$n.data = n.data-1
   
   # run jackknifing resampling
-  rejected = sample(seq(n.data),size=n.jackknife,replace=FALSE)
-  p.new = array(NA,c(n.jackknife,np))
-  for (i in seq(n.jackknife)) {
-    cat(sprintf('\rResample data to correct MLE bias: %4.2f%%',100*i/n.jackknife))
+  rejected = sample(seq(n.data),size=n.jn,replace=FALSE)
+  p.new = array(NA,c(n.jn,np))
+  for (i in seq(n.jn)) {
+    cat(sprintf('\rJackknifing %4.2f%%',100*i/n.jn))
     list = setdiff(seq(n.data),rejected[i])
-    jackknife$data$x = as.matrix(survey$data$x[list,])
+    jn$data$x = as.matrix(survey$data$x[list,])
     if (is.null(survey$data$x.err)) {
-      jackknife$data$x.err = NULL
+      jn$data$x.err = NULL
     } else if (length(dim(survey$data$x.err))==2) {
-      jackknife$data$x.err = as.matrix(survey$data$x.err[list,])
+      jn$data$x.err = as.matrix(survey$data$x.err[list,])
     } else if (length(dim(survey$data$x.err))==3) {
-      jackknife$data$x.err = as.matrix(survey$data$x.err[list,,])
+      jn$data$x.err = as.matrix(survey$data$x.err[list,,])
     }
-    p.new[i,] = .corefit(jackknife, supress.warning = TRUE)$p.best
+    p.new[i,] = .corefit(jn, supress.warning = TRUE)$p.best
   }
   cat('\r')
   
@@ -758,35 +760,36 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
 }
 
-.jackknife.uncertainties = function(survey) {
+.resample = function(survey) {
   
   # input handling
   n.data = survey$data$n.data
   np = survey$model$n.para
   if (n.data<2) stop('Jackknifing requires at least two objects.')
-  if (survey$options$n.uncertainties<2) stop('n.uncertainties must be at least 2.')
-  n.jackknife = survey$options$n.uncertainties
+  if (survey$options$n.resampling<2) stop('n.resampling must be at least 2.')
   
-  # set up jackknife survey
-  jackknife = survey
-  jackknife$options$p.initial = survey$fit$p.best
+  # set up resample survey
+  b = survey
+  b$options$p.initial = survey$fit$p.best
+  x.err.mean = mean(b$data$x.err)
   
-  # run resampling
-  p.new = array(NA,c(n.jackknife,np))
-  for (i in seq(n.jackknife)) {
-    cat(sprintf('\rResample data to determine uncertainties: %4.2f%%',100*i/n.jackknife))
+  # randomly resample and refit the DF
+  cum = cumsum(survey$grid$scd/sum(survey$grid$scd))
+  p.new = array(NA,c(survey$options$n.resampling,np))
+  for (iteration in seq(survey$options$n.resampling)) {
+    cat(sprintf('\rResampling: %4.2f%%',100*iteration/survey$options$n.resampling))
     n.new = max(2,rpois(1,n.data))
-    jackknife$data$n.data = n.new
-    list = sample(seq(n.data),size=n.new,replace=TRUE)
-    jackknife$data$x = as.matrix(survey$data$x[list,])
-    if (is.null(survey$data$x.err)) {
-      jackknife$data$x.err = NULL
-    } else if (length(dim(survey$data$x.err))==2) {
-      jackknife$data$x.err = as.matrix(survey$data$x.err[list,])
-    } else if (length(dim(survey$data$x.err))==3) {
-      jackknife$data$x.err = as.matrix(survey$data$x.err[list,,])
+    x.obs = array(NA,n.new)
+    r = runif(n.new)
+    for (i in seq(n.new)) {
+      index = which.min(abs(cum-r[i]))
+      x.obs[i] = survey$grid$x[index]
     }
-    p.new[i,] = .corefit(jackknife, supress.warning = TRUE)$p.best
+    x.obs = x.obs+rnorm(n.new)*x.err.mean
+    b$data$n.data = n.new
+    b$data$x = cbind(x.obs)
+    b$data$x.err = cbind(rep(x.err.mean,n.new))
+    p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
   }
   cat('\r')
   
@@ -802,8 +805,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   survey$fit$p.quantile.98 = p.quant[4,]
 
   # make DF quantiles
-  s = array(NA,c(n.jackknife,survey$grid$n.points))
-  for (i in seq(n.jackknife)) {
+  s = array(NA,c(survey$options$n.resampling,survey$grid$n.points))
+  for (i in seq(survey$options$n.resampling)) {
     s[i,] = survey$model$gdf(survey$grid$x,p.new[i,])
   }
   y.quant = array(NA,c(4,survey$grid$n.points))

@@ -6,7 +6,7 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  n.uncertainties = NULL, n.mle.bias = NULL, write.fit = TRUE, xmin = 4,
+  n.resampling = NULL, n.jackknife = NULL, write.fit = TRUE, xmin = 4,
   xmax = 12, dx = 0.01, keep.eddington.bias = FALSE)
 }
 \arguments{
@@ -26,9 +26,9 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
 
-\item{n.uncertainties}{If \code{n.uncertainties} is an integer larger than one, the data is resampled \code{n.uncertainties} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.uncertainties = NULL}, no resampling is performed.}
+\item{n.resampling}{If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.}
 
-\item{n.mle.bias}{If \code{n.mle.bias} is an integer larger than one, the data is jackknife-resampled \code{n.mle.bias} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.mle.bias} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.mle.bias = NULL}, no sucm parameters are deterimed.}
+\item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.}
 
 \item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
 
@@ -94,7 +94,7 @@ dfplotveff(survey)
 dat = dfmockdata(30, sigma=0.5)
 
 # fit a Schechter function and determine uncertainties by resampling the best fit
-survey = dffit(dat$x, dat$veff, dat$x.err, n.uncertainties = 30)
+survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
 
 # make posterior masses
 survey = dfposteriors(survey)
