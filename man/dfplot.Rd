@@ -11,7 +11,7 @@ dfplot(survey, xlab = "Observable x",
   show.data.histogram = FALSE, show.uncertainties = TRUE,
   uncertainty.type = NULL, show.bias.correction = FALSE, add = FALSE,
   nbins = NULL, bin.xmin = NULL, bin.xmax = NULL, col.fit = "blue",
-  lwd.fit = 2, lty.fit = 1, col.data.input = "#00000040",
+  lwd.fit = 2, lty.fit = 1, col.data.input = "purple",
   cex.data.input = 1, lwd.data.input = 1, col.data.posterior = "black",
   cex.data.posterior = 1, lwd.data.posterior = 1, col.hist = "grey",
   margins = c(5.1, 4.1, 4.1, 2.1))
