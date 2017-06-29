@@ -144,7 +144,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   survey$grid$scd = survey$grid$gdf*survey$grid$veff
   
   # Determine Gaussian uncertainties
-  survey = .add.Gaussian.errors(survey)
+  if (survey$fit$status$converged) survey = .add.Gaussian.errors(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
   if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) {survey = .resample(survey)}
@@ -559,6 +559,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     for (i in seq(n.data)) {
       d = x[i,]-t(x.mesh)
       rho.observed[[i]] = exp(-colSums(d*(invC[i,,]%*%d))/2)
+      if (sum(rho.observed[[i]])<0.01) {
+        index = which.min(abs(colSums(d)))[1]
+        rho.observed[[i]][index] = 1
+      }
     }
   }
   
@@ -602,7 +606,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     # determine veff LSS
     if (survey$options$correct.lss.bias) {
       veff.lss = .get.veff.lss(survey,p.initial)
-      veff.mesh = c(veff.lss(survey$grid$x))
+      veff.mesh = c(veff.lss(x.mesh))
     }
     
     # make unbiased source density function

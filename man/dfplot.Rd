@@ -5,9 +5,10 @@
 \title{Display fitted generative distribution function}
 \usage{
 dfplot(survey, xlab = "Observable x",
-  ylab = expression("Generative distribution function" ~ phi), xlim = NULL,
-  ylim = NULL, log = "y", xpower10 = FALSE, col = "blue", lwd = 2,
-  lty = 1, show.data.points = TRUE, show.data.histogram = FALSE,
+  ylab = expression("Generative distribution function" ~ phi),
+  ylab.histogram = "Counts", xlim = NULL, ylim = NULL, log = "y",
+  xpower10 = FALSE, col = "blue", lwd = 2, lty = 1,
+  show.data.points = TRUE, show.data.histogram = FALSE,
   show.uncertainties = TRUE, uncertainty.type = NULL,
   show.bias.correction = FALSE, add = FALSE, nbins = NULL,
   bin.xmin = NULL, bin.xmax = NULL, bin.type = 1, col.data = "black",
@@ -20,6 +21,8 @@ dfplot(survey, xlab = "Observable x",
 \item{xlab}{x-axis label}
 
 \item{ylab}{y-axis label}
+
+\item{ylab.histogram}{y-axis label for histogram}
 
 \item{xlim}{2-element vector with x-axis plotting limits}
 

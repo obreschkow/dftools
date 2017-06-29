@@ -10,6 +10,7 @@
 #' @param survey List produced by \code{\link{dffit}}
 #' @param xlab x-axis label
 #' @param ylab y-axis label
+#' @param ylab.histogram y-axis label for histogram
 #' @param xlim 2-element vector with x-axis plotting limits
 #' @param ylim 2-element vector with y-axis plotting limits
 #' @param log String specifying the log-axes as in \code{\link{plot}}.
@@ -44,6 +45,7 @@
 dfplot <- function(survey,
                    xlab = 'Observable x',
                    ylab = expression('Generative distribution function'~phi),
+                   ylab.histogram = 'Counts',
                    xlim = NULL,
                    ylim = NULL,
                    log = 'y',
@@ -192,7 +194,7 @@ dfplot <- function(survey,
     par(xpd=TRUE)
     lines(xlim,rep(ymax,2))
     par(xpd=FALSE)
-    magicaxis::magaxis(side=2,ylab='Counts',lwd=NA,labels=FALSE,lwd.ticks=NA)
+    magicaxis::magaxis(side=2,ylab=ylab.histogram,lwd=NA,labels=FALSE,lwd.ticks=NA)
     magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=NA)
     .plotSubEnd()
   }

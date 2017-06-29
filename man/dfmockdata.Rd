@@ -4,16 +4,17 @@
 \alias{dfmockdata}
 \title{Generate mock data}
 \usage{
-dfmockdata(n = NULL, seed = 1, f = function(x, r) pracma::erf((1 - 100 *
-  r/sqrt(10^x)) * 20) * 0.5 + 0.5, dVdr = function(r) 0.02439568 * r^2,
+dfmockdata(n = NULL, seed = 1, veff = NULL, f = NULL, dVdr = NULL,
   gdf = function(x, p) dfmodel(x, p, type = "Schechter"), p = c(-2, 10,
-  -1.3), g = function(r) 1, sigma = 0, rmin = 0, rmax = 100, xmin = 2,
+  -1.3), g = NULL, sigma = 0, rmin = 0, rmax = 100, xmin = 2,
   xmax = 13, shot.noise = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}
 
 \item{seed}{An interger number used as seed for the random number generator. If you wish to generate different realizations, with the same survey specifications, it suffices to vary this number.}
+
+\item{veff}{is the effective volume function \code{veff(x)}, definied as the cosmic volume in which sources of log-mass \code{x} can be detected by the survey. If this function is specified, \code{f}, \code{dVdr} and \code{g} cannot be specified.}
 
 \item{f}{is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey.}
 
@@ -25,7 +26,7 @@ dfmockdata(n = NULL, seed = 1, f = function(x, r) pracma::erf((1 - 100 *
 
 \item{g}{function of distance \code{r} descibing the number-density variation of galaxies due to cosmic large-scale structure (LSS). Explicitly, \code{g(r)>0} is the number-density at \code{r}, relative to the number-density without LSS. Values between 0 and 1 are underdense regions, values larger than 1 are overdense regions. In the absence of LSS, \code{g(r)=1}. Note that g is automatically rescaled, such that its average value in the survey volume is 1.}
 
-\item{sigma}{Gaussian observing errors in log-mass \code{x}, which are automatically added to the survey.}
+\item{sigma}{Gaussian observing errors in log-mass \code{x}, which are automatically added to the survey. \code{sigma} can either be a scalar or a vector of \code{n} elements.}
 
 \item{rmin, rmax}{Minimum and maximum distance of the survey. Outside these limits the function \code{f(x,r)} will automatically be assumed to be 0.}
 
@@ -57,32 +58,32 @@ This function produces a mock survey with observed log-masses \code{x.obs} with 
 \examples{
 # draw 1000 galaxies with mass errors of 0.3 dex from a Schechter function
 # with parameters (-2,10,-1.3) and a preset selection function
-dat = dfmockdata(sigma = 0.3)
+mock = dfmockdata(sigma = 0.3)
 
 # plot the distance-log(mass) relation of observed data, true data, and approximate survey limit
-plot(dat$r,dat$x,col='blue')
-points(dat$r,dat$x.true,pch=20)
+plot(mock$r,mock$x,col='blue')
+points(mock$r,mock$x.true,pch=20)
 x = seq(5,11,0.01)
 lines(1e-2*sqrt(10^x),x,col='red')
 
 # These data can then be used to fit a MF in several ways. For instance,
 # assuming that the effective volume function Veff(x) is known:
-selection = dat$veff
-survey = dffit(dat$x, selection, dat$x.err)
+selection = mock$veff
+survey = dffit(mock$x, selection, mock$x.err)
 
 # or assuming that Veff is known only on a galaxy-by-galaxy basis
-selection = dat$veff.values
-dffit(dat$x, selection, dat$x.err)
+selection = mock$veff.values
+dffit(mock$x, selection, mock$x.err)
 
 # or assuming that Veff is known on a galaxy-by-balaxy basis, but approximate analytically
 # outside the range of observed galaxy masses
-selection = list(dat$veff.values, dat$veff)
-dffit(dat$x, selection, dat$x.err)
+selection = list(mock$veff.values, mock$veff)
+dffit(mock$x, selection, mock$x.err)
 
 # or assuming that the full selection function f(x,r) and the observing volume
 # derivative dVdr(r) are known
-selection = list(dat$f, dat$dVdr, dat$rmin,dat$rmax)
-dffit(dat$x, selection, dat$x.err)
+selection = list(mock$f, mock$dVdr, mock$rmin,mock$rmax)
+dffit(mock$x, selection, mock$x.err)
 
 }
 \seealso{
