@@ -15,11 +15,9 @@
 #' @param ylim 2-element vector with y-axis plotting limits
 #' @param log String specifying the log-axes as in \code{\link{plot}}.
 #' @param xpower10 If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.
-#' @param col Color of fit (see \code{\link{plot}})
-#' @param lwd Line width of fit (see \code{\link{plot}})
-#' @param lty Line type of fit (see \code{\link{plot}})
-#' @param show.data.points If \code{TRUE}, binned data points are displayed.
-#' @param show.data.histogram If \code{TRUE}, a histogram of source counts is displayed in a bottom panel.
+#' @param show.input.data If \code{TRUE}, the input data is shown in bins. Each bin values is simply the sum 1/Veff(x) of the observed x-values in this bin.
+#' @param show.posterior.data If \code{TRUE}, the posterior data, constructucted from all the individual posterior PDFs of the observed data, are snown in bins. Note that posterior data only exists of the fitted data is uncertain, e.g. if the argument \code{x.err} in \code{\link{dffit}} was non-zero.
+#' @param show.data.histogram If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.
 #' @param show.uncertainties If \code{TRUE}, uncertainties are displayed around the best fit model.
 #' @param uncertainty.type \code{1}: plot Gaussian 1-sigma uncertanties propagated from the Hessian matrix of the likelihood. \code{2}: plot 68 percentile region (from 16 to 84 percent). \code{3} plot 68 (16 to 84) and 95 (2 to 98) percentile regions.
 #' @param show.bias.correction If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.
@@ -27,10 +25,15 @@
 #' @param nbins Number of bins to be plotted; must be larger than 0. Choose \code{nbins=NULL} (default) to determine the number of bins automatically.
 #' @param bin.xmin Left edge of first bin
 #' @param bin.xmax Right edge of last bin
-#' @param bin.type Integer value defining the type of data to be plotted in bins. 1 = plot raw input masses with Veff values evaluted at these masses, subject to Eddington bias. 2 = plot random masses sampled from posterior mass PDF with corresponding values Veff. 3 = posterior source counts using the full posterior mass PDFs of all sources.
-#' @param col.data Color of binned data
-#' @param cex.data Size of binned data
-#' @param lwd.data Line width of binned data
+#' @param col.fit Color of fit (see \code{\link{plot}})
+#' @param lwd.fit Line width of fit (see \code{\link{plot}})
+#' @param lty.fit Line type of fit (see \code{\link{plot}})
+#' @param col.data.input Color of binned input data
+#' @param cex.data.input Size of binned input data
+#' @param lwd.data.input Line width of binned input data
+#' @param col.data.posterior Color of binned posterior data
+#' @param cex.data.posterior Size of binned posterior data
+#' @param lwd.data.posterior Line width of binned posterior data
 #' @param col.hist Color of source count histogram
 #' @param margins Margins (bottom,left,top,right)
 #' 
@@ -50,10 +53,8 @@ dfplot <- function(survey,
                    ylim = NULL,
                    log = 'y',
                    xpower10 = FALSE,
-                   col = 'blue',
-                   lwd = 2,
-                   lty = 1,
-                   show.data.points = TRUE,
+                   show.input.data = TRUE,
+                   show.posterior.data = TRUE,
                    show.data.histogram = FALSE,
                    show.uncertainties = TRUE,
                    uncertainty.type = NULL,
@@ -62,16 +63,21 @@ dfplot <- function(survey,
                    nbins = NULL,
                    bin.xmin = NULL,
                    bin.xmax = NULL,
-                   bin.type = 1,
-                   col.data = 'black',
-                   cex.data = 1,
-                   lwd.data = 1,
+                   col.fit = 'blue',
+                   lwd.fit = 2,
+                   lty.fit = 1,
+                   col.data.input = '#00000040',
+                   cex.data.input = 1,
+                   lwd.data.input = 1,
+                   col.data.posterior = 'black',
+                   cex.data.posterior = 1,
+                   lwd.data.posterior = 1,
                    col.hist = 'grey',
                    margins=c(5.1,4.1,4.1,2.1)) {
   
-  r = col2rgb(col)[1]/255
-  g = col2rgb(col)[2]/255
-  b = col2rgb(col)[3]/255
+  r = col2rgb(col.fit)[1]/255
+  g = col2rgb(col.fit)[2]/255
+  b = col2rgb(col.fit)[3]/255
   
   n.data = dim(survey$data$x)[1]
   n.dim = dim(survey$data$x)[2]
@@ -95,7 +101,7 @@ dfplot <- function(survey,
   }
   
   # bin data
-  survey = .bin.data(survey,nbins,bin.type,bin.xmin,bin.xmax)
+  survey = .bin.data(survey,nbins,bin.xmin,bin.xmax)
   
   # open plot
   if (!add) {
@@ -145,31 +151,56 @@ dfplot <- function(survey,
   if (show.bias.correction & survey$fit$status$converged) {
     if (length(survey$fit$parameters$p.optimal.bias.corrected)==0) stop('Bias corrected MLE parameters not available. Use bias.correction in dffit.')
     lines(x,survey$input$distribution.function$phi(survey$grid$x[survey$grid$gdf>0],
-                                               survey$fit$parameters$p.optimal.bias.corrected),col=col,lwd=lwd,lty=lty)
+                                               survey$fit$parameters$p.optimal.bias.corrected),col=col.fit,lwd=lwd.fit,lty=lty.fit)
   } else {
-    lines(x,survey$grid$gdf[survey$grid$gdf>0],col=col,lwd=lwd,lty=lty)
+    lines(x,survey$grid$gdf[survey$grid$gdf>0],col=col.fit,lwd=lwd.fit,lty=lty.fit)
   }
 
-  # plot binned data points
-  if (show.data.points) {
-    list = survey$bin$gdf>0
-    pm = 0.05
-    f.16 = qpois(0.16,survey$bin$count)/survey$bin$count
-    f.84 = qpois(0.84,survey$bin$count)/survey$bin$count
-    upper = f.16<pm
-    f.16 = pmax(f.16,pm)
-    if (xpower10) {
-      points(10^survey$bin$xmean[list],survey$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
-      segments(10^survey$bin$xmean[list],survey$bin$gdf[list]*f.16[list],10^survey$bin$xmean[list],survey$bin$gdf[list]*f.84[list],col=col.data,lwd=lwd.data)
-      points(10^survey$bin$xmean[upper],survey$bin$gdf[upper]*pm,pch=25,cex=cex.data*0.7,col=col.data,bg=col.data)
-      segments(10^(survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),survey$bin$gdf[list],
-               10^(survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),survey$bin$gdf[list],col=col.data,lwd=lwd.data)
+  # plot binned input data points
+  bin = list()
+  for (mode in seq(2)) {
+    if (mode==1) {
+      show = show.input.data
+      if (show) {
+        bin$count = survey$bin$count.input
+        bin$gdf = survey$bin$gdf.input
+        bin$xmean = survey$bin$xmean.input
+        col.data = col.data.input
+        cex.data = cex.data.input
+        lwd.data = lwd.data.input
+      }
     } else {
-      points(survey$bin$xmean[list],survey$bin$gdf[list],pch=20,col=col.data,cex=cex.data)
-      segments(survey$bin$xmean[list],survey$bin$gdf[list]*f.16[list],survey$bin$xmean[list],survey$bin$gdf[list]*f.84[list],col=col.data,lwd=lwd.data)
-      points(survey$bin$xmean[upper],survey$bin$gdf[upper]*pm,pch=25,cex=cex.data,bg=col.data)
-      segments((survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),survey$bin$gdf[list],
-               (survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),survey$bin$gdf[list],col=col.data,lwd=lwd.data)
+      show = show.posterior.data & !is.null(survey$data$x.err)
+      if (show) {
+        bin$count = survey$bin$count.posterior
+        bin$gdf = survey$bin$gdf.posterior
+        bin$xmean = survey$bin$xmean.posterior
+        col.data = col.data.posterior
+        cex.data = cex.data.posterior
+        lwd.data = lwd.data.posterior
+      }
+    }
+    if (show) {
+      list = bin$gdf>0
+      pm = 0.05
+      f.16 = qpois(0.16,bin$count)/bin$count
+      f.84 = qpois(0.84,bin$count)/bin$count
+      upper = f.16<pm
+      f.16 = pmax(f.16,pm)
+      if (xpower10) {
+        points(10^bin$xmean[list],bin$gdf[list],pch=20,col=col.data,cex=cex.data)
+        segments(10^bin$xmean[list],bin$gdf[list]*f.16[list],10^bin$xmean[list],bin$gdf[list]*f.84[list],col=col.data,lwd=lwd.data)
+        points(10^bin$xmean[upper],bin$gdf[upper]*pm,pch=25,cex=cex.data*0.7,col=col.data,bg=col.data)
+        #stop('sdf')
+        segments(10^(survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),bin$gdf[list],
+                 10^(survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),bin$gdf[list],col=col.data,lwd=lwd.data)
+      } else {
+        points(bin$xmean[list],bin$gdf[list],pch=20,col=col.data,cex=cex.data)
+        segments(bin$xmean[list],bin$gdf[list]*f.16[list],bin$xmean[list],bin$gdf[list]*f.84[list],col=col.data,lwd=lwd.data)
+        points(bin$xmean[upper],bin$gdf[upper]*pm,pch=25,cex=cex.data,bg=col.data)
+        segments((survey$bin$xmin+seq(0,survey$bin$n-1)[list]*survey$bin$dx),bin$gdf[list],
+                 (survey$bin$xmin+seq(1,survey$bin$n)[list]*survey$bin$dx),bin$gdf[list],col=col.data,lwd=lwd.data)
+      }
     }
   }
   
@@ -216,13 +247,12 @@ dfplot <- function(survey,
   invisible(survey)
 }
 
-.bin.data = function(survey,nbins,bin.type,bin.xmin,bin.xmax) {
+.bin.data = function(survey,nbins,bin.xmin,bin.xmax) {
   
   # initialize
   x = survey$data$x
-  bin = list(type = bin.type)
+  bin = list()
   n.data = length(x)
-  if (bin.type>1 & is.null(survey$posterior)) stop('To display bin of bin.type>1, first make posterior PDFs by calling dfposteriors().')
   
   # determine number of bins
   if (is.null(nbins)) {
@@ -247,37 +277,30 @@ dfplot <- function(survey,
   bin$dx = wx/bin$n
   bin$xcenter = bin$xmin+(seq(bin$n)-0.5)*bin$dx
   
-  # fill data into bins
-  if (bin$type <= 2) {
-    
-    if (bin$type == 1) {
-      xval = x
-    } else {
-      xval = survey$posterior$x.rand
+  # fill input data into bins
+  v = survey$selection$veff(x)
+  bin$gdf.input = bin$count.input = bin$xmean.input = array(0,bin$n)
+  for (i in seq(n.data)) {
+    k = floor((x[i]-bin$xmin)/wx*0.99999999*bin$n)+1
+    if (k>=1 & k<=bin$n) {
+      bin$gdf.input[k] = bin$gdf.input[k]+1/bin$dx/v[i]
+      bin$count.input[k] = bin$count.input[k]+1
+      bin$xmean.input[k] = bin$xmean.input[k]+x[i]
     }
-    v = survey$selection$veff(xval)
-    bin$gdf = bin$count = bin$xmean = array(0,bin$n)
-    for (i in seq(n.data)) {
-      k = floor((xval[i]-bin$xmin)/wx*0.99999999*bin$n)+1
-      if (k>=1 & k<=bin$n) {
-        bin$gdf[k] = bin$gdf[k]+1/bin$dx/v[i]
-        bin$count[k] = bin$count[k]+1
-        bin$xmean[k] = bin$xmean[k]+xval[i]
-      }
-    }
-    bin$xmean = bin$xmean/pmax(1,bin$count)
+  }
+  bin$xmean.input = bin$xmean.input/pmax(1,bin$count.input)
     
-  } else if (bin$type == 3) {
-    
+  # fill posterior data into bins
+  if (!is.null(survey$data$x.err)) {
+    bin$gdf.posterior = bin$count.posterior = bin$xmean.posterior = array(0,bin$n)
     xg = survey$grid$x
     dx = xg[2]-xg[1]
     for (k in seq(bin$n)) {
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
-      bin$xmean[k] = sum(survey$grid$scd.posterior[list]*xg[list])/sum(survey$grid$scd.posterior[list])
-      bin$count[k] = mean(survey$grid$effective.counts[list])
-      bin$gdf[k] = sum(survey$grid$scd.posterior[list]/survey$grid$veff[list])/sum(list)
+      bin$xmean.posterior[k] = sum(survey$grid$scd.posterior[list]*xg[list])/sum(survey$grid$scd.posterior[list])
+      bin$count.posterior[k] = mean(survey$grid$effective.counts[list])
+      bin$gdf.posterior[k] = sum(survey$grid$scd.posterior[list]/survey$grid$veff[list])/sum(list)
     }
-    
   }
   
   # make historgram counts

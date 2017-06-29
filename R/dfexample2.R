@@ -42,10 +42,6 @@ dfexample2 = function(seed = 1, sigma = 0.3) {
   cat('Fit mock data while correcting for observational errors and LSS:\n')
   survey3 = dffit(dat$x,selection,dat$x.err,r=dat$r,correct.lss.bias = TRUE)
   
-  # evaluate posteriors
-  survey2 = dfposteriors(survey2)
-  survey3 = dfposteriors(survey3)
-  
   # plot effective volumes
   x = seq(6,12,0.01)
   dfplotveff(survey3,xlab='log10(M/Msun)',legend=FALSE)
@@ -54,9 +50,9 @@ dfexample2 = function(seed = 1, sigma = 0.3) {
          lwd=c(2,2,2),col=c('blue','black','red'),bty='n')
   
   # plot MFs
-  mfplot(survey1,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col='orange',col.data='orange')
-  mfplot(survey2,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col='red',col.data='red',bin.type=3,add=TRUE)
-  mfplot(survey3,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col='blue',col.data='blue',bin.type=3,add=TRUE)
+  mfplot(survey1,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='orange',col.data.input='orange')
+  mfplot(survey2,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='red',col.data.posterior='red',show.input.data=FALSE,add=TRUE)
+  mfplot(survey3,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='blue',col.data.posterior='blue',show.input.data=FALSE,add=TRUE)
   lines(10^x,survey1$model$gdf(x,p),lty=2)
   legend('topright',c('Fit without bias corrections','Correcting observational errors',
                       'Correcting observational errors + LSS','True input model'),

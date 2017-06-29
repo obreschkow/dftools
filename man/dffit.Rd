@@ -7,7 +7,8 @@
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
   n.resampling = NULL, n.jackknife = NULL, write.fit = TRUE, xmin = 4,
-  xmax = 12, dx = 0.01, keep.eddington.bias = FALSE)
+  xmax = 12, dx = 0.01, keep.eddington.bias = FALSE,
+  make.posteriors = TRUE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
@@ -35,6 +36,8 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 \item{xmin, xmax, dx}{are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.}
 
 \item{keep.eddington.bias}{If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.}
+
+\item{make.posteriors}{If \code{TRUE}, posterior probability distributions of the observed data are evaluated from the best fitting model.}
 }
 \value{
 \code{dffit} returns a structured list, which can be interpreted by other functions, such as \code{\link{dfwrite}}, \code{\link{dfplot}}, \code{\link{dfplotcov}}, \code{\link{dfplotveff}}. The list contains the following sublists:
@@ -43,6 +46,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 \item{model}{is a list describing the generative distribution function used to model. The main entry of this list is the function \code{gdf(xval,p)} (often written as phi(x|theta) in the literature).}
 \item{grid}{is a list of arrays representing a grid in the observables used for numerical integrations. Most importantly, the N-by-P array \code{x} contains the grid points, the N-element vector \code{gdf} gives the corresponding values of the fitted generative distribution function and the N-element vector \code{scd} representing the source count density given no measurement errors.}
 \item{fit}{is a list describing the fitted generative distribution function. It contains the array \code{p.best} giving the most likely model parameters, as well as their Gaussian uncertainties \code{p.sigma} and covariance matrix \code{p.covariance}. The list also contains the function \code{gdf(x)}, which is the model function evaluated at the parameters \code{p.best}; and the function \code{scd(x)=gdf(x)*veff(x)} representing the expected source count density.}
+\item{posteriors}{is a list of arrays specifying the posterior PDFs of the observed data, given the best-fitting model. The posterior PDFs are given via their means, standard deviations and modes, as well as a random value drawn from the posterior PDFs. This random value can be used to plot unbiased distribution functions, such as mass functions.}
 \item{options}{is a list of various optional input arguments of \code{dffit}.}
 }
 \description{
@@ -74,15 +78,12 @@ survey = dffit(dat$x, dat$veff)
 
 # plot fit and add a black dashed line showing the input MF
 mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
-lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)),lty=2)
+lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 
-# now account for measurement errors in fit and produce posterior data
+# do the same again, while accountting for measurement errors in the fit
 survey = dffit(dat$x, dat$veff, dat$x.err)
-survey = dfposteriors(survey)
-
-# plot fitted mass function with posterior data and input function as dashed line
-mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE, bin.type = 3)
-lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)), lty=2)
+mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
+lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 
 # show fitted parameter PDFs and covariances with true input parameters as black points
 dfplotcov(survey, reference = c(-2,10,-1.3))
@@ -96,17 +97,14 @@ dat = dfmockdata(30, sigma=0.5)
 # fit a Schechter function and determine uncertainties by resampling the best fit
 survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
 
-# make posterior masses
-survey = dfposteriors(survey)
-
 # show best fit with 68\% Gaussian uncertainties from Hessian and posterior data
-mfplot(survey, show.data.histogram = TRUE, bin.type = 3, uncertainty.type = 1)
+mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
 
 # show best fit with 68\% and 95\% resampling uncertainties and posterior data
-mfplot(survey, show.data.histogram = TRUE, bin.type = 3, uncertainty.type = 3)
+mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 
 # add input model as dashed lines
-lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)), lty=2)
+lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 
 }
 \author{

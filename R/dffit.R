@@ -18,6 +18,7 @@
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
+#' @param make.posteriors If \code{TRUE}, posterior probability distributions of the observed data are evaluated from the best fitting model.
 #' 
 #' @details
 #' For a detailed description of the method, please refer to the peer-reviewed publication by Obreschkow et al. 2017 (in prep.).
@@ -28,6 +29,7 @@
 #' \item{model}{is a list describing the generative distribution function used to model. The main entry of this list is the function \code{gdf(xval,p)} (often written as phi(x|theta) in the literature).}
 #' \item{grid}{is a list of arrays representing a grid in the observables used for numerical integrations. Most importantly, the N-by-P array \code{x} contains the grid points, the N-element vector \code{gdf} gives the corresponding values of the fitted generative distribution function and the N-element vector \code{scd} representing the source count density given no measurement errors.}
 #' \item{fit}{is a list describing the fitted generative distribution function. It contains the array \code{p.best} giving the most likely model parameters, as well as their Gaussian uncertainties \code{p.sigma} and covariance matrix \code{p.covariance}. The list also contains the function \code{gdf(x)}, which is the model function evaluated at the parameters \code{p.best}; and the function \code{scd(x)=gdf(x)*veff(x)} representing the expected source count density.}
+#' \item{posteriors}{is a list of arrays specifying the posterior PDFs of the observed data, given the best-fitting model. The posterior PDFs are given via their means, standard deviations and modes, as well as a random value drawn from the posterior PDFs. This random value can be used to plot unbiased distribution functions, such as mass functions.}
 #' \item{options}{is a list of various optional input arguments of \code{dffit}.}
 #'
 #' @keywords schechter function
@@ -57,15 +59,12 @@
 #' 
 #' # plot fit and add a black dashed line showing the input MF
 #' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
-#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)),lty=2)
+#' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 #' 
-#' # now account for measurement errors in fit and produce posterior data
+#' # do the same again, while accountting for measurement errors in the fit
 #' survey = dffit(dat$x, dat$veff, dat$x.err)
-#' survey = dfposteriors(survey)
-#' 
-#' # plot fitted mass function with posterior data and input function as dashed line
-#' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE, bin.type = 3)
-#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)), lty=2)
+#' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
+#' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 #'
 #' # show fitted parameter PDFs and covariances with true input parameters as black points
 #' dfplotcov(survey, reference = c(-2,10,-1.3))
@@ -79,17 +78,14 @@
 #' # fit a Schechter function and determine uncertainties by resampling the best fit
 #' survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
 #' 
-#' # make posterior masses
-#' survey = dfposteriors(survey)
-#' 
 #' # show best fit with 68% Gaussian uncertainties from Hessian and posterior data
-#' mfplot(survey, show.data.histogram = TRUE, bin.type = 3, uncertainty.type = 1)
+#' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
 #' 
 #' # show best fit with 68% and 95% resampling uncertainties and posterior data
-#' mfplot(survey, show.data.histogram = TRUE, bin.type = 3, uncertainty.type = 3)
+#' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 #' 
 #' # add input model as dashed lines
-#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,c(-2,10,-1.3)), lty=2)
+#' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 #'
 #' @author Danail Obreschkow
 #'
@@ -109,7 +105,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   xmin = 4,
                   xmax = 12,
                   dx = 0.01,
-                  keep.eddington.bias = FALSE) {
+                  keep.eddington.bias = FALSE,
+                  make.posteriors = TRUE) {
 
   # Set timer
   tStart = Sys.time()
@@ -147,10 +144,13 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   if (survey$fit$status$converged) survey = .add.Gaussian.errors(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
-  if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) {survey = .resample(survey)}
+  if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) survey = .resample(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
-  if (survey$fit$status$converged & !is.null(survey$options$n.jackknife)) {survey = .jackknife(survey)}
+  if (survey$fit$status$converged & !is.null(survey$options$n.jackknife)) survey = .jackknife(survey)
+  
+  # Make posteriors
+  if (survey$fit$status$converged & !is.null(survey$data$x.err) & make.posteriors) survey = .dfposteriors(survey)
   
   # Write best fitting parameters
   if (write.fit) dfwrite(survey)
@@ -825,4 +825,79 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   invisible(survey)
 
+}
+
+.dfposteriors <- function(survey) {
+  
+  if (is.null(survey$data$x.err)) stop('Posterior data PDFs can only be produced if the data is uncertain, i.e. if x.err is given.')
+  
+  # Input handling
+  x = survey$data$x
+  x.err = survey$data$x.err
+  x.mesh = survey$grid$x
+  x.mesh.dv = survey$grid$dvolume
+  n.data = dim(x)[1]
+  n.dim = dim(x)[2]
+  
+  # Make prior
+  prior = survey$grid$scd
+  prior[!is.finite(prior)] = 0
+  prior = pmax(0,prior)
+  
+  # Make inverse covariances
+  invC = array(NA,c(n.data,n.dim,n.dim))
+  if (length(dim(x.err))==2) {
+    if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim)) {
+      stop('Unknown format for x.err in .corefit.')
+    }
+    if (n.dim==1) {
+      for (i in seq(n.data)) {
+        invC[i,,] = 1/x.err[i,]^2
+      }
+    } else {
+      for (i in seq(n.data)) {
+        invC[i,,] = diag(1/x.err[i,]^2)
+      }
+    }
+  } else if (length(dim(x.err))==3) {
+    if (n.dim==1) stop('Unknown format for x.err in .corefit.')
+    if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim & dim(x.err)[3]==n.dim)) {
+      stop('Unknown format for x.err in .corefit.')
+    }
+    for (i in seq(n.data)) {
+      invC[i,,] = solve(x.err[i,,])
+    }
+  } else {
+    stop('Unknown format for x.err in .corefit.')
+  }
+  
+  # produce posteriors
+  m0 = m1 = md = array(NA,c(n.data,n.dim))
+  rho.unbiased = rho.unbiased.sqr = array(0,dim(x.mesh))
+  for (i in seq(n.data)) {
+    
+    # make prior PDF for data point i
+    d = x[i,]-t(x.mesh)
+    rho.observed = exp(-colSums(d*(invC[i,,]%*%d))/2)
+    
+    # make posterior PDF for data point i
+    rho.corrected = rho.observed*prior
+    s = sum(rho.corrected)
+    rho.unbiased = rho.unbiased+rho.corrected/(s*x.mesh.dv)
+    rho.unbiased.sqr = rho.unbiased.sqr+(rho.corrected/(s*x.mesh.dv))^2
+    
+    # mean, standard deviation and mode
+    for (j in seq(n.dim)) {
+      m0[i,j] = sum(x.mesh[,j]*rho.corrected)/s
+      m1[i,j] = sqrt(sum((x.mesh[,j]-m0[i,j])^2*rho.corrected)/s)
+    }
+    md[i,] = x.mesh[which.max(rho.corrected),]
+  }
+  
+  survey$posterior = list(x.mean = m0, x.stdev = m1, x.mode = md, x.random = m0+m1*array(rnorm(n.data*n.dim),c(n.data,n.dim)))
+  survey$grid$scd.posterior = rho.unbiased
+  survey$grid$effective.counts = rho.unbiased^2/rho.unbiased.sqr # this equation gives the effective number of sources per bin
+  survey$grid$effective.counts[!is.finite(survey$grid$effective.counts)] = 0
+  
+  invisible(survey)
 }

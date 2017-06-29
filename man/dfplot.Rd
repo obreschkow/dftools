@@ -7,13 +7,14 @@
 dfplot(survey, xlab = "Observable x",
   ylab = expression("Generative distribution function" ~ phi),
   ylab.histogram = "Counts", xlim = NULL, ylim = NULL, log = "y",
-  xpower10 = FALSE, col = "blue", lwd = 2, lty = 1,
-  show.data.points = TRUE, show.data.histogram = FALSE,
-  show.uncertainties = TRUE, uncertainty.type = NULL,
-  show.bias.correction = FALSE, add = FALSE, nbins = NULL,
-  bin.xmin = NULL, bin.xmax = NULL, bin.type = 1, col.data = "black",
-  cex.data = 1, lwd.data = 1, col.hist = "grey", margins = c(5.1, 4.1,
-  4.1, 2.1))
+  xpower10 = FALSE, show.input.data = TRUE, show.posterior.data = TRUE,
+  show.data.histogram = FALSE, show.uncertainties = TRUE,
+  uncertainty.type = NULL, show.bias.correction = FALSE, add = FALSE,
+  nbins = NULL, bin.xmin = NULL, bin.xmax = NULL, col.fit = "blue",
+  lwd.fit = 2, lty.fit = 1, col.data.input = "#00000040",
+  cex.data.input = 1, lwd.data.input = 1, col.data.posterior = "black",
+  cex.data.posterior = 1, lwd.data.posterior = 1, col.hist = "grey",
+  margins = c(5.1, 4.1, 4.1, 2.1))
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}
@@ -32,15 +33,11 @@ dfplot(survey, xlab = "Observable x",
 
 \item{xpower10}{If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.}
 
-\item{col}{Color of fit (see \code{\link{plot}})}
+\item{show.input.data}{If \code{TRUE}, the input data is shown in bins. Each bin values is simply the sum 1/Veff(x) of the observed x-values in this bin.}
 
-\item{lwd}{Line width of fit (see \code{\link{plot}})}
+\item{show.posterior.data}{If \code{TRUE}, the posterior data, constructucted from all the individual posterior PDFs of the observed data, are snown in bins. Note that posterior data only exists of the fitted data is uncertain, e.g. if the argument \code{x.err} in \code{\link{dffit}} was non-zero.}
 
-\item{lty}{Line type of fit (see \code{\link{plot}})}
-
-\item{show.data.points}{If \code{TRUE}, binned data points are displayed.}
-
-\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts is displayed in a bottom panel.}
+\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.}
 
 \item{show.uncertainties}{If \code{TRUE}, uncertainties are displayed around the best fit model.}
 
@@ -56,13 +53,23 @@ dfplot(survey, xlab = "Observable x",
 
 \item{bin.xmax}{Right edge of last bin}
 
-\item{bin.type}{Integer value defining the type of data to be plotted in bins. 1 = plot raw input masses with Veff values evaluted at these masses, subject to Eddington bias. 2 = plot random masses sampled from posterior mass PDF with corresponding values Veff. 3 = posterior source counts using the full posterior mass PDFs of all sources.}
+\item{col.fit}{Color of fit (see \code{\link{plot}})}
 
-\item{col.data}{Color of binned data}
+\item{lwd.fit}{Line width of fit (see \code{\link{plot}})}
 
-\item{cex.data}{Size of binned data}
+\item{lty.fit}{Line type of fit (see \code{\link{plot}})}
 
-\item{lwd.data}{Line width of binned data}
+\item{col.data.input}{Color of binned input data}
+
+\item{cex.data.input}{Size of binned input data}
+
+\item{lwd.data.input}{Line width of binned input data}
+
+\item{col.data.posterior}{Color of binned posterior data}
+
+\item{cex.data.posterior}{Size of binned posterior data}
+
+\item{lwd.data.posterior}{Line width of binned posterior data}
 
 \item{col.hist}{Color of source count histogram}
 
