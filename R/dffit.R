@@ -199,12 +199,12 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         stop('x.err cannot have more than three dimensions.')
       }
       if (min(survey$data$x.err)<=0) stop('All values of x.err must be positive.')
-      if (length(survey$data$x)==2) {
+      if (length(dim(survey$data$x.err))==2) {
         for (i in seq(survey$data$n.dim)) {
           if (any(survey$data$x[,i]-survey$data$x.err[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
           if (any(survey$data$x[,i]+survey$data$x.err[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
         }
-      } else if (length(survey$data$x)==3) {
+      } else if (length(dim(survey$data$x.err))==3) {
         for (i in seq(survey$data$n.dim)) {
           if (any(survey$data$x[,i]-sqrt(survey$data$x.err[,i,i])<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
           if (any(survey$data$x[,i]+sqrt(survey$data$x.err[,i,i])>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
@@ -729,6 +729,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   jn$options$p.initial = survey$fit$p.best
   jn$grid$veff = survey$grid$veff*(n.data-1)/n.data
   jn$data$n.data = n.data-1
+  jn$options$n.iterations = 1
   
   # run jackknifing resampling
   rejected = sample(seq(n.data),size=n.jn,replace=FALSE)
@@ -750,7 +751,27 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # estimate covariance
   ok = !is.na(rowSums(p.new))
-  survey$fit$p.covariance.jackknife = cov(p.new[ok,])*(n.data-1)
+  cov.jn = cov(p.new[ok,])*(n.data-1)
+  
+  # compute poisson covariance
+  jn = survey
+  jn$options$p.initial = survey$fit$p.best
+  jn$options$n.iterations = 1
+  q = c(0.16,0.5,0.84)
+  p.pois = array(NA,c(3,np))
+  for (i in seq(3)) {
+    n.new = qpois(q[i],n.data) 
+    jn$grid$veff = survey$grid$veff*n.new/n.data
+    p.pois[i,] = .corefit(jn, supress.warning = TRUE)$p.best
+  }
+  cov.pois = cov(p.pois)
+  
+  # estimate combined covariance
+  if (is.na(cov.pois[1,1])) {
+    survey$fit$p.covariance.jackknife = cov.jn
+  } else {
+    survey$fit$p.covariance.jackknife = cov.jn+cov.pois
+  }
   
   # correct estimator bias
   p.reduced = apply(p.new, 2, mean, na.rm = T)

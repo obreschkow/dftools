@@ -163,11 +163,11 @@ dfplotcov <- function(survey = NULL,
         pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.68,draw=F)
         xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
         yplot = (pts[,2]-ymin)/ylength
-        lines(xplot+xoffset,yplot+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd)
+        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd)
         pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.95,draw=F)
         xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
         yplot = (pts[,2]-ymin)/ylength
-        lines(xplot+xoffset,yplot+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd/2)
+        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd/2)
         points((xmu-xmin)/xlength+xoffset,(ymu-ymin)/ylength+yoffset,pch=20,col=chain.col,cex=chain.cex)
       }
       
@@ -188,11 +188,11 @@ dfplotcov <- function(survey = NULL,
       pts = ellipse::ellipse(C,centre=E,level=0.68,draw=F)
       xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
       yplot = (pts[,2]-ymin)/ylength
-      lines(xplot+xoffset,yplot+yoffset,col=model.col,lty=model.lty,lwd=model.lwd)
+      lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd)
       pts = ellipse::ellipse(C,centre=E,level=0.95,draw=F)
       xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
       yplot = (pts[,2]-ymin)/ylength
-      lines(xplot+xoffset,yplot+yoffset,col=model.col,lty=model.lty,lwd=model.lwd/2)
+      lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd/2)
       points(0.5+xoffset,0.5+yoffset,pch=20,col=model.col,cex=model.cex)
 
       # reference (lines and point)
