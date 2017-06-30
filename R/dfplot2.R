@@ -94,10 +94,11 @@ dfplot2 <- function(survey,
   xrange = c(survey$grid$xmin[1],survey$grid$xmax[1])
   yrange = c(survey$grid$xmin[2],survey$grid$xmax[2])
   log = ''
+  if (xpower10) log = paste0(log,'x')
+  if (ypower10) log = paste0(log,'y')
   if (is.null(xlim)) {
     if (xpower10) {
       xlim = 10^xrange
-      log = paste0(log,'x')
     } else {
       xlim = xrange
     }
@@ -105,7 +106,6 @@ dfplot2 <- function(survey,
   if (is.null(ylim)) {
     if (ypower10) {
       ylim = 10^yrange
-      log = paste0(log,'y')
     } else {
       ylim = yrange
     }

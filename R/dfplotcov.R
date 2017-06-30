@@ -154,12 +154,22 @@ dfplotcov <- function(survey = NULL,
       
       # chain (ellipse and point)
       if (!is.null(chain)) {
-        xmu = mean(chain[,i]) 
-        ymu = mean(chain[,j])
-        cxy = array(NA,c(2,2))
-        cxy[1,1] = cov(chain[,i],chain[,i])
-        cxy[1,2] = cxy[2,1] = cov(chain[,i],chain[,j])
-        cxy[2,2] = cov(chain[,j],chain[,j])
+        
+        # 2-sigma clipping
+        list = seq(dim(chain)[1])
+        factor = 1
+        for (interation in seq(5)) {
+          xmu = mean(chain[list,i]) 
+          ymu = mean(chain[list,j])
+          cxy = cov(chain[list,c(i,j)],chain[list,c(i,j)])*factor
+          q = cbind(chain[,i]-xmu,chain[,j]-ymu)
+          A = solve(cxy)
+          sqrdistance = rowSums((q%*%A)*q)
+          list = sqrdistance<4
+          factor = 1.45
+        }
+        # end clipping
+        
         pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.68,draw=F)
         xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
         yplot = (pts[,2]-ymin)/ylength

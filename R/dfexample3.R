@@ -103,7 +103,7 @@ dfexample3 = function(seed = 3, p.true = c(-2,10,-1.3,2/3,7,0.3),
   dfplotcov(survey, reference = p.true)
   
   # plot DF
-  dfplot2(survey, p.ref = p.true, xlab = 'log10(Mass/Msun)', ylab = 'log10(j/[kpc km/s])')
+  dfplot2(survey, p.ref = p.true, xlab = 'Mass/Msun', ylab = 'j/[kpc km/s]')
   legend(1.3e8,8e3,c('Mock observations','Observational uncertainties','Input distribution function (DF)','Fitted DF','Source count model from fitted DF'),
          pch=c(20,NA,NA,15,NA),col=c('black','grey','red','blue','purple'),lty=c(NA,1,2,2,1),bty='n')
   

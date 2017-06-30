@@ -132,10 +132,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   fit = .corefit(survey)
   if (survey$options$correct.lss.bias) survey$selection$veff = .get.veff.lss(survey,fit$p.best)
   survey$fit = list(p.best = fit$p.best, p.sigma = sqrt(diag(fit$p.covariance)), p.covariance = fit$p.covariance,
-                     gdf = function(x) survey$model$gdf(x,fit$p.best),
-                     scd = function(x) survey$model$gdf(x,fit$p.best)*survey$selection$veff(x),
-                     lnL = fit$lnL,
-                     status = fit$status)
+                    gdf = function(x) survey$model$gdf(x,fit$p.best),
+                    scd = function(x) survey$model$gdf(x,fit$p.best)*survey$selection$veff(x),
+                    lnL = fit$lnL,
+                    ln.evidence = fit$ln.evidence,
+                    status = fit$status)
   survey$grid$gdf = c(survey$fit$gdf(survey$grid$x))
   survey$grid$veff = c(survey$selection$veff(survey$grid$x))
   survey$grid$scd = survey$grid$gdf*survey$grid$veff
@@ -667,13 +668,15 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     if (!supress.warning) {
       cat('WARNING: Fit ill-conditionned. Consider providing better initial parameters or selection arguments.\n')
     }
+    ln.evidence = FALSE
   } else {
     cov = solve(opt$hessian)
+    ln.evidence = 0.5*log(det(cov))-offset
   }
   
   # finalize output
   fit = list(p.best = opt$par, p.covariance = cov, lnL = function(p) -neglogL(p),
-             status = list(n.iterations = k, converged = converged, chain = chain[1:k,]))
+             status = list(n.iterations = k, converged = converged, chain = chain[1:k,]), ln.evidence = ln.evidence)
   return(fit)
   
 }
