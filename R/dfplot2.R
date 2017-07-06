@@ -93,11 +93,9 @@ dfplot2 <- function(survey,
                 seq(survey$grid$xmin[2],survey$grid$xmax[2],survey$grid$dx[2]))
   xrange = c(survey$grid$xmin[1],survey$grid$xmax[1])
   yrange = c(survey$grid$xmin[2],survey$grid$xmax[2])
-  log = ''
   if (is.null(xlim)) {
     if (xpower10) {
       xlim = 10^xrange
-      log = paste0(log,'x')
     } else {
       xlim = xrange
     }
@@ -105,12 +103,13 @@ dfplot2 <- function(survey,
   if (is.null(ylim)) {
     if (ypower10) {
       ylim = 10^yrange
-      log = paste0(log,'y')
     } else {
       ylim = yrange
     }
   }
+  log = ''
   if (xpower10) {
+    log = paste0(log,'x')
     x = 10^survey$data$x[,1]
     cx = 10^x.grid[[1]]
   } else {
@@ -118,6 +117,7 @@ dfplot2 <- function(survey,
     cx = x.grid[[1]]
   }
   if (ypower10) {
+    log = paste0(log,'y')
     y = 10^survey$data$x[,2]
     cy = 10^x.grid[[2]]
   } else {

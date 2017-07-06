@@ -207,14 +207,16 @@ dfplotcov <- function(survey = NULL,
         ymu = mean(chain2[,j])
         cxy = cov(chain2[,c(i,j)],chain2[,c(i,j)])
         
-        pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.68,draw=F)
-        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-ymin)/ylength
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain2.col,lty=chain2.lty,lwd=chain2.lwd)
-        pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.95,draw=F)
-        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-ymin)/ylength
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain2.col,lty=chain2.lty,lwd=chain2.lwd/2)
+        if (!is.null(chain2.lwd)) {
+          pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.68,draw=F)
+          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-ymin)/ylength
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain2.col,lty=chain2.lty,lwd=chain2.lwd)
+          pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.95,draw=F)
+          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-ymin)/ylength
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain2.col,lty=chain2.lty,lwd=chain2.lwd/2)
+        }
         points((xmu-xmin)/xlength+xoffset,(ymu-ymin)/ylength+yoffset,pch=20,col=chain2.col,cex=chain2.cex)
       }
       
@@ -225,20 +227,22 @@ dfplotcov <- function(survey = NULL,
         ymu = mean(chain[,j])
         cxy = cov(chain[,c(i,j)],chain[,c(i,j)])
         
-        pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.68,draw=F)
-        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-ymin)/ylength
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd)
-        pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.95,draw=F)
-        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-ymin)/ylength
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd/2)
+        if (!is.null(chain.lwd)) {
+          pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.68,draw=F)
+          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-ymin)/ylength
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd)
+          pts = ellipse::ellipse(cxy,centre=c(xmu,ymu),level=0.95,draw=F)
+          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-ymin)/ylength
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=chain.col,lty=chain.lty,lwd=chain.lwd/2)
+        }
         points((xmu-xmin)/xlength+xoffset,(ymu-ymin)/ylength+yoffset,pch=20,col=chain.col,cex=chain.cex)
       }
       
       # model2 (ellipse and point)
       if (!is.null(expectation2)) {
-        if (!is.null(covariance2)) {
+        if (!is.null(covariance2) & !is.null(model2.lwd)) {
           pts = ellipse::ellipse(covariance2[c(i,j),c(i,j)],centre=expectation2[c(i,j)],level=0.68,draw=F)
           xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
           yplot = (pts[,2]-ymin)/ylength
@@ -252,14 +256,16 @@ dfplotcov <- function(survey = NULL,
       }
 
       # model (ellipse and point)
-      pts = ellipse::ellipse(C,centre=E,level=0.68,draw=F)
-      xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-      yplot = (pts[,2]-ymin)/ylength
-      lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd)
-      pts = ellipse::ellipse(C,centre=E,level=0.95,draw=F)
-      xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-      yplot = (pts[,2]-ymin)/ylength
-      lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd/2)
+      if (!is.null(model.lwd)) {
+        pts = ellipse::ellipse(C,centre=E,level=0.68,draw=F)
+        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+        yplot = (pts[,2]-ymin)/ylength
+        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd)
+        pts = ellipse::ellipse(C,centre=E,level=0.95,draw=F)
+        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+        yplot = (pts[,2]-ymin)/ylength
+        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd/2)
+      }
       points(0.5+xoffset,0.5+yoffset,pch=20,col=model.col,cex=model.cex)
 
       # model (cross)
