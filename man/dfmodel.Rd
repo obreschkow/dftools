@@ -11,7 +11,7 @@ dfmodel(x = NULL, p = NULL, output = "density", type = "Schechter")
 
 \item{p}{Parameters of the analytical function. See argument \code{type}.}
 
-\item{output}{Specifies what the function is doing. \code{'density'} evaluates the MF at \code{x}, \code{'npara'} returns the number of parameters of the analytical function, \code{'initial'} returns a vector of typical parameters \code{p} that are used as default initial values when fitting the MF, \code{'equation'} returns a string with the equation of the MF.}
+\item{output}{Specifies what the function is doing. \code{'density'} evaluates the MF at \code{x}, \code{'npara'} returns the number of parameters of the analytical function, \code{'initial'} returns a vector of typical parameters \code{p} that are used as default initial values when fitting the MF, \code{'equation'} returns a string with the equation of the MF, \code{'function'} returns a function of \code{x} and \code{p}.}
 
 \item{type}{Kind of MF: \code{'Schechter'} for Schechter function; \code{'PL'} for a simple power law; \code{'MRP'} for a Murray-Robotham-Power function, a 4-parameter extension of the Schechter function.}
 }

@@ -7,14 +7,16 @@
 dfplot(survey, xlab = "Observable x",
   ylab = expression("Generative distribution function" ~ phi),
   ylab.histogram = "Counts", xlim = NULL, ylim = NULL, log = "y",
-  xpower10 = FALSE, show.input.data = TRUE, show.posterior.data = TRUE,
-  show.data.histogram = FALSE, show.uncertainties = TRUE,
-  uncertainty.type = NULL, show.bias.correction = FALSE, add = FALSE,
-  nbins = NULL, bin.xmin = NULL, bin.xmax = NULL, col.fit = "blue",
-  lwd.fit = 2, lty.fit = 1, col.data.input = "purple",
-  cex.data.input = 1, lwd.data.input = 1, col.data.posterior = "black",
+  p = NULL, veff = NULL, xpower10 = FALSE, show.input.data = TRUE,
+  show.posterior.data = TRUE, show.data.histogram = FALSE,
+  show.uncertainties = TRUE, uncertainty.type = NULL,
+  show.bias.correction = FALSE, add = FALSE, nbins = NULL,
+  bin.xmin = NULL, bin.xmax = NULL, col.fit = "blue", lwd.fit = 2,
+  lty.fit = 1, col.data.input = "purple", cex.data.input = 1,
+  lwd.data.input = 1, col.data.posterior = "black",
   cex.data.posterior = 1, lwd.data.posterior = 1, col.hist = "grey",
-  margins = c(5.1, 4.1, 4.1, 2.1))
+  col.ref = "black", lwd.ref = 1, lty.ref = 2, col.veff = "#666666",
+  lwd.veff = 1.5, lty.veff = 5, margins = c(5.1, 4.1, 4.1, 2.1))
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}
@@ -30,6 +32,10 @@ dfplot(survey, xlab = "Observable x",
 \item{ylim}{2-element vector with y-axis plotting limits}
 
 \item{log}{String specifying the log-axes as in \code{\link{plot}}.}
+
+\item{p}{Parameters of a reference distribution function do be over-plotted to the fitted function. Choose \code{NULL} to avoid plotting a reference function.}
+
+\item{veff}{Function of x to be plotted over the histogram, if \code{show.data.histogram = TRUE}.}
 
 \item{xpower10}{If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.}
 
@@ -72,6 +78,18 @@ dfplot(survey, xlab = "Observable x",
 \item{lwd.data.posterior}{Line width of binned posterior data}
 
 \item{col.hist}{Color of source count histogram}
+
+\item{col.ref}{Color of reference distribution function}
+
+\item{lwd.ref}{Line width of reference distribution function}
+
+\item{lty.ref}{Line type of reference distribution function}
+
+\item{col.veff}{Color of reference function \code{veff}}
+
+\item{lwd.veff}{Line width of reference function \code{veff}}
+
+\item{lty.veff}{Line type of reference function \code{veff}}
 
 \item{margins}{Margins (bottom,left,top,right)}
 }

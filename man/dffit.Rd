@@ -6,9 +6,9 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  n.resampling = NULL, n.jackknife = NULL, write.fit = TRUE, xmin = 4,
-  xmax = 12, dx = 0.01, keep.eddington.bias = FALSE,
-  make.posteriors = TRUE)
+  n.resampling = NULL, n.jackknife = NULL, xmin = 4, xmax = 12,
+  dx = 0.01, keep.eddington.bias = FALSE, write.fit = TRUE,
+  add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
 \arguments{
 \item{x}{Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.}
@@ -31,11 +31,13 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.}
 
-\item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
-
 \item{xmin, xmax, dx}{are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.}
 
 \item{keep.eddington.bias}{If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.}
+
+\item{write.fit}{If \code{TRUE}, the best-fitting parameters are displayed in the console.}
+
+\item{add.gaussian.errors}{If \code{TRUE}, Gaussian estimates of the 16 and 84 percentiles of the fitted generative distribution function (gdf) are included in the sublist \code{grid} of the output.}
 
 \item{make.posteriors}{If \code{TRUE}, posterior probability distributions of the observed data are evaluated from the best fitting model.}
 }

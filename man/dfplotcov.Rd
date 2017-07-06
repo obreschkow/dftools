@@ -5,14 +5,17 @@
 \title{Plot parameter covariance matrix}
 \usage{
 dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
-  expectation2 = NULL, covariance2 = NULL, chain = NULL,
-  reference = NULL, name = NULL, title = "", nstd = 10, lower = TRUE,
-  upper = FALSE, margins = c(4, 4, 0.5, 0.5), model.col = "blue",
-  model.lwd = 2, model.lty = 1, model.cex = 1, model2.col = "black",
-  model2.lwd = 2, model2.lty = 1, model2.cex = 1, chain.col = "purple",
-  chain.lwd = 2, chain.lty = 1, chain.cex = 1, chain.point.cex = 0.1,
-  chain.point.alpha = 0.2, reference.col = "black", reference.lwd = 1,
-  reference.lty = 2, reference.cex = 1, text.size.labels = 1.1,
+  expectation2 = NULL, covariance2 = NULL, chain = NULL, chain2 = NULL,
+  name = NULL, title = "", nstd = 10, lower = TRUE, upper = FALSE,
+  margins = c(4, 4, 0.5, 0.5), model.col = "blue", model.lwd = 2,
+  model.lty = 1, model.cex = 1, model.cross.lty = NULL,
+  model2.col = "black", model2.lwd = 2, model2.lty = 1, model2.cex = 1,
+  model2.cross.lty = NULL, chain.col = "purple", chain.lwd = 2,
+  chain.lty = 1, chain.cex = 1, chain.point.cex = 0.1,
+  chain.point.alpha = 0.2, chain.cross.lty = NULL, chain2.col = "red",
+  chain2.lwd = 2, chain2.lty = 1, chain2.cex = 1,
+  chain2.point.cex = 0.1, chain2.point.alpha = 0.2,
+  chain2.cross.lty = NULL, text.size.labels = 1.1,
   text.size.numbers = 0.8)
 }
 \arguments{
@@ -28,7 +31,7 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{chain}{Matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud.}
 
-\item{reference}{Reference parameters to be plotted as points and crosses.}
+\item{chain2}{Matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud.}
 
 \item{name}{Optional list of parameter names}
 
@@ -50,6 +53,8 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{model.cex}{Model point size}
 
+\item{model.cross.lty}{Model line type for vertical & horizontal cross-lines}
+
 \item{model2.col}{Second model color}
 
 \item{model2.lwd}{Second model line width}
@@ -57,6 +62,8 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 \item{model2.lty}{Second model line type}
 
 \item{model2.cex}{Second model point size}
+
+\item{model2.cross.lty}{Second model line type for vertical & horizontal cross-lines}
 
 \item{chain.col}{Color of point cloud}
 
@@ -70,17 +77,25 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{chain.point.alpha}{Transparency of cloud points}
 
-\item{reference.col}{Color of reference point}
+\item{chain.cross.lty}{Point cloud line type for vertical & horizontal cross-lines}
 
-\item{reference.lwd}{Line width of reference lines}
+\item{chain2.col}{Color of 2nd point cloud}
 
-\item{reference.lty}{Line type of reference lines}
+\item{chain2.lwd}{Line width of 2nd point cloud ellipses}
 
-\item{reference.cex}{Size of reference point}
+\item{chain2.lty}{Line type of 2nd point cloud ellipses}
+
+\item{chain2.cex}{Point size at the center of 2nd point cloud}
+
+\item{chain2.point.cex}{Point size of 2nd cloud points}
+
+\item{chain2.point.alpha}{Transparency of 2nd cloud points}
 
 \item{text.size.labels}{Text size of parameter names}
 
 \item{text.size.numbers}{Text size of numbers}
+
+\item{chain.cross.lty}{2nd point cloud line type for vertical & horizontal cross-lines}
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.

@@ -46,20 +46,21 @@ dfexample2 = function(seed = 1, sigma = 0.3) {
   x = seq(6,12,0.01)
   dfplotveff(survey3,xlab='log10(M/Msun)',legend=FALSE)
   lines(x,dat$veff.lss(x),type='l',ylim=c(0,6),col='black')
-  legend('bottomright',c('Recovered model from data used for fit','Input model with LSS used to generate the data','Input model without without LSS'),
+  legend('bottomright',c('Recovered model from data used for fit','Input model with LSS used to generate the data','Input model without LSS'),
          lwd=c(2,2,2),col=c('blue','black','red'),bty='n')
   
   # plot MFs
-  mfplot(survey1,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='orange',col.data.input='orange')
-  mfplot(survey2,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='red',col.data.posterior='red',show.input.data=FALSE,add=TRUE)
-  mfplot(survey3,xlim=c(1e7,2e11),ylim=c(2e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='blue',col.data.posterior='blue',show.input.data=FALSE,add=TRUE)
+  mfplot(survey1,xlim=c(1e7,2e11),ylim=c(1e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='orange',col.data.input='orange',show.data.histogram = FALSE)
+  mfplot(survey2,xlim=c(1e7,2e11),ylim=c(1e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='red',col.data.posterior='red',show.input.data=FALSE,add=TRUE,show.data.histogram = FALSE)
+  mfplot(survey3,xlim=c(1e7,2e11),ylim=c(1e-5,5),nbins=20,bin.xmin=7,bin.xmax=11,col.fit='blue',col.data.posterior='blue',show.input.data=FALSE,add=TRUE,show.data.histogram = FALSE)
   lines(10^x,survey1$model$gdf(x,p),lty=2)
-  legend('topright',c('Fit without bias corrections','Correcting observational errors',
-                      'Correcting observational errors + LSS','True input model'),
-         lwd=c(2,2,2,1),lty=c(1,1,1,2),col=c('orange','red','blue','black'),bty='n')
+  legend('bottomleft',c('Uncorrected fit','Including mass errors',
+                      'Including errors + LSS','Input model'),
+         lwd=c(2,2,2,1),lty=c(1,1,1,2),col=c('orange','red','blue','black'),bty='n',
+         cex = 0.9)
   x = 8; y = 2e-3
   points(10^x,y,pch=20)
   segments(10^(x-sigma),y,10^(x+sigma),y,lwd=1)
-  text(10^x,y*1.6,expression('Assumed observing error'~sigma),cex=0.8)
+  text(10^x,y*1.6,expression('Observing error'~sigma),cex=0.8)
   
 }

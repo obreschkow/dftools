@@ -20,6 +20,7 @@ dfplotveff <- function(survey,
                        ylab = expression('Effective volume'),
                        legend = TRUE) {
   
+  blue = '#7777ff'
   n.dim = dim(survey$data$x)[2]
   if (n.dim!=1) {
     if (n.dim==2) {
@@ -38,7 +39,7 @@ dfplotveff <- function(survey,
        xaxs='i', yaxs='i', xaxt='n', yaxt='n',
        xlab = '', ylab = '', log='y')
   xr = sort(c(survey$grid$x,x))
-  lines(xr,pmax(ylim[1]/2,survey$selection$veff(xr)),col='blue',lwd=3)
+  lines(xr,pmax(ylim[1]/2,survey$selection$veff(xr)),col=blue,lwd=3)
   if (!is.null(survey$selection$veff.input.function)) {
     lines(xr,survey$selection$veff.input.function(xr))
     list[2] = TRUE
@@ -48,7 +49,7 @@ dfplotveff <- function(survey,
     list[3] = TRUE
   }
   if (survey$options$correct.lss.bias) {
-    lines(xr,survey$selection$veff.no.lss(xr),col='red')
+    lines(xr,survey$selection$veff.no.lss(xr),col='black',lty=2)
     list[4] = TRUE
   }
   magicaxis::magaxis(side=1,xlab=xlab,lwd=NA,lwd.ticks=1)
@@ -58,6 +59,6 @@ dfplotveff <- function(survey,
   if (legend) {
     legend('bottomright',c('Model used for DF fit (veff)','Input function (veff.input.function)',
                            'Input values (veff.input.values)','Model without LSS (veff.no.lss)')[list],
-           lwd=c(3,1,NA,1)[list],pch=c(NA,NA,20,NA)[list],col=c('blue','black','black','red')[list],bty='n')
+           lwd=c(3,1,NA,1)[list],lty=c(1,1,NA,2),pch=c(NA,NA,20,NA)[list],col=c(blue,'black','black','black')[list],bty='n')
   }
 }

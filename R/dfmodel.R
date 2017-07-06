@@ -4,7 +4,7 @@
 #'
 #' @param x Vector of log-masses, typically \code{x = log10(M/Msun)}.
 #' @param p Parameters of the analytical function. See argument \code{type}.
-#' @param output Specifies what the function is doing. \code{'density'} evaluates the MF at \code{x}, \code{'npara'} returns the number of parameters of the analytical function, \code{'initial'} returns a vector of typical parameters \code{p} that are used as default initial values when fitting the MF, \code{'equation'} returns a string with the equation of the MF.
+#' @param output Specifies what the function is doing. \code{'density'} evaluates the MF at \code{x}, \code{'npara'} returns the number of parameters of the analytical function, \code{'initial'} returns a vector of typical parameters \code{p} that are used as default initial values when fitting the MF, \code{'equation'} returns a string with the equation of the MF, \code{'function'} returns a function of \code{x} and \code{p}.
 #' @param type Kind of MF: \code{'Schechter'} for Schechter function; \code{'PL'} for a simple power law; \code{'MRP'} for a Murray-Robotham-Power function, a 4-parameter extension of the Schechter function.
 #'
 #' @examples
@@ -26,6 +26,10 @@ dfmodel <- function(x = NULL, p = NULL, output = 'density', type = 'Schechter') 
   if (output=='npara') {
     return(length(dfmodel(output = 'initial')))
   }
+  
+  if (output=='function') {
+    return(function(x,p) dfmodel(x,p,type=type))
+  }
 
   # call model function
   if (type == 'Schechter') {
@@ -46,7 +50,7 @@ dfmodel <- function(x = NULL, p = NULL, output = 'density', type = 'Schechter') 
     mu = 10^(x-p[2])
     return(log(10)*10^p[1]*mu^(p[3]+1)*exp(-mu))
   } else if (output == 'initial') {
-    return(c(-2,10,-1))
+    return(c(-2,10,-1.3))
   } else if (output == 'equation') {
     return('dN/(dVdx) = log(10)*10^p[1]*mu^(p[3]+1)*exp(-mu), where mu=10^(x-p[2])')
   }
@@ -54,10 +58,10 @@ dfmodel <- function(x = NULL, p = NULL, output = 'density', type = 'Schechter') 
 
 .dfmodel.MRP = function(x = NULL, p = NULL, output = 'density') {
   # returns the (unlogged) space density of galaxies of mass 10^x
-  # p[1]=normalization, p[2]=Hs, p[3]=alpha, p[4]=beta
+  # p[1]=normalization, p[2]=Ms, p[3]=alpha, p[4]=beta
   if (output == 'density') {
     mu = 10^(x-p[2])
-    return(log(10)*10^p[1]*p[4]*mu^(p[3]+1)*exp(-mu^p[4]))
+    return(log(10)*10^p[1]*p[4]*mu^(p[3]+1)*exp(-mu^abs(p[4])))
   } else if (output == 'initial') {
     return(c(-2,10,-1,1))
   } else if (output == 'equation') {

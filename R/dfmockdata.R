@@ -94,6 +94,10 @@ dfmockdata <- function(n = NULL,
   }
   lss = !is.null(g)
   if (lss & is.null(f)) stop('If g(r) is given, the selection must be specified by f(x,r) and dVdr(r), not by veff(x).')
+  test = try(gdf(xmin,p),silent=TRUE)
+  if (!is.finite(test)) {
+    stop('gdf cannot be evaluated for parameter-vector p.\n')
+  }
   
   # evaluate effective volume and source count density without LSS
   if (is.null(veff)) {

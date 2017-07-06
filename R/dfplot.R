@@ -14,6 +14,8 @@
 #' @param xlim 2-element vector with x-axis plotting limits
 #' @param ylim 2-element vector with y-axis plotting limits
 #' @param log String specifying the log-axes as in \code{\link{plot}}.
+#' @param p Parameters of a reference distribution function do be over-plotted to the fitted function. Choose \code{NULL} to avoid plotting a reference function.
+#' @param veff Function of x to be plotted over the histogram, if \code{show.data.histogram = TRUE}.
 #' @param xpower10 If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.
 #' @param show.input.data If \code{TRUE}, the input data is shown in bins. Each bin values is simply the sum 1/Veff(x) of the observed x-values in this bin.
 #' @param show.posterior.data If \code{TRUE}, the posterior data, constructucted from all the individual posterior PDFs of the observed data, are snown in bins. Note that posterior data only exists of the fitted data is uncertain, e.g. if the argument \code{x.err} in \code{\link{dffit}} was non-zero.
@@ -35,6 +37,12 @@
 #' @param cex.data.posterior Size of binned posterior data
 #' @param lwd.data.posterior Line width of binned posterior data
 #' @param col.hist Color of source count histogram
+#' @param col.ref Color of reference distribution function
+#' @param lwd.ref Line width of reference distribution function
+#' @param lty.ref Line type of reference distribution function
+#' @param col.veff Color of reference function \code{veff}
+#' @param lwd.veff Line width of reference function \code{veff}
+#' @param lty.veff Line type of reference function \code{veff}
 #' @param margins Margins (bottom,left,top,right)
 #' 
 #' @return Returns the input list \code{survey} with the additional sub-list \code{survey$bin} that contains the binned data.
@@ -52,6 +60,8 @@ dfplot <- function(survey,
                    xlim = NULL,
                    ylim = NULL,
                    log = 'y',
+                   p = NULL,
+                   veff = NULL,
                    xpower10 = FALSE,
                    show.input.data = TRUE,
                    show.posterior.data = TRUE,
@@ -73,6 +83,12 @@ dfplot <- function(survey,
                    cex.data.posterior = 1,
                    lwd.data.posterior = 1,
                    col.hist = 'grey',
+                   col.ref = 'black',
+                   lwd.ref = 1,
+                   lty.ref = 2,
+                   col.veff = '#666666',
+                   lwd.veff = 1.5,
+                   lty.veff = 5,
                    margins=c(5.1,4.1,4.1,2.1)) {
   
   r = col2rgb(col.fit)[1]/255
@@ -97,7 +113,7 @@ dfplot <- function(survey,
     if (xpower10) xlim = 10^xlim
   }
   if (is.null(ylim)) {
-    ylim = max(survey$fit$gdf(survey$data$x))*c(1e-4,10)
+    ylim = max(survey$fit$gdf(survey$data$x))*c(2e-4,2)
   }
   
   # bin data
@@ -144,7 +160,7 @@ dfplot <- function(survey,
       polygon(poly.x[list],poly.y.68[list],col=rgb(r,g,b,0.25),border=NA)
     }
   }
-
+  
   # plot central fit
   x = survey$grid$x[survey$grid$gdf>0]
   if (xpower10) x = 10^x
@@ -154,6 +170,15 @@ dfplot <- function(survey,
                                                survey$fit$parameters$p.optimal.bias.corrected),col=col.fit,lwd=lwd.fit,lty=lty.fit)
   } else {
     lines(x,survey$grid$gdf[survey$grid$gdf>0],col=col.fit,lwd=lwd.fit,lty=lty.fit)
+  }
+  
+  # plot reference distribution function
+  if (!is.null(p)) {
+    if (xpower10) {
+      lines(x,survey$model$gdf(log10(x),p),col=col.ref,lwd=lwd.ref,lty=lty.ref)
+    } else {
+      lines(x,survey$model$gdf(x,p),col=col.ref,lwd=lwd.ref,lty=lty.ref)
+    }
   }
 
   # plot binned input data points
@@ -170,7 +195,7 @@ dfplot <- function(survey,
         lwd.data = lwd.data.input
       }
     } else {
-      show = show.posterior.data & !is.null(survey$data$x.err)
+      show = show.posterior.data & !is.null(survey$data$x.err) & !is.null(survey$grid$effective.counts)
       if (show) {
         bin$count = survey$bin$count.posterior
         bin$gdf = survey$bin$gdf.posterior
@@ -222,6 +247,16 @@ dfplot <- function(survey,
     xhist = c(xlim[1],xbin,xlim[2])
     yhist = c(0,0,rep(survey$bin$histogram,each=2),0,0)
     polygon(xhist,yhist,col=col.hist,border = NA)
+    if (!is.null(veff)) {
+      if (xpower10) {
+        x = seq(log10(xlim[1]),log10(xlim[2]),length=200)
+      } else {
+        x = seq(xlim[1],xlim[2],length=200)
+      }
+      y = veff(x)
+      if (xpower10) {x = 10^x}
+      lines(x,y/max(y)*ymax*0.85,col=col.veff,lwd=lwd.veff,lty=lty.veff)
+    }
     par(xpd=TRUE)
     lines(xlim,rep(ymax,2))
     par(xpd=FALSE)
@@ -291,7 +326,7 @@ dfplot <- function(survey,
   bin$xmean.input = bin$xmean.input/pmax(1,bin$count.input)
     
   # fill posterior data into bins
-  if (!is.null(survey$data$x.err)) {
+  if (!is.null(survey$data$x.err) & !is.null(survey$grid$effective.counts)) {
     bin$gdf.posterior = bin$count.posterior = bin$xmean.posterior = array(0,bin$n)
     xg = survey$grid$x
     dx = xg[2]-xg[1]

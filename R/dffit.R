@@ -15,9 +15,10 @@
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param n.resampling If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
 #' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
-#' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
+#' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
+#' @param add.gaussian.errors If \code{TRUE}, Gaussian estimates of the 16 and 84 percentiles of the fitted generative distribution function (gdf) are included in the sublist \code{grid} of the output.
 #' @param make.posteriors If \code{TRUE}, posterior probability distributions of the observed data are evaluated from the best fitting model.
 #' 
 #' @details
@@ -101,11 +102,12 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   correct.lss.bias = FALSE,
                   n.resampling = NULL,
                   n.jackknife = NULL,
-                  write.fit = TRUE,
                   xmin = 4,
                   xmax = 12,
                   dx = 0.01,
                   keep.eddington.bias = FALSE,
+                  write.fit = TRUE,
+                  add.gaussian.errors = TRUE,
                   make.posteriors = TRUE) {
 
   # Set timer
@@ -142,7 +144,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   survey$grid$scd = survey$grid$gdf*survey$grid$veff
   
   # Determine Gaussian uncertainties
-  if (survey$fit$status$converged) survey = .add.Gaussian.errors(survey)
+  if (survey$fit$status$converged & add.gaussian.errors) survey = .add.Gaussian.errors(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
   if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) survey = .resample(survey)
@@ -625,10 +627,18 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       #return(sum(lambda-log(lambda)*rho.unbiased)*x.mesh.dv-offset)
     }
     
+    # test
+    test = try(sum(gdf(x.mesh,p.initial)),silent=TRUE)
+    if (!is.finite(test)) stop('cannot evaluate GDF at initial parameters provided')
+    test = try(neglogL(p.initial),silent=TRUE)
+    if (!is.finite(test)) stop('cannot evaluate likelihood at initial parameters provided')
+    
     # maximize ln(L)
-    opt = optim(p.initial,neglogL,hessian=TRUE)#,control=list(reltol=1e-20,abstol=1e-20,maxit=1e4))
+    opt = optim(p.initial,neglogL,hessian=TRUE,control=list(maxit=1e5)) # reltol=1e-20,abstol=1e-20,
     offset = opt$value+offset
     chain[k,] = c(opt$par,opt$value)
+    print(opt$convergence)
+    print(opt$counts)
     
     # assess convergence
     if ((is.null(x.err) & !survey$options$correct.lss.bias)| keep.eddington.bias) { # exist without extra iterations
