@@ -11,7 +11,7 @@
 #' @param show.data.histogram If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.
 #' @param ... All other arguments of \code{\link{dfplot}}.
 #'
-#' @seealso As an example run \code{\link{dfexample1}}. See examples in \code{\link{dffit}}.
+#' @seealso As an example run \code{dfexample(1)}. See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

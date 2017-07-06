@@ -91,11 +91,11 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{chain2.point.alpha}{Transparency of 2nd cloud points}
 
+\item{chain2.cross.lty}{2nd point cloud line type for vertical & horizontal cross-lines}
+
 \item{text.size.labels}{Text size of parameter names}
 
 \item{text.size.numbers}{Text size of numbers}
-
-\item{chain.cross.lty}{2nd point cloud line type for vertical & horizontal cross-lines}
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.

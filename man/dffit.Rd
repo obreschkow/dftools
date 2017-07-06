@@ -58,15 +58,9 @@ This function fits galaxy mass function (MF) to a discrete set of \code{N} galax
 For a detailed description of the method, please refer to the peer-reviewed publication by Obreschkow et al. 2017 (in prep.).
 }
 \examples{
-# For a quick overview of some key functionalities of dftools, run the following three examples:
-# 1) Example of fitting a mass function under strong Eddington bias
-dfexample1()
-
-# 2) Example of fitting a mass function in the presence of large-scale structure
-dfexample2()
-
-# 3) Example of fitting a 2D distribution function:
-dfexample3()
+# For a quick overview of some key functionalities run
+dfexample()
+# with varying integer arguments.
 
 # The following examples introduce the basics of dftools step-by step.
 # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors
@@ -88,7 +82,7 @@ mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 
 # show fitted parameter PDFs and covariances with true input parameters as black points
-dfplotcov(survey, reference = c(-2,10,-1.3))
+dfplotcov(survey, expectation2 = c(-2,10,-1.3))
 
 # show effective volume function
 dfplotveff(survey)

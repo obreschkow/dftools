@@ -4,11 +4,12 @@
 \alias{dfssmodel}
 \title{Make step-wise linearmass function}
 \usage{
-dfssmodel(xpoints, method = "linear", p.Schechter = dfmodel(output =
-  "initial"))
+dfssmodel(xpoints, method = "linear", p = dfmodel(output = "initial"))
 }
 \arguments{
 \item{xpoints}{Vector of log-masses used as interpolation points.}
+
+\item{method}{specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xpoints}.}
 
 \item{p}{Schechter function parameters used to determine the initial values of the step-wise paraemters.}
 }
@@ -26,7 +27,7 @@ plot(10^xpoints,10^model$p.initial,log='xy',ylim=c(1e-5,1),pch=20)
 lines(10^seq(4,12,0.01),model$gdf(seq(4,12,0.01),model$p.initial))
 
 # Example of fitting a stepwise linear MF
-dfexample4()
+dfexample(3)
 
 }
 \seealso{

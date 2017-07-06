@@ -47,7 +47,7 @@
 #' 
 #' @return Returns the input list \code{survey} with the additional sub-list \code{survey$bin} that contains the binned data.
 #' 
-#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{\link{dfexample1}}. See examples in \code{\link{dffit}}.
+#' @seealso For optimized plotting of galaxy mass functions, use the derived function \code{\link{mfplot}}. As an example run \code{dfexample(1)}. See examples in \code{\link{dffit}}.
 #'
 #' @author Danail Obreschkow
 #'

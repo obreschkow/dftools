@@ -22,14 +22,16 @@
 dfexample <- function(case = 1, seed = 1) {
   
   if (case == 1) {
-    .dfexample_basic(seed)
+    survey = .dfexample_basic(seed)
   } else if (case == 2) {
-    .dfexample_lss(seed)
+    survey = .dfexample_lss(seed)
   } else if (case == 3) {
-    .dfexample_nonparametric(seed)
+    survey = .dfexample_nonparametric(seed)
   } else if (case == 4) {
-    .dfexample_mj(seed)
+    survey = .dfexample_mj(seed)
   }
+  
+  invisible(survey)
   
 }
 
@@ -177,7 +179,7 @@ dfexample <- function(case = 1, seed = 1) {
   segments(10^(x-sigma),y,10^(x+sigma),y,lwd=1)
   text(10^x,y*1.8,expression('Observing error'~sigma),cex=0.85)
   
-  invisible(survey)
+  invisible(surveys)
 }
 
 .dfexample_mj = function(seed) {

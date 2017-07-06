@@ -3,8 +3,10 @@
 #' This function converts a Schechter function into a step-wise linear mass function of an arbitrary number of bins, to fit a quasi non-parametric mass functions.
 #' 
 #' @importFrom pracma grad
+#' @importFrom stats approx splinefun
 #'
 #' @param xpoints Vector of log-masses used as interpolation points.
+#' @param method	specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xpoints}.
 #' @param p Schechter function parameters used to determine the initial values of the step-wise paraemters.
 #' 
 #' @return \code{dfssmodel} returns a list with two components \code{gdf} and {p.initial}. The first component is a function of log-masses \code{x} and a parameter vector \code{p}. The second component is the initial parameter-vector producing a step-wise mass function that closely matches the Schechter function specified by \code{p}.
@@ -17,7 +19,7 @@
 #' lines(10^seq(4,12,0.01),model$gdf(seq(4,12,0.01),model$p.initial))
 #' 
 #' # Example of fitting a stepwise linear MF
-#' dfexample4()
+#' dfexample(3)
 #'
 #' @seealso \code{\link{dffit}}
 #'
@@ -27,13 +29,13 @@
 
 dfssmodel <- function(xpoints,
                       method = 'linear',
-                      p.Schechter = dfmodel(output = 'initial')) {
+                      p = dfmodel(output = 'initial')) {
   
   # input handling
   npoints = length(xpoints)
   if (npoints<2) stop('xpoints needs at least two elements')
   if (any(xpoints[2:npoints]<=xpoints[1:npoints-1])) stop('xpoints must be a monotonically increasing vector.')
-  ypoints = log10(dfmodel(xpoints, p = p.Schechter))
+  ypoints = log10(dfmodel(xpoints, p = p))
   if (any(!is.finite(ypoints))) stop('cannot evaluate Schechter function at all values of xpoint.')
   
   # interpolation function

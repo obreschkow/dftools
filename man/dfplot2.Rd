@@ -84,7 +84,7 @@ Returns the input list \code{survey}.
 This function displays a one-dimensional distribution function fitted using \code{\link{dffit}}.
 }
 \seealso{
-For an full example of \code{dfplot2} run \code{\link{dfexample3}}.
+For an full example of \code{dfplot2} run \code{dfexample(4)}.
 }
 \author{
 Danail Obreschkow

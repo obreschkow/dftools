@@ -42,7 +42,7 @@
 #' @param chain2.cex Point size at the center of 2nd point cloud
 #' @param chain2.point.cex Point size of 2nd cloud points
 #' @param chain2.point.alpha Transparency of 2nd cloud points
-#' @param chain.cross.lty 2nd point cloud line type for vertical & horizontal cross-lines
+#' @param chain2.cross.lty 2nd point cloud line type for vertical & horizontal cross-lines
 #' @param text.size.labels Text size of parameter names
 #' @param text.size.numbers Text size of numbers
 #'
