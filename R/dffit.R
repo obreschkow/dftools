@@ -628,8 +628,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     }
     
     # test
-    test = try(sum(gdf(x.mesh,p.initial)),silent=TRUE)
-    if (!is.finite(test)) stop('cannot evaluate GDF at initial parameters provided')
+    if (all(!is.finite(gdf(x.mesh,p.initial)))) stop('cannot evaluate GDF at initial parameters provided')
     test = try(neglogL(p.initial),silent=TRUE)
     if (!is.finite(test)) stop('cannot evaluate likelihood at initial parameters provided')
     
@@ -637,11 +636,9 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     opt = optim(p.initial,neglogL,hessian=TRUE,control=list(maxit=1e5)) # reltol=1e-20,abstol=1e-20,
     offset = opt$value+offset
     chain[k,] = c(opt$par,opt$value)
-    print(opt$convergence)
-    print(opt$counts)
     
     # assess convergence
-    if ((is.null(x.err) & !survey$options$correct.lss.bias)| keep.eddington.bias) { # exist without extra iterations
+    if ((is.null(x.err) & !survey$options$correct.lss.bias) | keep.eddington.bias) { # exist without extra iterations
       converged = opt$convergence==0
       running = FALSE
     } else {
@@ -694,28 +691,28 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 .add.Gaussian.errors <- function(survey) {
 
   cov = survey$fit$p.covariance
-
-  # make Gaussian uncertainties of DF
   eig = eigen(cov)
   np = survey$model$n.para
   nx = survey$grid$n.points
-  index = 0
-  nsteps.tot.max = 64
-  nsteps = max(2,round(nsteps.tot.max^(1/np))) # a larger number of steps leads to a more accurate sampling of the covariance ellipsoid
-  y.new = array(NA,c(nx,nsteps^np))
-  k = atan(seq(-pi/2,pi/2,length=nsteps))
-  kv = array(NA,c(nsteps^np,np))
-  for (i in seq(np)) {
-    kv[,i] = rep(k,nsteps^(i-1),each=nsteps^(np-i))
-  }
   
   # sample surface of covariance ellipsoid
-  for (i in seq(nsteps^np)) {
-    e = kv[i,]#/max(1e-20,sqrt(sum(kv[i,]^2)))
+  nsteps = 50
+  y.new = array(NA,c(nx,nsteps+2*np))
+  for (i in seq(nsteps+2*np)) {
+    if (i>nsteps) {
+      e = rnorm(np)
+      e = e/sqrt(sum(e^2))
+    } else {
+      e = array(0,np)
+      if (i>nsteps+np) {
+        e[i-nsteps-np] = 1
+      } else {
+        e[i-nsteps] = -1
+      }
+    }
     v = c(eig$vectors%*%(sqrt(eig$values)*e))
     p.new = survey$fit$p.best+v
     y.new[,i] = survey$model$gdf(survey$grid$x,p.new)
-    if (any(!is.finite(y.new[,i])) | any(y.new[,i]<0)) y.new[,i] = NA
   }
 
   survey$grid$gdf.error.neg = array(NA,nx)
