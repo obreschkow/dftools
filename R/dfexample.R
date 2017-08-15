@@ -6,7 +6,7 @@
 #' @importFrom pracma erf simpson2d
 #' @importFrom stats optim
 #' 
-#' @param case is an integer from 1 to 4, specifying the example. Choose 1 for an example of fitting a Schechter function mock data drawn from a Schechter function. Choose @ to fit a Schechter function to mock data drawn from a Schechter function in the presence of large-scale structure. Choose 3 to fit a quasi non-parametric mass function to mock data drawn from a modified Scheckter function. Choose 4 to fit a 2D analytic distribution function to mock data in the the mass-specific angular momentum plane.
+#' @param case is an integer from 1 to 4, specifying the example. Choose 1 for an example of fitting a Schechter function mock data drawn from a Schechter function. Choose 2 to fit a Schechter function to mock data drawn from a Schechter function in the presence of large-scale structure. Choose 3 to fit a quasi non-parametric mass function to mock data drawn from a modified Scheckter function. Choose 4 to fit a 2D analytic distribution function to mock data in the the mass-specific angular momentum plane.
 #' @param seed A positive integer used as seed for the random number generator.
 #' 
 #' @examples
@@ -108,7 +108,7 @@ dfexample <- function(case = 1, seed = 1) {
   cat('Fit mock data while correcting for observational errors (Eddington bias):\n')
   survey2 = dffit(dat$x,selection,dat$x.err,r=dat$r,correct.lss.bias = FALSE)
   cat('Fit mock data while correcting for observational errors and LSS:\n')
-  survey3 = dffit(dat$x,selection,dat$x.err,r=dat$r,correct.lss.bias = TRUE)
+  survey3 = dffit(dat$x,selection,dat$x.err,r=dat$r,correct.lss.bias = TRUE, lss.weight = function(x) 10^x)
   
   # plot effective volumes
   x = seq(6,12,0.01)
@@ -174,10 +174,18 @@ dfexample <- function(case = 1, seed = 1) {
   x = seq(4,12,0.01)
   lines(10^x,gdf.analytic(x,p.true),lty=2)
   
-  x = 8; y = 5e-3
+  x = 9.3; y = 2e-2
   points(10^x,y,pch=20)
   segments(10^(x-sigma),y,10^(x+sigma),y,lwd=1)
   text(10^x,y*1.8,expression('Observing error'~sigma),cex=0.85)
+  
+  legend('bottomleft',c('Input MF','Data with observing errors drawn from the input MF',
+                        'Fitted MF using uniform bins',
+                        'Fitted MF using linear elements',
+                        'Fitted MF using splines'),
+         lwd=c(1,1,2,2,2),lty=c(2,1,1,1,1),col=c('black','grey','blue','orange','red'),bty='n',
+         pch=c(NA,20,NA,NA,NA),
+         cex = 0.85)
   
   invisible(surveys)
 }
@@ -191,7 +199,7 @@ dfexample <- function(case = 1, seed = 1) {
   corr.xy = 0.6
   
   # initialize
-  set.seed(seed)
+  set.seed(seed+1)
   mrange = c(8,12)
   jrange = c(1,4)
   cov = rbind(c(sigma.x^2,corr.xy*sigma.x*sigma.y),
@@ -271,7 +279,7 @@ dfexample <- function(case = 1, seed = 1) {
   
   # plot DF
   dfplot2(survey, p.ref = p.true, xlab = 'Mass/Msun', ylab = 'j/[kpc km/s]',
-          xlim = c(1e8,5e11),ylim=c(10,2e4))
+          xlim = c(1e8,5e11),ylim=c(10,5e3))
   legend('topleft',c('Mock observations','Observational uncertainties','Input distribution function (DF)','Fitted DF','Source count model from fitted DF'),
          pch=c(20,NA,NA,15,NA),col=c('black','grey','red','blue','purple'),lty=c(NA,1,2,2,1),bty='n',cex=0.85)
   

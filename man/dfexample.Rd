@@ -7,7 +7,7 @@
 dfexample(case = 1, seed = 1)
 }
 \arguments{
-\item{case}{is an integer from 1 to 4, specifying the example. Choose 1 for an example of fitting a Schechter function mock data drawn from a Schechter function. Choose @ to fit a Schechter function to mock data drawn from a Schechter function in the presence of large-scale structure. Choose 3 to fit a quasi non-parametric mass function to mock data drawn from a modified Scheckter function. Choose 4 to fit a 2D analytic distribution function to mock data in the the mass-specific angular momentum plane.}
+\item{case}{is an integer from 1 to 4, specifying the example. Choose 1 for an example of fitting a Schechter function mock data drawn from a Schechter function. Choose 2 to fit a Schechter function to mock data drawn from a Schechter function in the presence of large-scale structure. Choose 3 to fit a quasi non-parametric mass function to mock data drawn from a modified Scheckter function. Choose 4 to fit a 2D analytic distribution function to mock data in the the mass-specific angular momentum plane.}
 
 \item{seed}{A positive integer used as seed for the random number generator.}
 }

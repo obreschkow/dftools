@@ -5,6 +5,7 @@
 #' @importFrom ellipse ellipse
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom graphics par rect lines points plot axis hist
+#' @importFrom pracma erf
 #'
 #' @param survey List produced by \code{\link{dffit}}
 #' @param expectation Vector of expected parameters
@@ -87,6 +88,7 @@ dfplotcov <- function(survey = NULL,
   chain2.b = col2rgb(chain2.col)[3]/255
   chain2.hist.col = rgb(chain2.r,chain2.g,chain2.b,0.4)
   chain2.point.col = rgb(chain2.r,chain2.g,chain2.b,chain2.point.alpha)
+  area = 0.9*sqrt(2*pi)/nstd*pracma::erf(nstd/2/sqrt(2))
   
   my.hist = function(x,breaks) {
     b = c(-1e99,breaks,1e99)
@@ -123,19 +125,21 @@ dfplotcov <- function(survey = NULL,
       
       # chain2 (transparent histogram)
       if (!is.null(chain2)) {
-        nbins = min(100,max(1,sqrt(dim(chain2)[1])))
+        nbins = min(100,max(1,round(sqrt(dim(chain2)[1])/2)))
         h = my.hist(chain2[,i],seq(xmin,xmax,length=nbins+1))
+        f = area/sum(h$counts/nbins)
         xplot = rep(seq(0,1,length=nbins+1),each=2)+xoffset
-        yplot = h$y/max(h$y)*0.9+yoffset
+        yplot = pmin(1,h$y*f)+yoffset
         polygon(xplot,yplot,col=chain2.hist.col,border=NA)
       }
       
       # chain (transparent histogram)
       if (!is.null(chain)) {
-        nbins = min(100,max(1,sqrt(dim(chain)[1])))
+        nbins = min(100,max(1,round(sqrt(dim(chain)[1])/2)))
         h = my.hist(chain[,i],seq(xmin,xmax,length=nbins+1))
+        f = area/sum(h$counts)*nbins
         xplot = rep(seq(0,1,length=nbins+1),each=2)+xoffset
-        yplot = h$y/max(h$y)*0.9+yoffset
+        yplot = pmin(1,h$y*f)+yoffset
         polygon(xplot,yplot,col=chain.hist.col,border=NA)
       }
       

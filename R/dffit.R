@@ -1,6 +1,6 @@
 #' Fit a generative distribution function, such as a galaxy mass function
 #'
-#' This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
+#' This function fits a galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy mass measurements and a user-defined selection function. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements of \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 #'
 #' @importFrom akima interp
 #' @importFrom stats optim rpois quantile approxfun cov
@@ -13,6 +13,7 @@
 #' @param p.initial Initial model parameters for fitting the DF.
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
+#' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
 #' @param n.resampling If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
 #' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
@@ -46,7 +47,7 @@
 #' # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors
 #' dat = dfmockdata(sigma=0.5)
 #' 
-#' # show the observed and true log-masses (x and x.true) as a function of distance r
+#' # show the observed and true log-masses (x and x.true) as a function of true distance r
 #' plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
 #' 
 #' # fit a Schechter function to the mock sample without accounting for errors
@@ -56,7 +57,8 @@
 #' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 #' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 #' 
-#' # do the same again, while accountting for measurement errors in the fit
+#' # now, do the same again, while accountting for measurement errors in the fit
+#' # this time, the posterior data, corrected for Eddington bias, is shown as black points
 #' survey = dffit(dat$x, dat$veff, dat$x.err)
 #' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 #' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
@@ -67,16 +69,16 @@
 #' # show effective volume function
 #' dfplotveff(survey)
 #'
-#' # Now create a smaller survey of only 30 galaxies with 0.5dex mass errors
+#' # now create a smaller survey of only 30 galaxies with 0.5dex mass errors
 #' dat = dfmockdata(30, sigma=0.5)
 #' 
 #' # fit a Schechter function and determine uncertainties by resampling the best fit
 #' survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
 #' 
-#' # show best fit with 68% Gaussian uncertainties from Hessian and posterior data
+#' # show best fit with 68% Gaussian uncertainties from Hessian and posterior data as black points
 #' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
 #' 
-#' # show best fit with 68% and 95% resampling uncertainties and posterior data
+#' # show best fit with 68% and 95% resampling uncertainties and posterior data as black points
 #' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 #' 
 #' # add input model as dashed lines
@@ -94,6 +96,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   p.initial = NULL,
                   n.iterations = 100,
                   correct.lss.bias = FALSE,
+                  lss.weight = NULL,
                   n.resampling = NULL,
                   n.jackknife = NULL,
                   xmin = 4,
@@ -108,14 +111,16 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   tStart = Sys.time()
   
   # Initialize main dataframe
-  survey = list(data = list(x = x, x.err = x.err, r = r),
+  survey = list(data = list(x = x, x.err = x.err, r = r, lss.weight),
                 selection = list(),
                 model = list(),
                 grid = list(xmin = xmin, xmax = xmax, dx = dx),
                 fit = list(),
                 options = list(p.initial = p.initial, n.iterations = n.iterations,
                                n.resampling = n.resampling, n.jackknife = n.jackknife,
-                               keep.eddington.bias = keep.eddington.bias, correct.lss.bias = correct.lss.bias),
+                               keep.eddington.bias = keep.eddington.bias,
+                               correct.lss.bias = correct.lss.bias,
+                               lss.weight = lss.weight),
                 tmp = list(selection = selection, gdf = gdf))
   
   # Check and pre-process input arguments
@@ -454,9 +459,14 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   }
   veff.lss.scale = Vectorize(veff.lss.function.elemental)
   
-  # renormalize veff
-  int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)*10^x
-  int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*10^x
+  # renormalize veff to conserve total
+  if (is.null(survey$options$lss.weight)) {
+    weight = function(x) 1
+  } else {
+    weight = survey$options$lss.weight
+  }
+  int.ref = function(x) survey$selection$veff.no.lss(x)*survey$model$gdf(x,p)*weight(x)
+  int.exp = function(x) veff.lss.scale(x)*survey$model$gdf(x,p)*weight(x)
   if (simpson.integration) {
     reference = integrate(int.ref,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
     expectation = integrate(int.exp,survey$grid$xmin,survey$grid$xmax,stop.on.error=FALSE)$value
@@ -821,6 +831,14 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
   }
   cat('\r')
+  
+  # compute covariance
+  survey$fit$p.covariance.resample = array(NA,c(np,np))
+  for (i in seq(np)) {
+    for (j in seq(np)) {
+      survey$fit$p.covariance.resample[i,j] = var(p.new[1:iteration,i],p.new[1:iteration,j],na.rm=TRUE)
+    }
+  }
   
   # make parameter quantiles
   q = c(0.02,0.16,0.84,0.98)

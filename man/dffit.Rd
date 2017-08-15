@@ -6,8 +6,8 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  n.resampling = NULL, n.jackknife = NULL, xmin = 4, xmax = 12,
-  dx = 0.01, keep.eddington.bias = FALSE, write.fit = TRUE,
+  lss.weight = NULL, n.resampling = NULL, n.jackknife = NULL, xmin = 4,
+  xmax = 12, dx = 0.01, keep.eddington.bias = FALSE, write.fit = TRUE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
 \arguments{
@@ -26,6 +26,8 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 \item{n.iterations}{Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.}
 
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
+
+\item{lss.weight}{If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).}
 
 \item{n.resampling}{If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.}
 
@@ -52,7 +54,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 \item{options}{is a list of various optional input arguments of \code{dffit}.}
 }
 \description{
-This function fits galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy data. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
+This function fits a galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy mass measurements and a user-defined selection function. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements of \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
 }
 \details{
 For a detailed description of the method, please refer to the peer-reviewed publication by Obreschkow et al. 2017 (in prep.).
@@ -66,7 +68,7 @@ dfexample()
 # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors
 dat = dfmockdata(sigma=0.5)
 
-# show the observed and true log-masses (x and x.true) as a function of distance r
+# show the observed and true log-masses (x and x.true) as a function of true distance r
 plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
 
 # fit a Schechter function to the mock sample without accounting for errors
@@ -76,7 +78,8 @@ survey = dffit(dat$x, dat$veff)
 mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
 
-# do the same again, while accountting for measurement errors in the fit
+# now, do the same again, while accountting for measurement errors in the fit
+# this time, the posterior data, corrected for Eddington bias, is shown as black points
 survey = dffit(dat$x, dat$veff, dat$x.err)
 mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
 lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
@@ -87,16 +90,16 @@ dfplotcov(survey, expectation2 = c(-2,10,-1.3))
 # show effective volume function
 dfplotveff(survey)
 
-# Now create a smaller survey of only 30 galaxies with 0.5dex mass errors
+# now create a smaller survey of only 30 galaxies with 0.5dex mass errors
 dat = dfmockdata(30, sigma=0.5)
 
 # fit a Schechter function and determine uncertainties by resampling the best fit
 survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
 
-# show best fit with 68\% Gaussian uncertainties from Hessian and posterior data
+# show best fit with 68\% Gaussian uncertainties from Hessian and posterior data as black points
 mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
 
-# show best fit with 68\% and 95\% resampling uncertainties and posterior data
+# show best fit with 68\% and 95\% resampling uncertainties and posterior data as black points
 mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 
 # add input model as dashed lines
