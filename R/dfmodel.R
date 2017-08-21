@@ -50,7 +50,7 @@ dfmodel <- function(x = NULL, p = NULL, output = 'density', type = 'Schechter') 
     mu = 10^(x-p[2])
     return(log(10)*10^p[1]*mu^(p[3]+1)*exp(-mu))
   } else if (output == 'initial') {
-    return(c(-2,10,-1.3))
+    return(c(-2,11,-1.3))
   } else if (output == 'equation') {
     return('dN/(dVdx) = log(10)*10^p[1]*mu^(p[3]+1)*exp(-mu), where mu=10^(x-p[2])')
   }
@@ -63,7 +63,7 @@ dfmodel <- function(x = NULL, p = NULL, output = 'density', type = 'Schechter') 
     mu = 10^(x-p[2])
     return(log(10)*10^p[1]*p[4]*mu^(p[3]+1)*exp(-mu^abs(p[4])))
   } else if (output == 'initial') {
-    return(c(-2,10,-1,1))
+    return(c(-2,11,-1,1))
   } else if (output == 'equation') {
     return('dN/(dVdx) = log(10)*p[4]*10^p[1]*mu^(p[3]+1)*exp(-mu^p[4]), where mu=10^(x-p[2])')
   }

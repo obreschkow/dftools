@@ -99,8 +99,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   lss.weight = NULL,
                   n.resampling = NULL,
                   n.jackknife = NULL,
-                  xmin = 4,
-                  xmax = 12,
+                  xmin = 5,
+                  xmax = 13,
                   dx = 0.01,
                   keep.eddington.bias = FALSE,
                   write.fit = TRUE,
@@ -111,7 +111,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   tStart = Sys.time()
   
   # Initialize main dataframe
-  survey = list(data = list(x = x, x.err = x.err, r = r, lss.weight),
+  survey = list(data = list(x = x, x.err = x.err, r = r, lss.weight = lss.weight),
                 selection = list(),
                 model = list(),
                 grid = list(xmin = xmin, xmax = xmax, dx = dx),
@@ -682,7 +682,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     ln.evidence = FALSE
   } else {
     cov = solve(opt$hessian)
-    ln.evidence = 0.5*log(det(cov))-offset
+    n.para = length(opt$par)
+    ln.evidence = -offset+0.5*n.para*log(2*pi)+0.5*log(det(cov))
   }
   
   # finalize output

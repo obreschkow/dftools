@@ -19,7 +19,7 @@
 #' @param xpower10 If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.
 #' @param show.input.data If \code{TRUE}, the input data is shown in bins. Each bin values is simply the sum 1/Veff(x) of the observed x-values in this bin.
 #' @param show.posterior.data If \code{TRUE}, the posterior data, constructucted from all the individual posterior PDFs of the observed data, are snown in bins. Note that posterior data only exists of the fitted data is uncertain, e.g. if the argument \code{x.err} in \code{\link{dffit}} was non-zero.
-#' @param show.data.histogram If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.
+#' @param show.data.histogram If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel. Choose \code{NA}, to leave space for the histogram without drawing it.
 #' @param show.uncertainties If \code{TRUE}, uncertainties are displayed around the best fit model.
 #' @param uncertainty.type \code{1}: plot Gaussian 1-sigma uncertanties propagated from the Hessian matrix of the likelihood. \code{2}: plot 68 percentile region (from 16 to 84 percent). \code{3} plot 68 (16 to 84) and 95 (2 to 98) percentile regions.
 #' @param show.bias.correction If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.
@@ -56,7 +56,7 @@
 dfplot <- function(survey,
                    xlab = 'Observable x',
                    ylab = expression('Generative distribution function'~phi),
-                   ylab.histogram = 'Counts',
+                   ylab.histogram = 'Selection',
                    xlim = NULL,
                    ylim = NULL,
                    log = 'y',
@@ -123,12 +123,18 @@ dfplot <- function(survey,
   if (!add) {
     par(pty = 'm')
     par(mar = margins)
-    if (show.data.histogram) {
+    if (is.na(show.data.histogram) | show.data.histogram) {
       plot(0,0,type='n',yaxs='i',xaxt='n',yaxt='n',xlim=xlim,ylim=c(0,1),xlab='',ylab='',bty='n')
       .plotSub(0,1,0.2,1)
     }
     plot(1,1,type='n',log=log,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
            xlim = xlim, ylim = ylim, xlab = '', ylab = '',bty='n')
+  } else {
+    if (is.na(show.data.histogram) | show.data.histogram) {
+      .plotSub(0,1,0.2,1)
+      plot(1,1,type='n',log=log,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
+           xlim = xlim, ylim = ylim, xlab = '', ylab = '',bty='n')
+    }
   }
   
   # plot uncertainty regions
@@ -236,7 +242,7 @@ dfplot <- function(survey,
   }
   
   # plot binned data histogram
-  if (show.data.histogram) {
+  if (!is.na(show.data.histogram) & show.data.histogram) {
     .plotSub(0,1,0,0.2)
     ymax = max(survey$bin$histogram)*1.2
     if (length(grep('x',log))==1) {lg='x'} else {lg=''}
@@ -262,6 +268,9 @@ dfplot <- function(survey,
     par(xpd=FALSE)
     magicaxis::magaxis(side=2,ylab=ylab.histogram,lwd=NA,labels=FALSE,lwd.ticks=NA)
     magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=NA)
+  }
+  
+  if (is.na(show.data.histogram) | show.data.histogram) {
     .plotSubEnd()
   }
 
@@ -273,10 +282,11 @@ dfplot <- function(survey,
     par(pty = "m")
   }
   
-  if (show.data.histogram) {
+  if (is.na(show.data.histogram) | show.data.histogram) {
     .plotSub(0,1,0,1)
     plot(1,1,type='n',log=log,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
          xlim = xlim, ylim = c(exp(log(ylim[1])-(log(ylim[2])-log(ylim[1]))*0.25),ylim[2]), xlab = '', ylab = '',bty='n')
+    clip(xlim[1],xlim[2],ylim[1],ylim[2])
   }
   
   invisible(survey)

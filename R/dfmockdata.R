@@ -8,8 +8,8 @@
 #' @param n Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.
 #' @param seed An interger number used as seed for the random number generator. If you wish to generate different realizations, with the same survey specifications, it suffices to vary this number.
 #' @param veff is the effective volume function \code{veff(x)}, definied as the cosmic volume in which sources of log-mass \code{x} can be detected by the survey. If this function is specified, \code{f}, \code{dVdr} and \code{g} cannot be specified.
-#' @param f is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey. The default is \code{f = function(x,r) erf((1-1e2*r/sqrt(10^x))*20)*0.5+0.5}, which mimick a sensitivity-limited survey with a fuzzy limit.
-#' @param dVdr is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default is \code{Omega=2.439568e-2} [sterradians], chose such that the expected number of galaxies is exactly 1000 when combined with the default selection function \code{f(x,r)}.
+#' @param f is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey. The default is \code{f = function(x,r) erf((1-1e3*r/sqrt(10^x))*20)*0.5+0.5}, which mimiks a sensitivity-limited survey with a fuzzy limit.
+#' @param dVdr is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default is \code{Omega=2.13966} [sterradians], chose such that the expected number of galaxies is exactly 1000 when combined with the default selection function \code{f(x,r)}.
 #' @param gdf is the 'generative distribution function', i.e. the underlying mass function, from which the galaxies are drawn. This function is a function of log-mass \code{x} and model parameters \code{p}. It returns the expected number of galaxies per unit of cosmic volume \code{V} and log-mass \code{x}. The default is a Schechter function.
 #' @param p model parameters for the \code{gdf}.
 #' @param g function of distance \code{r} descibing the number-density variation of galaxies due to cosmic large-scale structure (LSS). Explicitly, \code{g(r)>0} is the number-density at \code{r}, relative to the number-density without LSS. Values between 0 and 1 are underdense regions, values larger than 1 are overdense regions. In the absence of LSS, \code{g(r)=1}. Note that g is automatically rescaled, such that its average value in the survey volume is 1.
@@ -23,7 +23,7 @@
 #' \item{x}{Array of observed log-mass.}
 #' \item{x.err}{Gaussian uncertainties on x.}
 #' \item{x.true}{Array of true log-masses, i.e. the values of \code{x} before they were perturbed by random uncertainties \code{x.err}.}
-#' \item{r}{Array of comoving distances.}
+#' \item{r}{Array of comoving distances, only available if a function \code{f} is given.}
 #' \item{f}{Selection function provided as input argument.}
 #' \item{g}{Cosmic LSS function provided as input argument.}
 #' \item{dVdr}{Derivative of survey volume provided as input argument, but rescaled to the requested number of galaxies \code{n}.}
@@ -36,7 +36,7 @@
 #' 
 #' @examples
 #' # draw 1000 galaxies with mass errors of 0.3 dex from a Schechter function
-#' # with parameters (-2,10,-1.3) and a preset selection function
+#' # with parameters (-2,11,-1.3) and a preset selection function
 #' mock = dfmockdata(sigma = 0.3)
 #' 
 #' # plot the distance-log(mass) relation of observed data, true data, and approximate survey limit
@@ -76,10 +76,10 @@ dfmockdata <- function(n = NULL,
                        f = NULL,
                        dVdr = NULL,
                        gdf = function(x,p) dfmodel(x,p,type='Schechter'),
-                       p = c(-2,10,-1.3),
+                       p = c(-2,11,-1.3),
                        g = NULL,
                        sigma = 0.0,
-                       rmin = 0, rmax = 100,
+                       rmin = 0, rmax = 20,
                        xmin = 2, xmax = 13,
                        shot.noise = FALSE,
                        verbose = FALSE
@@ -89,8 +89,8 @@ dfmockdata <- function(n = NULL,
   if (is.null(f)!=is.null(dVdr)) stop('The functions f(x,r) and dVdr(r) must both be given or both not be given.')
   if (!is.null(f) & !is.null(veff)) stop('Either veff(x) or the pair {f(x,r) and dVdr(r)} must be given, but not both.')
   if (is.null(f) & is.null(veff)) {
-    f = function(x,r) pracma::erf((1-1e2*r/sqrt(10^x))*20)*0.5+0.5
-    dVdr = function(r) 2.439568e-2*r^2
+    f = function(x,r) pracma::erf((1-1e3*r/sqrt(10^x))*20)*0.5+0.5
+    dVdr = function(r) 2.13966*r^2
   }
   lss = !is.null(g)
   if (lss & is.null(f)) stop('If g(r) is given, the selection must be specified by f(x,r) and dVdr(r), not by veff(x).')

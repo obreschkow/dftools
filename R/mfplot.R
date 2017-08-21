@@ -8,7 +8,7 @@
 #' @param log String specifying the log-axes as in \code{\link{plot}}.
 #' @param veff Function of x to be plotted over the histogram, if \code{show.data.histogram = TRUE}.
 #' @param xpower10 If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.
-#' @param show.data.histogram If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.
+#' @param show.data.histogram If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel. Choose \code{NA}, to leave space for the histogram without drawing it.
 #' @param ... All other arguments of \code{\link{dfplot}}.
 #'
 #' @seealso As an example run \code{dfexample(1)}. See examples in \code{\link{dffit}}.

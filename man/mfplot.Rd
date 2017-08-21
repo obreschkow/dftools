@@ -21,7 +21,7 @@ mfplot(survey, xlab = expression("M [M"["sun"] * "]"), ylab = expression(phi
 
 \item{xpower10}{If \code{TRUE}, the model argument x is elevated to the power of 10 in the plots.}
 
-\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.}
+\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel. Choose \code{NA}, to leave space for the histogram without drawing it.}
 
 \item{...}{All other arguments of \code{\link{dfplot}}.}
 }

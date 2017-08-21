@@ -12,11 +12,12 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
   model2.col = "black", model2.lwd = 2, model2.lty = 1, model2.cex = 1,
   model2.cross.lty = NULL, chain.col = "purple", chain.lwd = 2,
   chain.lty = 1, chain.cex = 1, chain.point.cex = 0.1,
-  chain.point.alpha = 0.2, chain.cross.lty = NULL, chain2.col = "red",
-  chain2.lwd = 2, chain2.lty = 1, chain2.cex = 1,
+  chain.point.alpha = 0.2, chain.cross.lty = NULL, chain.nmax = NULL,
+  chain2.col = "red", chain2.lwd = 2, chain2.lty = 1, chain2.cex = 1,
   chain2.point.cex = 0.1, chain2.point.alpha = 0.2,
-  chain2.cross.lty = NULL, text.size.labels = 1.1,
-  text.size.numbers = 0.8)
+  chain2.cross.lty = NULL, chain2.nmax = NUL, text.size.labels = 1.1,
+  text.size.numbers = 0.8, text.offset.labels = c(0, 0),
+  text.offset.numbers = c(0, 0))
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}
@@ -79,6 +80,8 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{chain.cross.lty}{Point cloud line type for vertical & horizontal cross-lines}
 
+\item{chain.nmax}{Maximum number of points to plot for this chain}
+
 \item{chain2.col}{Color of 2nd point cloud}
 
 \item{chain2.lwd}{Line width of 2nd point cloud ellipses}
@@ -93,9 +96,15 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{chain2.cross.lty}{2nd point cloud line type for vertical & horizontal cross-lines}
 
+\item{chain2.nmax}{Maximum number of points to plot for this chain}
+
 \item{text.size.labels}{Text size of parameter names}
 
 \item{text.size.numbers}{Text size of numbers}
+
+\item{text.offset.labels}{2-element vector to adjust the position of the vertical and horizontal parameter names}
+
+\item{text.offset.numbers}{2-element vector to adjust the position of the vertical and horizontal numbers}
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.

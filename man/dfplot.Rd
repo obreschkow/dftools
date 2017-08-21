@@ -6,7 +6,7 @@
 \usage{
 dfplot(survey, xlab = "Observable x",
   ylab = expression("Generative distribution function" ~ phi),
-  ylab.histogram = "Counts", xlim = NULL, ylim = NULL, log = "y",
+  ylab.histogram = "Selection", xlim = NULL, ylim = NULL, log = "y",
   p = NULL, veff = NULL, xpower10 = FALSE, show.input.data = TRUE,
   show.posterior.data = TRUE, show.data.histogram = FALSE,
   show.uncertainties = TRUE, uncertainty.type = NULL,
@@ -43,7 +43,7 @@ dfplot(survey, xlab = "Observable x",
 
 \item{show.posterior.data}{If \code{TRUE}, the posterior data, constructucted from all the individual posterior PDFs of the observed data, are snown in bins. Note that posterior data only exists of the fitted data is uncertain, e.g. if the argument \code{x.err} in \code{\link{dffit}} was non-zero.}
 
-\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel.}
+\item{show.data.histogram}{If \code{TRUE}, a histogram of source counts, based on the input data, is displayed in a bottom panel. Choose \code{NA}, to leave space for the histogram without drawing it.}
 
 \item{show.uncertainties}{If \code{TRUE}, uncertainties are displayed around the best fit model.}
 

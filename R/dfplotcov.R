@@ -37,6 +37,7 @@
 #' @param chain.point.cex Point size of cloud points
 #' @param chain.point.alpha Transparency of cloud points
 #' @param chain.cross.lty Point cloud line type for vertical & horizontal cross-lines
+#' @param chain.nmax Maximum number of points to plot for this chain
 #' @param chain2.col Color of 2nd point cloud
 #' @param chain2.lwd Line width of 2nd point cloud ellipses
 #' @param chain2.lty Line type of 2nd point cloud ellipses
@@ -44,8 +45,11 @@
 #' @param chain2.point.cex Point size of 2nd cloud points
 #' @param chain2.point.alpha Transparency of 2nd cloud points
 #' @param chain2.cross.lty 2nd point cloud line type for vertical & horizontal cross-lines
+#' @param chain2.nmax Maximum number of points to plot for this chain
 #' @param text.size.labels Text size of parameter names
 #' @param text.size.numbers Text size of numbers
+#' @param text.offset.labels 2-element vector to adjust the position of the vertical and horizontal parameter names
+#' @param text.offset.numbers 2-element vector to adjust the position of the vertical and horizontal numbers
 #'
 #' @seealso See examples in \code{\link{dffit}}.
 #'
@@ -65,10 +69,11 @@ dfplotcov <- function(survey = NULL,
                       model.col = 'blue', model.lwd = 2, model.lty = 1, model.cex = 1, model.cross.lty = NULL,
                       model2.col = 'black', model2.lwd = 2, model2.lty = 1, model2.cex = 1, model2.cross.lty = NULL,
                       chain.col = 'purple', chain.lwd = 2, chain.lty = 1, chain.cex = 1, chain.point.cex = 0.1,
-                      chain.point.alpha = 0.2, chain.cross.lty = NULL,
+                      chain.point.alpha = 0.2, chain.cross.lty = NULL, chain.nmax = NULL,
                       chain2.col = 'red', chain2.lwd = 2, chain2.lty = 1, chain2.cex = 1, chain2.point.cex = 0.1,
-                      chain2.point.alpha = 0.2, chain2.cross.lty = NULL,
-                      text.size.labels = 1.1, text.size.numbers = 0.8) {
+                      chain2.point.alpha = 0.2, chain2.cross.lty = NULL, chain2.nmax = NUL,
+                      text.size.labels = 1.1, text.size.numbers = 0.8,
+                      text.offset.labels = c(0,0), text.offset.numbers = c(0,0)) {
   
   # input handling
   if (is.null(survey)==is.null(expectation)) stop('Either the survey order expectation must be given, but not both.')
@@ -145,13 +150,15 @@ dfplotcov <- function(survey = NULL,
       
       # model2 (bell curve)
       if (!is.null(expectation2) & !is.null(covariance2)) {
-        x = seq(xmin,xmax,length=200)
-        y = 0.9*sqrt(C[1]/covariance2[i,i])*exp(-(x-expectation2[i])^2/2/covariance2[i,i])
-        x = (x-xmin)/xlength+xoffset
-        y = pmin(1,y)
-        y[2:199] = y[1:198]*0.0005+y[2:199]*0.999000001+y[3:200]*0.0005
-        y[y>=1] = NA
-        lines(x,y+yoffset,col=model2.col,lty=model2.lty,lwd=model2.lwd)
+        if (!is.na(covariance2[i,i])) {
+          x = seq(xmin,xmax,length=200)
+          y = 0.9*sqrt(C[1]/covariance2[i,i])*exp(-(x-expectation2[i])^2/2/covariance2[i,i])
+          x = (x-xmin)/xlength+xoffset
+          y = pmin(1,y)
+          y[2:199] = y[1:198]*0.0005+y[2:199]*0.999000001+y[3:200]*0.0005
+          y[y>=1] = NA
+          lines(x,y+yoffset,col=model2.col,lty=model2.lty,lwd=model2.lwd)
+        }
       }
 
       # model (bell curve)
@@ -168,8 +175,10 @@ dfplotcov <- function(survey = NULL,
       
       # model2 (vertical line)
       if (!is.null(expectation2) & !is.null(model2.cross.lty)) {
-        xplot = (expectation2[i]-E[1])/nstd/sqrt(C[1,1])+0.5
-        if (xplot>0 & xplot<1) lines(rep(xplot+xoffset,2),c(0,1)+yoffset,lty=model2.cross.lty,lwd=1,col=model2.col)
+        if (!is.na(expectation2[i])) {
+          xplot = (expectation2[i]-E[1])/nstd/sqrt(C[1,1])+0.5
+          if (xplot>0 & xplot<1) lines(rep(xplot+xoffset,2),c(0,1)+yoffset,lty=model2.cross.lty,lwd=1,col=model2.col)
+        }
       }
       
       # chain (vertical line)
@@ -189,8 +198,13 @@ dfplotcov <- function(survey = NULL,
     } else {
       
       # chain2 (point cloud)
-      if (!is.null(chain)) {
+      if (!is.null(chain2)) {
         selection = (chain2[,i]>xmin) & (chain2[,i]<xmax) & (chain2[,j]>ymin) & (chain2[,j]<ymax)
+        if (!is.null(chain2.nmax)) {
+          selection = seq(length(selection))[selection]
+          npts = min(length(selection),chain2.nmax)
+          selection = selection[1:npts]
+        }
         xplot = (chain2[selection,i]-xmin)/xlength+xoffset
         yplot = (chain2[selection,j]-ymin)/ylength+yoffset
         points(xplot,yplot,pch=20,cex=chain2.point.cex,col=chain2.point.col)
@@ -199,6 +213,11 @@ dfplotcov <- function(survey = NULL,
       # chain (point cloud)
       if (!is.null(chain)) {
         selection = (chain[,i]>xmin) & (chain[,i]<xmax) & (chain[,j]>ymin) & (chain[,j]<ymax)
+        if (!is.null(chain.nmax)) {
+          selection = seq(length(selection))[selection]
+          npts = min(length(selection),chain.nmax)
+          selection = selection[1:npts]
+        }
         xplot = (chain[selection,i]-xmin)/xlength+xoffset
         yplot = (chain[selection,j]-ymin)/ylength+yoffset
         points(xplot,yplot,pch=20,cex=chain.point.cex,col=chain.point.col)
@@ -246,29 +265,35 @@ dfplotcov <- function(survey = NULL,
       
       # model2 (ellipse and point)
       if (!is.null(expectation2)) {
-        if (!is.null(covariance2) & !is.null(model2.lwd)) {
-          pts = ellipse::ellipse(covariance2[c(i,j),c(i,j)],centre=expectation2[c(i,j)],level=0.68,draw=F)
-          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-          yplot = (pts[,2]-ymin)/ylength
-          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model2.col,lty=model2.lty,lwd=model2.lwd)
-          pts = ellipse::ellipse(covariance2[c(i,j),c(i,j)],centre=expectation2[c(i,j)],level=0.95,draw=F)
-          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-          yplot = (pts[,2]-ymin)/ylength
-          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model2.col,lty=model2.lty,lwd=model2.lwd/2)
+        if (!is.na(sum(expectation2[c(i,j)]))) {
+          if (!is.null(covariance2) & !is.null(model2.lwd)) {
+            if (!is.na(sum(covariance2[c(i,j),c(i,j)]))) {
+              pts = ellipse::ellipse(covariance2[c(i,j),c(i,j)],centre=expectation2[c(i,j)],level=0.68,draw=F)
+              xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+              yplot = (pts[,2]-ymin)/ylength
+              lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model2.col,lty=model2.lty,lwd=model2.lwd)
+              pts = ellipse::ellipse(covariance2[c(i,j),c(i,j)],centre=expectation2[c(i,j)],level=0.95,draw=F)
+              xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+              yplot = (pts[,2]-ymin)/ylength
+              lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model2.col,lty=model2.lty,lwd=model2.lwd/2)
+            }
+          }
+          points((expectation2[i]-xmin)/xlength+xoffset,(expectation2[j]-ymin)/ylength+yoffset,pch=20,col=model2.col,cex=model2.cex)
         }
-        points((expectation2[i]-xmin)/xlength+xoffset,(expectation2[j]-ymin)/ylength+yoffset,pch=20,col=model2.col,cex=model2.cex)
       }
 
       # model (ellipse and point)
       if (!is.null(model.lwd)) {
-        pts = ellipse::ellipse(C,centre=E,level=0.68,draw=F)
-        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-ymin)/ylength
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd)
-        pts = ellipse::ellipse(C,centre=E,level=0.95,draw=F)
-        xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-ymin)/ylength
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd/2)
+        if (!is.na(sum(C))) {
+          pts = ellipse::ellipse(C,centre=E,level=0.68,draw=F)
+          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-ymin)/ylength
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd)
+          pts = ellipse::ellipse(C,centre=E,level=0.95,draw=F)
+          xplot = (pts[,1]-xmin)/xlength # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-ymin)/ylength
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=model.col,lty=model.lty,lwd=model.lwd/2)
+        }
       }
       points(0.5+xoffset,0.5+yoffset,pch=20,col=model.col,cex=model.cex)
 
@@ -313,19 +338,19 @@ dfplotcov <- function(survey = NULL,
     # add axes
     tickpos = c(0.2,0.5,0.8)
     if (i==1 & j>1) {
-      axis(2, at = yoffset+tickpos,labels=sprintf('%4.1f',E[2]+ylength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = 0.8)
+      axis(2, at = yoffset+tickpos,labels=sprintf('%4.1f',E[2]+ylength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = 0.8+text.offset.numbers[1])
       if (is.null(name)) {
-        axis(2, at = yoffset+0.5,pos=-0.1,labels=bquote(p [.(j)]),cex.axis=text.size.labels,tick=F)
+        axis(2, at = yoffset+0.5,pos=-0.1+text.offset.labels[1],labels=bquote(p [.(j)]),cex.axis=text.size.labels,tick=F)
       } else {
-        axis(2, at = yoffset+0.5,pos=-0.1,labels=name[j],cex.axis=text.size.labels,tick=F)
+        axis(2, at = yoffset+0.5,pos=-0.1+text.offset.labels[1],labels=name[j],cex.axis=text.size.labels,tick=F)
       }
     }
     if (j==n) {
-      axis(1, at = xoffset+tickpos,labels=sprintf('%4.1f',E[1]+xlength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = -0.8)
+      axis(1, at = xoffset+tickpos,labels=sprintf('%4.1f',E[1]+xlength*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = -0.8+text.offset.numbers[2])
       if (is.null(name)) {
-        axis(1, at = xoffset+0.5,pos=-0.1,labels=bquote(p [.(i)]),cex.axis=text.size.labels,tick=F)
+        axis(1, at = xoffset+0.5,pos=-0.1+text.offset.labels[2],labels=bquote(p [.(i)]),cex.axis=text.size.labels,tick=F)
       } else {
-        axis(1, at = xoffset+0.5,pos=-0.1,labels=name[i],cex.axis=text.size.labels,tick=F)
+        axis(1, at = xoffset+0.5,pos=-0.1+text.offset.labels[2],labels=name[i],cex.axis=text.size.labels,tick=F)
       }
     }
   }

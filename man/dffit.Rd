@@ -6,8 +6,8 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  lss.weight = NULL, n.resampling = NULL, n.jackknife = NULL, xmin = 4,
-  xmax = 12, dx = 0.01, keep.eddington.bias = FALSE, write.fit = TRUE,
+  lss.weight = NULL, n.resampling = NULL, n.jackknife = NULL, xmin = 5,
+  xmax = 13, dx = 0.01, keep.eddington.bias = FALSE, write.fit = TRUE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
 \arguments{
