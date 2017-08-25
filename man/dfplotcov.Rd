@@ -23,21 +23,39 @@ dfplotcov(data, name = NULL, title = "", nstd = 10, lower = TRUE,
 
 \item{nstd}{Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.}
 
-\item{lower}{Logical flag indicating whether the lower triangle is shown.}
+\item{lower}{Logical flag indicating whether the lower triangle is shown}
 
-\item{upper}{Logical flag indicating whether the lower triangle is shown.}
+\item{upper}{Logical flag indicating whether the lower triangle is shown}
 
 \item{margins}{Plot margins (bottom,left,top,right)}
 
-\item{col}{Vector of colors of each object in the data-list.}
+\item{col}{Vector of colors of each object in the data-list}
 
-\item{lwd}{Vector of line width of each object in the data-list.}
+\item{lwd}{Vector of line width of each object in the data-list}
 
-\item{lty}{Vector of line types of each object in the data-list.}
+\item{lty}{Vector of line types of each object in the data-list}
 
-\item{cex}{Vector of point sizes for the central parameters each object in the data-list.}
+\item{cex}{Vector of point sizes for the central parameters each object in the data-list}
 
-\item{pch}{Vector of point type for the central parameters each object in the data-list.}
+\item{pch}{Vector of point type for the central parameters each object in the data-list}
+
+\item{cloud.alpha}{Vector of alpha values setting the transparency of the point clouds}
+
+\item{cloud.nmax}{Vector specifying the maximum number of points to be plotted in a point cloud}
+
+\item{hist.alpha}{Vector of alpha values setting the transparency of the histograms}
+
+\item{show.histogram}{= Logical vector specifying whether to plot histograms}
+
+\item{show.cloud}{Logical vector specifying whether to plot the point cloud}
+
+\item{show.gaussian}{Logical vector specifying whether to draw the Gaussian apprixmation of the parameter distribution}
+
+\item{show.expectation}{Logical vector specifying whether to mark the expected values (= averages if a parameter set is specified)}
+
+\item{show.ellipse.68}{Logical vector specifying whether to draw 68\% confidence ellipses}
+
+\item{show.ellipse.95}{Logical vector specifying whether to draw 95\% confidence ellipses}
 
 \item{text.size.labels}{Text size of parameter names}
 

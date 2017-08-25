@@ -11,17 +11,23 @@
 #' @param name Optional list of parameter names
 #' @param title Optional plot title
 #' @param nstd Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.
-#' @param lower Logical flag indicating whether the lower triangle is shown.
-#' @param upper Logical flag indicating whether the lower triangle is shown.
+#' @param lower Logical flag indicating whether the lower triangle is shown
+#' @param upper Logical flag indicating whether the lower triangle is shown
 #' @param margins Plot margins (bottom,left,top,right)
-#' @param col Vector of colors of each object in the data-list.
-#' @param lwd Vector of line width of each object in the data-list.
-#' @param lty Vector of line types of each object in the data-list.
-#' @param cex Vector of point sizes for the central parameters each object in the data-list.
-#' @param pch Vector of point type for the central parameters each object in the data-list.
-#' @param cloud.alpha
-#' @param cloud.nmax
-#' @param hist.alpha
+#' @param col Vector of colors of each object in the data-list
+#' @param lwd Vector of line width of each object in the data-list
+#' @param lty Vector of line types of each object in the data-list
+#' @param cex Vector of point sizes for the central parameters each object in the data-list
+#' @param pch Vector of point type for the central parameters each object in the data-list
+#' @param cloud.alpha Vector of alpha values setting the transparency of the point clouds 
+#' @param cloud.nmax Vector specifying the maximum number of points to be plotted in a point cloud
+#' @param hist.alpha Vector of alpha values setting the transparency of the histograms
+#' @param show.histogram = Logical vector specifying whether to plot histograms
+#' @param show.cloud Logical vector specifying whether to plot the point cloud
+#' @param show.gaussian Logical vector specifying whether to draw the Gaussian apprixmation of the parameter distribution
+#' @param show.expectation Logical vector specifying whether to mark the expected values (= averages if a parameter set is specified)
+#' @param show.ellipse.68 Logical vector specifying whether to draw 68\% confidence ellipses
+#' @param show.ellipse.95 Logical vector specifying whether to draw 95\% confidence ellipses
 #' @param text.size.labels Text size of parameter names
 #' @param text.size.numbers Text size of numbers
 #' @param text.offset.labels 2-element vector to adjust the position of the vertical and horizontal parameter names
@@ -33,10 +39,6 @@
 #' @author Danail Obreschkow
 #'
 #' @export
-#' 
-#' survey
-#' chain
-#' model
 
 dfplotcov <- function(data,
                       name = NULL, title = '',
@@ -118,15 +120,17 @@ dfplotcov <- function(data,
       
       # gaussian function
       if (show.gaussian[k] & !is.null(C)) {
-        x = seq(xmin[i],xmax[i],length=200)
-        dx = x[2]-x[1]
-        y = exp(-(x-E[i])^2/2/C[i,i])
-        y = y/sum(y)*200*area
-        x = (x-xmin[i])/(xmax[i]-xmin[i])+xoffset
-        y = pmin(1,y)
-        y[2:199] = y[1:198]*0.0005+y[2:199]*0.999000001+y[3:200]*0.0005
-        y[y>=1] = NA
-        lines(x,y+yoffset,col=col[k],lty=lty[k],lwd=lwd[k]*1.5)
+        if (!is.na(E[i]) & !is.na(C[i,i])) {
+          x = seq(xmin[i],xmax[i],length=200)
+          dx = x[2]-x[1]
+          y = exp(-(x-E[i])^2/2/C[i,i])
+          y = y/sum(y)*200*area
+          x = (x-xmin[i])/(xmax[i]-xmin[i])+xoffset
+          y = pmin(1,y)
+          y[2:199] = y[1:198]*0.0005+y[2:199]*0.999000001+y[3:200]*0.0005
+          y[y>=1] = NA
+          lines(x,y+yoffset,col=col[k],lty=lty[k],lwd=lwd[k]*1.5)
+        }
       }
       
     } else {
@@ -146,25 +150,31 @@ dfplotcov <- function(data,
       
       # central point
       if (show.expectation[k]) {
-        points((E[i]-xmin[i])/(xmax[i]-xmin[i])+xoffset,
-               (E[j]-xmin[j])/(xmax[j]-xmin[j])+yoffset,
-               pch=pch[k],col=col[k],cex=cex[k])
+        if (!is.na(sum(E[c(i,j)]))) {
+          points((E[i]-xmin[i])/(xmax[i]-xmin[i])+xoffset,
+                 (E[j]-xmin[j])/(xmax[j]-xmin[j])+yoffset,
+                 pch=pch[k],col=col[k],cex=cex[k])
+        }
       }
       
       # 68% ellipse
       if (show.ellipse.68[k] & !is.null(C)) {
-        pts = ellipse::ellipse(C[c(i,j),c(i,j)],centre=c(E[i],E[j]),level=0.68,draw=F)
-        xplot = (pts[,1]-xmin[i])/(xmax[i]-xmin[i]) # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-xmin[j])/(xmax[j]-xmin[j])
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=col[k],lty=lty[k],lwd=lwd[k]*2)
+        if (!is.na(sum(E[c(i,j)])) & !is.na(sum(C[c(i,j),c(i,j)]))) {
+          pts = ellipse::ellipse(C[c(i,j),c(i,j)],centre=c(E[i],E[j]),level=0.68,draw=F)
+          xplot = (pts[,1]-xmin[i])/(xmax[i]-xmin[i]) # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-xmin[j])/(xmax[j]-xmin[j])
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=col[k],lty=lty[k],lwd=lwd[k]*2)
+        }
       }
       
       # 95% ellipse
       if (show.ellipse.95[k] & !is.null(C)) {
-        pts = ellipse::ellipse(C[c(i,j),c(i,j)],centre=c(E[i],E[j]),level=0.95,draw=F)
-        xplot = (pts[,1]-xmin[i])/(xmax[i]-xmin[i]) # convert the coordinates into the coordinates of the plot
-        yplot = (pts[,2]-xmin[j])/(xmax[j]-xmin[j])
-        lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=col[k],lty=lty[k],lwd=lwd[k])
+        if (!is.na(sum(E[c(i,j)])) & !is.na(sum(C[c(i,j),c(i,j)]))) {
+          pts = ellipse::ellipse(C[c(i,j),c(i,j)],centre=c(E[i],E[j]),level=0.95,draw=F)
+          xplot = (pts[,1]-xmin[i])/(xmax[i]-xmin[i]) # convert the coordinates into the coordinates of the plot
+          yplot = (pts[,2]-xmin[j])/(xmax[j]-xmin[j])
+          lines(pmin(1,pmax(0,xplot))+xoffset,pmin(1,pmax(0,yplot))+yoffset,col=col[k],lty=lty[k],lwd=lwd[k])
+        }
       }
 
     }
@@ -209,8 +219,8 @@ dfplotcov <- function(data,
       } else {
         # object type 4
         type = 4
-        E = survey$fit$p.best
-        C = survey$fit$p.covariance
+        E = d$fit$p.best
+        C = d$fit$p.covariance
         P = NULL
       }
       n = length(E)
@@ -239,6 +249,7 @@ dfplotcov <- function(data,
     if (k == 1) {
       
       # determine graphical parameters
+      nref = n
       area = 0.9*sqrt(2*pi)/nstd*pracma::erf(nstd/2/sqrt(2))
       xmin = xmax = xavg = array(NA,n)
       for (i in seq(n)) {
@@ -256,6 +267,8 @@ dfplotcov <- function(data,
       plot(0,0,type='n',xlim=c(0,n),ylim=c(0,n),ann=FALSE,xaxs='i',yaxs='i',xaxt='n',yaxt='n',bty='n')
       
     }
+    
+    if (n!=nref) stop('In dfplotcov, all data objects must have the same number of parameters.')
     
     if (type>0) {
       for (i in seq(n)) {

@@ -54,7 +54,9 @@ dfexample <- function(case = 1, seed = 1) {
   p.fit = survey$fit$parameters$p.optimal
   
   # plot covariances
-  dfplotcov(survey,expectation2 =p.true,title='Parameter covariance',model.col='blue',model2.cross.lty = 2)
+  dfplotcov(list(survey,p.true),title='Parameter covariance',
+            col = c('blue','black'),
+            pch = c(20,3))
   
   # plot main plot
   nbins = max(4,round(sqrt(n)/2))
@@ -272,7 +274,7 @@ dfexample <- function(case = 1, seed = 1) {
   survey = dffit(x, veff, x.err, gdf = gdf, p.initial = p.true, xmin = c(mrange[1],jrange[1]), xmax = c(mrange[2],jrange[2]), dx = c(0.1,0.1))
   
   # plot parameter covariances and initial parameters
-  dfplotcov(survey, expectation2 = p.true)
+  dfplotcov(list(survey, p.true), col=c('blue','black'), pch=c(20,3))
   
   # plot DF
   dfplot2(survey, p.ref = p.true, xlab = 'Mass/Msun', ylab = 'j/[kpc km/s]',
