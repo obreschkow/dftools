@@ -44,8 +44,10 @@
 #' # with varying integer arguments.
 #' 
 #' # The following examples introduce the basics of dftools step-by step.
-#' # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors
-#' dat = dfmockdata(sigma=0.5)
+#' # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors, drawn from
+#' # a Schechter function with parameters (-2,11,-1.3):
+#' p.true = c(-2,11,-1.3)
+#' dat = dfmockdata(n=1000,p=p.true,sigma=0.5)
 #' 
 #' # show the observed and true log-masses (x and x.true) as a function of true distance r
 #' plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
@@ -54,17 +56,15 @@
 #' survey = dffit(dat$x, dat$veff)
 #' 
 #' # plot fit and add a black dashed line showing the input MF
-#' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
-#' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
+#' mfplot(survey, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
 #' 
 #' # now, do the same again, while accountting for measurement errors in the fit
 #' # this time, the posterior data, corrected for Eddington bias, is shown as black points
 #' survey = dffit(dat$x, dat$veff, dat$x.err)
-#' mfplot(survey, xlim=c(1e6,2e11), ylim=c(2e-4,2), show.data.histogram = TRUE)
-#' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
+#' mfplot(survey, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = NA, p = p.true, add = TRUE)
 #'
 #' # show fitted parameter PDFs and covariances with true input parameters as black points
-#' dfplotcov(survey, expectation2 = c(-2,10,-1.3))
+#' dfplotcov(survey, expectation2 = c(-2,11,-1.3))
 #'
 #' # show effective volume function
 #' dfplotveff(survey)

@@ -64,7 +64,7 @@ dfexample <- function(case = 1, seed = 1) {
   x = 8; y = 1.5e-2
   points(10^x,y,pch=20)
   segments(10^(x-sigma),y,10^(x+sigma),y,lwd=1)
-  text(10^x,y*1.8,expression('Observing error'~sigma),cex=0.85)
+  text(10^x,y*1.8,expression('Observing error (\u00B1'*sigma*')'),cex=0.85)
   legend(2e7,6e-3,c('Input Schechter function',
                     'Fitted Schechter function with 68%-uncertainties',
                     'Binned input data',
@@ -128,7 +128,7 @@ dfexample <- function(case = 1, seed = 1) {
   x = 9.8; y = 1.7e-3
   points(10^x,y,pch=20)
   segments(10^(x-sigma),y,10^(x+sigma),y,lwd=1)
-  text(10^x,y*1.8,expression('Observing error'~sigma),cex=0.85)
+  text(10^x,y*1.8,expression('Observing error (\u00B1'*sigma*')'),cex=0.85)
   
 }
 
@@ -175,7 +175,7 @@ dfexample <- function(case = 1, seed = 1) {
   x = 10.3; y = 3e-2
   points(10^x,y,pch=20)
   segments(10^(x-sigma),y,10^(x+sigma),y,lwd=1)
-  text(10^x,y*1.8,expression('Observing error'~sigma),cex=0.85)
+  text(10^x,y*1.8,expression('Observing error (\u00B1'*sigma*')'),cex=0.85)
   legend(2e7,0.012,c('Input MF','Data with observing errors drawn from the input MF',
                         'Fitted MF using uniform bins',
                         'Fitted MF using linear elements',
@@ -231,13 +231,13 @@ dfexample <- function(case = 1, seed = 1) {
     }
     return(array(s,dim(x)))
   }
-  n = simpson2d(sc.array,6,14,-1,6)
+  n = pracma::simpson2d(sc.array,6,14,-1,6)
   if (n>1) {n = round(n)}
   if (n<10) stop('Expected number of galaxies cannot be smaller than 10.')
   if (n>1e5) stop('Expected number of galaxies cannot be larger than 10^5.')
   
   # check if data lies nicely within boundaries
-  if (simpson2d(sc.array,mrange[1],mrange[2],jrange[1],jrange[2])<0.9*n) {
+  if (pracma::simpson2d(sc.array,mrange[1],mrange[2],jrange[1],jrange[2])<0.9*n) {
     stop('With this parameter choice, more than 10% of the expected sources lie outside the integration range.')
   }
   

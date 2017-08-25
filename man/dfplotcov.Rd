@@ -4,35 +4,18 @@
 \alias{dfplotcov}
 \title{Plot parameter covariance matrix}
 \usage{
-dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
-  expectation2 = NULL, covariance2 = NULL, chain = NULL, chain2 = NULL,
-  name = NULL, title = "", nstd = 10, lower = TRUE, upper = FALSE,
-  margins = c(4, 4, 0.5, 0.5), model.col = "blue", model.lwd = 2,
-  model.lty = 1, model.cex = 1, model.cross.lty = NULL,
-  model2.col = "black", model2.lwd = 2, model2.lty = 1, model2.cex = 1,
-  model2.cross.lty = NULL, chain.col = "purple", chain.lwd = 2,
-  chain.lty = 1, chain.cex = 1, chain.point.cex = 0.1,
-  chain.point.alpha = 0.2, chain.cross.lty = NULL, chain.nmax = NULL,
-  chain2.col = "red", chain2.lwd = 2, chain2.lty = 1, chain2.cex = 1,
-  chain2.point.cex = 0.1, chain2.point.alpha = 0.2,
-  chain2.cross.lty = NULL, chain2.nmax = NUL, text.size.labels = 1.1,
-  text.size.numbers = 0.8, text.offset.labels = c(0, 0),
-  text.offset.numbers = c(0, 0))
+dfplotcov(data, name = NULL, title = "", nstd = 10, lower = TRUE,
+  upper = FALSE, margins = c(4, 4, 0.5, 0.5), col = c("black", "blue",
+  "red", "green", "orange"), lwd = 1, lty = 1, cex = 1.2, pch = 20,
+  cloud.alpha = 0.1, cloud.nmax = NULL, hist.alpha = 0.4,
+  show.histogram = TRUE, show.cloud = TRUE, show.gaussian = TRUE,
+  show.expectation = TRUE, show.ellipse.68 = TRUE, show.ellipse.95 = TRUE,
+  text.size.labels = 1.1, text.size.numbers = 0.8,
+  text.offset.labels = c(0, 0), text.offset.numbers = c(0, 0),
+  text.format.numbers = "\%4.1f")
 }
 \arguments{
-\item{survey}{List produced by \code{\link{dffit}}}
-
-\item{expectation}{Vector of expected parameters}
-
-\item{covariance}{Matrix of parameter covariances}
-
-\item{expectation2}{Vector of expected parameters of an optional 2nd model}
-
-\item{covariance2}{Matrix of parameter covariances of an optional 2nd model}
-
-\item{chain}{Matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud.}
-
-\item{chain2}{Matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud.}
+\item{data}{List of objects to be plotted. Each object in this list must be one of the following four: (1) a vector of parameters; (2) a list of two objects, a vector of parameters and an associated covariance matrix; (3) a matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud; (4) an output list produced by \code{\link{dffit}}. The plot will be centered on the parameters or average parameters of the first object in the data list.}
 
 \item{name}{Optional list of parameter names}
 
@@ -46,57 +29,15 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 
 \item{margins}{Plot margins (bottom,left,top,right)}
 
-\item{model.col}{Model color}
+\item{col}{Vector of colors of each object in the data-list.}
 
-\item{model.lwd}{Model line width}
+\item{lwd}{Vector of line width of each object in the data-list.}
 
-\item{model.lty}{Model line type}
+\item{lty}{Vector of line types of each object in the data-list.}
 
-\item{model.cex}{Model point size}
+\item{cex}{Vector of point sizes for the central parameters each object in the data-list.}
 
-\item{model.cross.lty}{Model line type for vertical & horizontal cross-lines}
-
-\item{model2.col}{Second model color}
-
-\item{model2.lwd}{Second model line width}
-
-\item{model2.lty}{Second model line type}
-
-\item{model2.cex}{Second model point size}
-
-\item{model2.cross.lty}{Second model line type for vertical & horizontal cross-lines}
-
-\item{chain.col}{Color of point cloud}
-
-\item{chain.lwd}{Line width of point cloud ellipses}
-
-\item{chain.lty}{Line type of point cloud ellipses}
-
-\item{chain.cex}{Point size at the center of point cloud}
-
-\item{chain.point.cex}{Point size of cloud points}
-
-\item{chain.point.alpha}{Transparency of cloud points}
-
-\item{chain.cross.lty}{Point cloud line type for vertical & horizontal cross-lines}
-
-\item{chain.nmax}{Maximum number of points to plot for this chain}
-
-\item{chain2.col}{Color of 2nd point cloud}
-
-\item{chain2.lwd}{Line width of 2nd point cloud ellipses}
-
-\item{chain2.lty}{Line type of 2nd point cloud ellipses}
-
-\item{chain2.cex}{Point size at the center of 2nd point cloud}
-
-\item{chain2.point.cex}{Point size of 2nd cloud points}
-
-\item{chain2.point.alpha}{Transparency of 2nd cloud points}
-
-\item{chain2.cross.lty}{2nd point cloud line type for vertical & horizontal cross-lines}
-
-\item{chain2.nmax}{Maximum number of points to plot for this chain}
+\item{pch}{Vector of point type for the central parameters each object in the data-list.}
 
 \item{text.size.labels}{Text size of parameter names}
 
@@ -105,6 +46,8 @@ dfplotcov(survey = NULL, expectation = NULL, covariance = NULL,
 \item{text.offset.labels}{2-element vector to adjust the position of the vertical and horizontal parameter names}
 
 \item{text.offset.numbers}{2-element vector to adjust the position of the vertical and horizontal numbers}
+
+\item{text.format.numbers}{String specifying the floating point format of the numbers. (see \code{\link{sprintf}})}
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.

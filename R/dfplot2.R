@@ -93,22 +93,10 @@ dfplot2 <- function(survey,
                 seq(survey$grid$xmin[2],survey$grid$xmax[2],survey$grid$dx[2]))
   xrange = c(survey$grid$xmin[1],survey$grid$xmax[1])
   yrange = c(survey$grid$xmin[2],survey$grid$xmax[2])
-  if (is.null(xlim)) {
-    if (xpower10) {
-      xlim = 10^xrange
-    } else {
-      xlim = xrange
-    }
-  }
-  if (is.null(ylim)) {
-    if (ypower10) {
-      ylim = 10^yrange
-    } else {
-      ylim = yrange
-    }
-  }
+  
   log = ''
   if (xpower10) {
+    xrange = 10^xrange
     log = paste0(log,'x')
     x = 10^survey$data$x[,1]
     cx = 10^x.grid[[1]]
@@ -117,6 +105,7 @@ dfplot2 <- function(survey,
     cx = x.grid[[1]]
   }
   if (ypower10) {
+    yrange = 10^yrange
     log = paste0(log,'y')
     y = 10^survey$data$x[,2]
     cy = 10^x.grid[[2]]
@@ -124,6 +113,9 @@ dfplot2 <- function(survey,
     y = survey$data$x[,2]
     cy = x.grid[[2]]
   }
+  
+  if (is.null(xlim)) {xlim = xrange}
+  if (is.null(ylim)) {ylim = yrange}
   
   # make model DF field
   r = col2rgb(col.gdf)[1]/255
@@ -157,7 +149,7 @@ dfplot2 <- function(survey,
   
   # plot central fit
   if (show.gdf) {
-    rasterImage(aperm(rgb[,ny:1,],c(2,1,3)),xlim[1],ylim[1],xlim[2],ylim[2])
+    rasterImage(aperm(rgb[,ny:1,],c(2,1,3)),xrange[1],yrange[1],xrange[2],yrange[2])
   }
   if (show.gdf.contours) {
     contour(cx,cy,img,add=TRUE,lwd=lwd.gdf.contours,lty=lty.gdf.contours,col=col.gdf.contours,drawlabels=FALSE,levels=contour.levels)

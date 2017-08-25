@@ -361,6 +361,7 @@ dfplot <- function(survey,
   invisible(survey)
 }
 
+#' @export
 .plotSub <- function(xleft=0.1,xright=0.3,ybottom=0.1,ytop=0.3) {
   par(omd=c(0,1,0,1))
   xmarg = sum(par()$mai[c(2,4)])
@@ -370,9 +371,17 @@ dfplot <- function(survey,
   par(new=T,omd=c(xleft*xplot/(xplot+xmarg),(xright*xplot+xmarg)/(xplot+xmarg),ybottom*yplot/(yplot+ymarg),(ytop*yplot+ymarg)/(yplot+ymarg)))
 }
 
+#' @export
 .plotSubEnd <- function() {
   par(oma=c(0,0,0,0))
   par(omi=c(0,0,0,0))
   par(omd=c(0,1,0,1))
+}
+
+#' @export
+.dfsun <- function(x,y,cex=1) {
+  par(xpd=TRUE)
+  points(rep(x,2),rep(y,2),pch=c(1,20),cex=c(1.2,0.45)*cex)
+  par(xpd=FALSE)
 }
 
