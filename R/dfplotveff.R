@@ -21,7 +21,7 @@
 dfplotveff <- function(survey,
                        xlim = NULL,
                        ylim = NULL,
-                       xlab = 'Observable x',
+                       xlab = 'Mass M',
                        ylab = expression('Effective volume'),
                        legend = TRUE,
                        xpower10 = TRUE) {

@@ -1,15 +1,26 @@
 #' Fit a generative distribution function, such as a galaxy mass function
 #'
-#' This function fits a galaxy mass function (MF) to a discrete set of \code{N} galaxies with noisy mass measurements and a user-defined selection function. More generally, \code{dffit} finds the most likely \code{P}-dimensional distribution function (DF) generating \code{N} objects \code{i=1,...,N} with uncertain measurements of \code{P} observables. For instance, if the objects are galaxies, it can fit a MF (\code{P=1}), a mass-size distribution (\code{P=2}) or the mass-spin-morphology distribution (\code{P=3}). A full description of the algorithm can be found in Obreschkow et al. (2017).
+#' This function finds the most likely P-dimensional model parameters of a D-dimensional distribution function (DF) generating an observed set of N objects with D-dimensional observables x, accounting for measurement uncertainties and a user-defined selection function. For instance, if the objects are galaxies, \code{dffit} can fit a mass function (D=1), a mass-size distribution (D=2) or the mass-spin-morphology distribution (D=3). A full description of the algorithm can be found in Obreschkow et al. (2017).
 #'
 #' @importFrom akima interp
 #' @importFrom stats optim rpois quantile approxfun cov
 #'
-#' @param x Normally \code{x} is a \code{N}-element vector, representing the log-masses (log10(M/Msun)) of \code{N} galaxies. More generally, \code{x} can be either a vector of \code{N} elements or a matrix of \code{N-by-P} elements, containing the values of one or \code{P} observables of \code{N} objects, respectively.
-#' @param selection Specifies the effective volume \code{Veff(xval)} in which a galaxy of log-mass \code{xval} can be observed; or, more generally, the volume in which an object of observed values \code{xval[1:P]} can be observed. This volume can be specified in five ways: (1) If \code{selection} is a single positive number, it will be interpreted as a constant volume, \code{Veff(xval)=selection}, in which all galaxies are fully observable. \code{Veff(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for one observable (\code{P=1}), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all \code{j=1,...,P} if \code{P>1}. This mode can be used for volume-complete surveys or for simulated galaxies in a box. (2) If \code{selection} is a vector of \code{N} elements, they will be interpreted as the effective volumes for each of the \code{N} galaxies. \code{Veff(xval)} is interpolated (linearly in \code{1/Veff}) for other values \code{xval}. \code{Veff(xval)=0} is assumed outside the observed domain. (3) \code{selection} can be a function of \code{P} variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}. (4) \code{selection} can also be a list (\code{selection = list(veff.values, veff.userfct)}) of an \code{N}-element vector \code{Veff.values} and a \code{P}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{Veff(xval)} will be interpolated from the \code{N} values of \code{Veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain. (5) Finally, \code{selection} can be a list of two functions and one optional 2-element vector: \code{selection = list(f, dVdr, rmin, rmax)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The scalars \code{rmin} and \code{rmax} (can be \code{0} and \code{Inf}) are the minimum and maximum comoving distance limits of the survey. Outside these limits \code{Veff=0} will be assumed.
-#' @param x.err Optional vector or array specifying the observational errors of \code{x}. If \code{x} is a vector then \code{x.err} must also be a vector of same length. Its elements are interpreted as the standard deviations of Gaussian uncertainties in \code{x}. If \code{x} is a \code{N-by-P} matrix representing \code{N} objects with \code{P} observables, then \code{x.err} must be either a \code{N-by-P} matrix or a \code{N-by-P-by-P} array. In the first case, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the second case, the \code{P-by-P} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{P} observed values \code{x[i,]}.
-#' @param r Optional vector of \code{N} elements specifying the comoving distances of the \code{N} galaxies. This vector is only needed if \code{correct.lss.bias = TRUE}.
-#' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{P=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
+#' @param x is an N-by-D matrix (or N-element vector if D=1) containing the observed quantities of N objects (e.g. galaxies).
+#' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
+#' 
+#' (1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
+#' 
+#' (2) \code{selection} can be an N-element vector. The elements will be interpreted as the volumes of each galaxy. \code{V(xval)} is interpolated (linearly in \code{1/V}) for other values \code{xval}. \code{V(xval)=0} is assumed outside the observed domain.\cr\cr
+#' 
+#' (3) \code{selection} can be a function of D variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}.\cr\cr
+#' 
+#' (4) \code{selection} can be a list (\code{selection = list(veff.values, veff.userfct)}) of an \code{N}-element vector \code{veff.values} and a \code{D}-dimensional function \code{veff.userfct}. In this case, the effective volume is computed using a hybrid scheme of modes (2) and (3): \code{V(xval)} will be interpolated from the N values of \code{veff.values} inside the observed domain, but set equal to \code{veff.userfct} outside this domain.\cr\cr
+#' 
+#' (5) \code{selection} can be a list of two functions and one 2-element vector: \code{selection = list(f, dVdr, rmin, rmax)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The scalars \code{rmin} and \code{rmax} (can be \code{0} and \code{Inf}) are the minimum and maximum comoving distance limits of the survey. Outside these limits \code{V(xval)=0} will be assumed.\cr\cr
+#' 
+#' @param x.err Optional \code{N-by-D} matrix or \code{N-by-D-by-D} array specifying the observational errors of \code{x}. If \code{x.err} is a \code{N-by-D} matrix, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the other case, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{D} observed values \code{x[i,]}.
+#' @param r Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.
+#' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
 #' @param p.initial Initial model parameters for fitting the DF.
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
@@ -25,13 +36,45 @@
 #' @details
 #' For a detailed description of the method, please refer to the peer-reviewed publication by Obreschkow et al. 2017 (in prep.).
 #'
-#' @return \code{dffit} returns a structured list, which can be interpreted by other functions, such as \code{\link{dfwrite}}, \code{\link{dfplot}}, \code{\link{dfplotcov}}, \code{\link{dfplotveff}}. The list contains the following sublists:
-#' \item{data}{is a list containing the input data, that is the array of observations \code{x}, their Gaussian uncertainties \code{x.err} and the distances if the objects \code{r}.}
-#' \item{selection}{is a list describing the selection function underlying the observations, namely the function \code{veff(x)}, which is derived from the input argument \code{selection}.}
-#' \item{model}{is a list describing the generative distribution function used to model. The main entry of this list is the function \code{gdf(xval,p)} (often written as phi(x|theta) in the literature).}
-#' \item{grid}{is a list of arrays representing a grid in the observables used for numerical integrations. Most importantly, the N-by-P array \code{x} contains the grid points, the N-element vector \code{gdf} gives the corresponding values of the fitted generative distribution function and the N-element vector \code{scd} representing the source count density given no measurement errors.}
-#' \item{fit}{is a list describing the fitted generative distribution function. It contains the array \code{p.best} giving the most likely model parameters, as well as their Gaussian uncertainties \code{p.sigma} and covariance matrix \code{p.covariance}. The list also contains the function \code{gdf(x)}, which is the model function evaluated at the parameters \code{p.best}; and the function \code{scd(x)=gdf(x)*veff(x)} representing the expected source count density.}
-#' \item{posteriors}{is a list of arrays specifying the posterior PDFs of the observed data, given the best-fitting model. The posterior PDFs are given via their means, standard deviations and modes, as well as a random value drawn from the posterior PDFs. This random value can be used to plot unbiased distribution functions, such as mass functions.}
+#' @return The routine \code{dffit} returns a structured list, which can be interpreted by other routines, such as \code{\link{dfwrite}}, \code{\link{dfplot}}, \code{\link{dfplotcov}}, \code{\link{dfplotveff}}. The list contains the following sublists:
+#' 
+#' \item{data}{contains the input arguments \code{x}, \code{x.err}, \code{r} and \code{lss.weight}, as well as the integers \code{n.data} and \code{n.dim} specifying the number of objects (N) to be fitted and the dimension (D) of the observables. In other words, \code{n.data} and \code{n.dim} are the number of rows and columns of \code{x}, respectively.}
+#' 
+#' \item{selection}{is a list describing the selection function of the data used when fitting the generative DF. The most important entries in this list are:\cr\cr
+#' \code{veff} is a function of a D-dimensional vector, specifying the effective volume associated with an object of properties xval. If LSS is corrected for, i.e. if the argument \code{correct.lss.bias} is set to \code{TRUE}, this function is the final effecive volume, including the effect of LSS.\cr\cr
+#' \code{veff.no.lss} is a function of a D-dimensional vector, specifying the effecive volume associate with an object, if LSS were not accounted for. This function is indentical to \code{veff}, if LSS is not accounted for in the fit, i.e. if the argument \code{correct.lss.bias} is set to \code{FALSE}.\cr\cr
+#' \code{mode} is an integer specifying the format of the input argument \code{selection}.}
+#' 
+#' \item{fit}{is a list describing the fitted generative distribution function. Its most important entries are:\cr\cr
+#' \code{p.best} is a P-vector giving the most likely model parameters according to the MML method.\cr\cr
+#' \code{p.sigma} and \code{p.covariance} are the standard deviations and covariance matrices of the best-fitting parameters in the Gaussian approximation from the Hessian matrix of the modified likelihood function.\cr\cr
+#'  \code{gdf} is a function of a D-dimensional vector, which is the generative DF, evaluated at the parameters \code{p.best}.\cr\cr
+#'  \code{scd} is a function of a D-dimensional vector, which gives the predicted source counts of the most likely model, i.e. scd(x)=gdf(x)*veff(x).}
+#' 
+#' \item{posteriors}{is a list specifying the posterior PDFs of the observed data, given the best-fitting model. It contains the following entries:\cr\cr
+#' \code{x.mean} is an N-by-D dimensional array giving the D-dimensional means of the posterior PDFs of the N objects.\cr\cr
+#' \code{x.mode} is an N-by-D dimensional array giving the D-dimensional modes of the posterior PDFs of the N objects.\cr\cr
+#' \code{x.stdev} is an N-by-D dimensional array giving the D-dimensional standard deviations of the posterior PDFs of the N objects.\cr\cr
+#' \code{x.random} is an N-by-D dimensional array giving one random D-dimensional value drawn from the posterior PDFs of each of the N objects.}
+#' 
+#' \item{model}{is a list describing the generative DF used to model the data. The main entries of this list are:\cr\cr
+#' \code{gdf(xval,p)} is the generative DF to be fitted, written as phi(x|theta) in the reference publication.\cr\cr
+#' \code{gdf.equation} is a text-string representing the analytical equation of \code{gdf}.\cr\cr
+#' \code{parameter.names} is a P-vector of expressions (see \code{\link{expression}}), specifying the names of the parameters.\cr\cr
+#' \code{n.para} is an integer specifying the number P of model parameters.}
+#' 
+#' \item{grid}{is a list of arrays with numerical evaluations of different functions on a grid in the D-dimensional observable space. This grid is used for numerical integrations and graphical representations. The most important list entries are:\cr\cr
+#' \code{x} is a M-by-D array of M points, defining a regular cartesian grid in the D-dimensional observable space.\cr\cr
+#' \code{xmin} and \code{xmax} are D-vectors specifying the lower and upper boundary of the grid in the D-dimensional observable space.\cr\cr
+#' \code{dx} is a D-vector specifying the steps between grid points.\cr\cr
+#' \code{dvolume} is a number specifying the D-dimensional volume associated with each grid point.\cr\cr
+#' \code{n.points} is the number M of grid points.\cr\cr
+#' \code{gdf} is an M-vector of values of the best-fitting generative DF at each grid point. The additional entries \code{gdf.error.neg} and \code{gdf.error.pos} define the 68\%-confidence range in the Hessian approximation of the parameter covariances. The optional entries \code{gdf.quantile.#} are different quantiles, generated if the input argument \code{n.resampling} is set.\cr\cr
+#' \code{veff} is an M-vector of effective volumes at each grid point.\cr\cr
+#' \code{scd} is an M-vector of predicted source counts according to the best-fitting model.\cr\cr
+#' \code{scd.posterior} is an M-vector of observed source counts derived from the posterior PDFs of each object.\cr\cr
+#' \code{effective.counts} is an M-vector of fractional source counts derived from the posterior PDFs of each object.}
+#' 
 #' \item{options}{is a list of various optional input arguments of \code{dffit}.}
 #'
 #' @keywords schechter function
@@ -41,36 +84,36 @@
 #' @examples
 #' # For a quick overview of some key functionalities run
 #' dfexample()
-#' # with varying integer arguments.
+#' # with varying integer arguments 1, 2, 3, 4.
 #' 
 #' # The following examples introduce the basics of dftools step-by step.
 #' # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors, drawn from
 #' # a Schechter function with parameters (-2,11,-1.3):
 #' p.true = c(-2,11,-1.3)
-#' dat = dfmockdata(n=1000,p=p.true,sigma=0.5)
+#' dat = dfmockdata(n=1000, p=p.true, sigma=0.5)
 #' 
 #' # show the observed and true log-masses (x and x.true) as a function of true distance r
 #' plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
 #' 
 #' # fit a Schechter function to the mock sample without accounting for errors
-#' survey = dffit(dat$x, dat$veff)
+#' survey.noerrors = dffit(dat$x, dat$veff)
 #' 
 #' # plot fit and add a black dashed line showing the input MF
-#' mfplot(survey, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
+#' mfplot(survey.noerrors, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
 #' 
 #' # now, do the same again, while accountting for measurement errors in the fit
 #' # this time, the posterior data, corrected for Eddington bias, is shown as black points
-#' survey = dffit(dat$x, dat$veff, dat$x.err)
-#' mfplot(survey, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = NA, p = p.true, add = TRUE)
+#' survey.witherrors = dffit(dat$x, dat$veff, dat$x.err)
+#' mfplot(survey.witherrors, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = NA, p = p.true, add = TRUE)
 #'
 #' # show fitted parameter PDFs and covariances with true input parameters as black points
-#' dfplotcov(survey, expectation2 = c(-2,11,-1.3))
+#' dfplotcov(list(survey.witherrors,survey.noerrors,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
 #'
 #' # show effective volume function
-#' dfplotveff(survey)
+#' dfplotveff(survey.witherrors)
 #'
 #' # now create a smaller survey of only 30 galaxies with 0.5dex mass errors
-#' dat = dfmockdata(30, sigma=0.5)
+#' dat = dfmockdata(n=30, p=p.true, sigma=0.5)
 #' 
 #' # fit a Schechter function and determine uncertainties by resampling the best fit
 #' survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
@@ -82,7 +125,7 @@
 #' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 #' 
 #' # add input model as dashed lines
-#' lines(10^survey$grid$x, pmax(2e-4,survey$model$gdf(survey$grid$x,c(-2,10,-1.3))),lty=2)
+#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,p.true), lty=2)
 #'
 #' @author Danail Obreschkow
 #'
@@ -103,7 +146,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   xmax = 13,
                   dx = 0.01,
                   keep.eddington.bias = FALSE,
-                  write.fit = TRUE,
+                  write.fit = FALSE,
                   add.gaussian.errors = TRUE,
                   make.posteriors = TRUE) {
 
@@ -229,13 +272,15 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # Handle gdf
   if (is.function(survey$tmp$gdf)) {
-    survey$model$gdf = survey$tmp$gdf
-    survey$model$gdf.equation = NA
     if (is.null(survey$options$p.initial)) stop('For user-defined distribution functions initial parameters must be given.')
+    survey$model$gdf = survey$tmp$gdf
+    survey$model$gdf.equation = NULL
+    survey$model$parameter.names = NULL
   } else {
+    if (is.null(survey$options$p.initial)) survey$options$p.initial = dfmodel(output = 'initial', type = survey$tmp$gdf)
     survey$model$gdf = function(x,p) {dfmodel(x, p, type = survey$tmp$gdf)}
     survey$model$gdf.equation = dfmodel(output = 'equation', type = survey$tmp$gdf)
-    if (is.null(survey$options$p.initial)) survey$options$p.initial = dfmodel(output = 'initial', type = survey$tmp$gdf)
+    survey$model$parameter.names = dfmodel(output = 'names', type = survey$tmp$gdf)
   }
   survey$model$n.para = length(survey$options$p.initial)
   
@@ -701,7 +746,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   nx = survey$grid$n.points
   
   # sample surface of covariance ellipsoid
-  nsteps = 50
+  nsteps = 100
   y.new = array(NA,c(nx,nsteps+2*np))
   for (i in seq(nsteps+2*np)) {
     if (i>nsteps) {
@@ -917,7 +962,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # produce posteriors
   m0 = m1 = md = array(NA,c(n.data,n.dim))
-  rho.unbiased = rho.unbiased.sqr = array(0,dim(x.mesh))
+  rho.unbiased = rho.unbiased.sqr = array(0,dim(x.mesh)[1])
   for (i in seq(n.data)) {
     
     # make prior PDF for data point i

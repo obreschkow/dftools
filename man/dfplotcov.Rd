@@ -4,30 +4,25 @@
 \alias{dfplotcov}
 \title{Plot parameter covariance matrix}
 \usage{
-dfplotcov(data, name = NULL, title = "", nstd = 10, lower = TRUE,
-  upper = FALSE, margins = c(4, 4, 0.5, 0.5), col = c("black", "blue",
-  "red", "green", "orange"), lwd = 1, lty = 1, cex = 1.2, pch = 20,
-  cloud.alpha = 0.1, cloud.nmax = NULL, hist.alpha = 0.4,
-  show.histogram = TRUE, show.cloud = TRUE, show.gaussian = TRUE,
-  show.expectation = TRUE, show.ellipse.68 = TRUE, show.ellipse.95 = TRUE,
+dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
+  col = c("blue", "black", "red", "green", "orange"), lwd = 1, lty = 1,
+  cex = 1.2, pch = 20, cloud.alpha = 0.1, cloud.nmax = NULL,
+  hist.alpha = 0.4, show.histogram = TRUE, show.cloud = TRUE,
+  show.gaussian = TRUE, show.expectation = TRUE, show.ellipse.68 = TRUE,
+  show.ellipse.95 = TRUE, title = "", nstd = 10, nbins = NULL,
+  lower = TRUE, upper = FALSE, margins = c(4, 4, 0.5, 0.5),
   text.size.labels = 1.1, text.size.numbers = 0.8,
   text.offset.labels = c(0, 0), text.offset.numbers = c(0, 0),
   text.format.numbers = "\%4.1f")
 }
 \arguments{
-\item{data}{List of objects to be plotted. Each object in this list must be one of the following four: (1) a vector of parameters; (2) a list of two objects, a vector of parameters and an associated covariance matrix; (3) a matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud; (4) an output list produced by \code{\link{dffit}}. The plot will be centered on the parameters or average parameters of the first object in the data list.}
+\item{data}{List of objects to be plotted. Each object in this list must be one of the following four: (1) a vector of parameters; (2) a list of two objects, a vector of parameters and an associated covariance matrix; (3) a matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud; (4) an output list produced by \code{\link{dffit}}. The plot will be centered on the parameters (or average parameters) of the first object in the data list, unless the argument \code{master} is set to a different index.}
 
-\item{name}{Optional list of parameter names}
+\item{master}{Integer specifying the index of the object in the data list defining the axes scales}
 
-\item{title}{Optional plot title}
+\item{order}{Vector of integer specifying the order of drawing.}
 
-\item{nstd}{Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.}
-
-\item{lower}{Logical flag indicating whether the lower triangle is shown}
-
-\item{upper}{Logical flag indicating whether the lower triangle is shown}
-
-\item{margins}{Plot margins (bottom,left,top,right)}
+\item{names}{Optional list of parameter names}
 
 \item{col}{Vector of colors of each object in the data-list}
 
@@ -57,6 +52,18 @@ dfplotcov(data, name = NULL, title = "", nstd = 10, lower = TRUE,
 
 \item{show.ellipse.95}{Logical vector specifying whether to draw 95\% confidence ellipses}
 
+\item{title}{Optional plot title}
+
+\item{nstd}{Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.}
+
+\item{nbins}{Optional integer specifying the number of bins used in histograms. If set to \code{NULL}, this number is determined automatically.}
+
+\item{lower}{Logical flag indicating whether the lower triangle is shown}
+
+\item{upper}{Logical flag indicating whether the lower triangle is shown}
+
+\item{margins}{Plot margins (bottom,left,top,right)}
+
 \item{text.size.labels}{Text size of parameter names}
 
 \item{text.size.numbers}{Text size of numbers}
@@ -69,6 +76,29 @@ dfplotcov(data, name = NULL, title = "", nstd = 10, lower = TRUE,
 }
 \description{
 This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
+}
+\examples{
+# generate two random correlated vectors p[1,] and p[2,] of n elements
+# and display their covariance plot
+n = 100
+p = array(NA,c(n,2))
+p[,1] = rnorm(n)
+p[,2] = 0.25*p[,1]+rnorm(n,1,0.5)
+dfplotcov(list(p))
+
+# now produce the same plot, but increase the number of bins
+# add in red color the theoretical expectation
+expected_mean = c(0,1)
+expected_covariance = cbind(c(1,0.5^2),c(0.5^2,0.5^2+0.25^2))
+dfplotcov(list(p,list(expected_mean,expected_covariance)), nbins=20, col=c('black','red'))
+
+# Fit a Schechter function to a mock survey, plot the best-fitting parameters
+# with uncertainties in blue and add input parameters as black crosses
+p.true = c(-2,11,-1.3)
+dat = dfmockdata(n=1000,p=p.true,sigma=0.5)
+survey = dffit(dat$x, dat$veff, dat$x.err)
+dfplotcov(list(survey,p.true), col=c('blue','black'), pch=c(20,3))
+
 }
 \seealso{
 See examples in \code{\link{dffit}}.

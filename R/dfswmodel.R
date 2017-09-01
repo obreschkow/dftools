@@ -9,12 +9,12 @@
 #' @param method	specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xpoints}.
 #' @param p Schechter function parameters used to determine the initial values of the step-wise paraemters.
 #' 
-#' @return \code{dfssmodel} returns a list with two components \code{gdf} and {p.initial}. The first component is a function of log-masses \code{x} and a parameter vector \code{p}. The second component is the initial parameter-vector producing a step-wise mass function that closely matches the Schechter function specified by \code{p}.
+#' @return \code{dfswmodel} returns a list with two components \code{gdf} and {p.initial}. The first component is a function of log-masses \code{x} and a parameter vector \code{p}. The second component is the initial parameter-vector producing a step-wise mass function that closely matches the Schechter function specified by \code{p}.
 #'
 #' @examples
 #' # Basic example of a stepwise linear MF
 #' xpoints = seq(6.5,12,0.5)
-#' model = dfssmodel(xpoints)
+#' model = dfswmodel(xpoints)
 #' plot(10^xpoints,10^model$p.initial,log='xy',ylim=c(1e-5,1),pch=20)
 #' lines(10^seq(4,12,0.01),model$gdf(seq(4,12,0.01),model$p.initial))
 #' 
@@ -27,7 +27,7 @@
 #'
 #' @export
 
-dfssmodel <- function(xpoints,
+dfswmodel <- function(xpoints,
                       method = 'linear',
                       p = dfmodel(output = 'initial')) {
   
