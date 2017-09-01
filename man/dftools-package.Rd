@@ -6,7 +6,7 @@
 Fitting distribution functions such as galaxy mass functions
 }
 \description{
-The package can be used to find the most likely P parameters of a D-dimensional distribution function (DF) generating N objects with D observables per object. For instance, if the objects are galaxies, it can fit a mass function (P=1), a mass-size distribution (P=2) or the mass-spin-morphology distribution (P=3). Fits are performed using the modified maximum likelihood (MML) formalism with the fit-and-debias algorithm. Unlike most common fitting techniques, this method accurately accounts for measurement is uncertainties and complex selection functions. In the context of astrophysical applications, such as fitting a galaxy mass function, the routines can also accurately account for cosmic large-scale structure, inherent to any galaxy survey. A full description of the formalism and algorithm can be found in Obreschkow et al. (2017). The package contains the following routines\cr\cr
+The package can be used to find the most likely P parameters of a D-dimensional distribution function (DF) generating N objects with D observables per object. For instance, if the objects are galaxies, it can fit a mass function (P=1), a mass-size distribution (P=2) or the mass-spin-morphology distribution (P=3). Fits are performed using the modified maximum likelihood (MML) formalism with the fit-and-debias algorithm. Unlike most common fitting techniques, this method accurately accounts for measurement is uncertainties and complex selection functions. In the context of astrophysical applications, such as fitting a galaxy mass function, the routines can also accurately account for cosmic large-scale structure, inherent to any galaxy survey. A full description of the formalism and algorithm can be found in Obreschkow et al. (2017). The package contains the following routines:\cr\cr
 \code{\link{dffit}} is the core routine, used to fit model parameters to a set of observations.\cr\cr
 \code{\link{dfplot}}, \code{\link{mfplot}}, \code{\link{dfplot2}} are plotting functions that use the output argument of \code{dffit} as primary input argument. These functions can visualize the input data and fitted model in a single plot.\cr\cr
 \code{\link{dfplotveff}} and \code{\link{dfplotveff2}} are a second set of plotting functions that use the output argument of \code{dffit} as primary input argument. These functions visualize the effective volume (= weight) as a function of the observables.\cr\cr
@@ -30,8 +30,4 @@ Danail Obreschkow <danail.obreschkow@icrar.org>
 \references{
 Obreschkow et al., 2017
 }
-
 \keyword{ package }
-\seealso{
-Obreschkow et al. (2017)
-}

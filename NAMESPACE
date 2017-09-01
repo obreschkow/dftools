@@ -2,6 +2,7 @@
 
 export(.corefit)
 export(.dfsun)
+export(.hist)
 export(.make.veff)
 export(.plotSub)
 export(.plotSubEnd)

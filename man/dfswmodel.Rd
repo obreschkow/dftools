@@ -2,32 +2,55 @@
 % Please edit documentation in R/dfswmodel.R
 \name{dfswmodel}
 \alias{dfswmodel}
-\title{Make step-wise linearmass function}
+\title{Make step-wise linear distribution function}
 \usage{
-dfswmodel(xpoints, method = "linear", p = dfmodel(output = "initial"))
+dfswmodel(gdf = function(x) dfmodel(x, dfmodel(output = "initial"),
+  "density"), xedges = seq(6, 12, 0.5), method = "linear",
+  extrapolate = TRUE)
 }
 \arguments{
-\item{xpoints}{Vector of log-masses used as interpolation points.}
+\item{gdf}{is the one-dimensional generative DF to be converted into a step-wise DF.}
 
-\item{method}{specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xpoints}.}
+\item{xedges}{is a vector of observables x defining the edges of the bins for the step-wise DF.}
 
-\item{p}{Schechter function parameters used to determine the initial values of the step-wise paraemters.}
+\item{method}{specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xedges}.}
+
+\item{extrapolate}{is a logical flag. If \code{TRUE}, the step-wise DF is linearly extraplated outside the range of \code{xedges}. This extrapolation is useful when fitting the stepw-wise DF to data.}
 }
 \value{
 \code{dfswmodel} returns a list with two components \code{gdf} and {p.initial}. The first component is a function of log-masses \code{x} and a parameter vector \code{p}. The second component is the initial parameter-vector producing a step-wise mass function that closely matches the Schechter function specified by \code{p}.
 }
 \description{
-This function converts a Schechter function into a step-wise linear mass function of an arbitrary number of bins, to fit a quasi non-parametric mass functions.
+This function converts a continuous one-dimensional distribution function (DF), such as a galaxy mass function, into a step-wise DF on an arbitrary number of bins.
 }
 \examples{
-# Basic example of a stepwise linear MF
-xpoints = seq(6.5,12,0.5)
-model = dfswmodel(xpoints)
-plot(10^xpoints,10^model$p.initial,log='xy',ylim=c(1e-5,1),pch=20)
-lines(10^seq(4,12,0.01),model$gdf(seq(4,12,0.01),model$p.initial))
-
-# Example of fitting a stepwise linear MF
+# For an overall illustration run
 dfexample(3)
+
+# The follwoing is a step-by-step example.
+# First, define and visulize a smooth Schechter function (a special type of galaxy mass function)
+p.true = c(-2,11,-1.4) # Schechter function parameters
+gdf = function(x) dfmodel(x, p.true, type='Schechter') # Schechter function
+x = seq(5.8,12,0.01) # plotting range
+plot(10^x, gdf(x), type='l', log='xy', ylim=c(1e-5,2))
+
+# Define the edges of non-equal bins
+xbin = c(6,7,7.5,seq(8,9,0.2),seq(9.5,11,0.5),11.8) # edges of bins
+
+# Make and plot step-wise constant function
+swconstant = dfswmodel(gdf, xbin, 'constant') # step-wise constant function
+lines(10^x, swconstant$gdf(x, swconstant$p.initial), col='blue', lwd=3)
+
+# Make and plot step-wise linear function
+swlinear = dfswmodel(gdf, xbin, 'linear') # step-wise linear function
+lines(10^x, swlinear$gdf(x, swlinear$p.initial), col='orange', lwd=2)
+
+# Make and plot step-wise spline function
+swspline = dfswmodel(gdf, xbin, 'spline') # step-wise linear function
+lines(10^x, swspline$gdf(x, swspline$p.initial), col='red')
+
+# Plot mid-points of bins
+points(10^swconstant$xmid, 10^swconstant$p.initial, pch=20)
 
 }
 \seealso{

@@ -151,27 +151,31 @@ dfexample <- function(case = 1, seed = 1) {
   dat = dfmockdata(n = n, seed = seed, sigma = sigma, gdf = gdf.analytic, p = p.true, xmax = 14, rmax = 25)
   
   # make step-wise linear fitting function
-  xpoints = seq(7.5,12,length=10)
-  ssc = dfssmodel(xpoints,method='constant')
-  ssl = dfssmodel(xpoints,method='linear')
-  sss = dfssmodel(xpoints,method='spline')
+  gdf = function(x) gdf.analytic(x, p.true)
+  xedges = c(7.5,seq(8,9.5,0.5),seq(10,11,0.25),11.5,12)
+  ssc = dfswmodel(gdf, xedges, method='constant')
+  ssl = dfswmodel(gdf, xedges, method='linear')
+  sss = dfswmodel(gdf, xedges, method='spline')
   
   # fitt step-wise linear function
   surveyc = dffit(dat$x, dat$veff, dat$x.err, gdf = ssc$gdf,
-                  p.initial = log10(gdf.analytic(xpoints,p.true)),
+                  p.initial = ssc$p.initial,
                   xmin = dat$xmin, xmax = dat$xmax, write.fit = FALSE)
   surveyl = dffit(dat$x, dat$veff, dat$x.err, gdf = ssl$gdf,
-                  p.initial = log10(gdf.analytic(xpoints,p.true)),
+                  p.initial = ssl$p.initial,
                   xmin = dat$xmin, xmax = dat$xmax, write.fit = FALSE)
   surveys = dffit(dat$x, dat$veff, dat$x.err, gdf = sss$gdf,
-                  p.initial = log10(gdf.analytic(xpoints,p.true)),
+                  p.initial = sss$p.initial,
                   xmin = dat$xmin, xmax = dat$xmax, write.fit = FALSE)
   
   # plot
-  mfplot(surveyc,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,col.data.input='#00000030',show.data.histogram = TRUE)
-  mfplot(surveys,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,show.input.data=FALSE,add=TRUE,show.data.histogram = NA,col.fit='red')
-  mfplot(surveyl,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,show.input.data=FALSE,add=TRUE,show.data.histogram = NA,col.fit='orange')
-  x = seq(4,12,0.01)
+  mfplot(surveyc,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,
+         clip.xmin=10^min(xedges), clip.xmax=10^max(xedges),col.data.input='#00000030',show.data.histogram = TRUE)
+  mfplot(surveys,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,
+         clip.xmin=10^min(xedges), clip.xmax=10^max(xedges),show.input.data=FALSE,add=TRUE,show.data.histogram = NA,col.fit='red')
+  mfplot(surveyl,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,
+         clip.xmin=10^min(xedges), clip.xmax=10^max(xedges),show.input.data=FALSE,add=TRUE,show.data.histogram = NA,col.fit='orange')
+  x = seq(7,13,0.01)
   lines(10^x,gdf.analytic(x,p.true),lty=2)
   
   x = 10.3; y = 3e-2

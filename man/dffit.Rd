@@ -6,8 +6,9 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  lss.weight = NULL, n.resampling = NULL, n.jackknife = NULL, xmin = 5,
-  xmax = 13, dx = 0.01, keep.eddington.bias = FALSE, write.fit = FALSE,
+  lss.weight = NULL, lss.errors = TRUE, n.resampling = NULL,
+  n.jackknife = NULL, xmin = 5, xmax = 13, dx = 0.01,
+  keep.eddington.bias = FALSE, write.fit = FALSE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
 \arguments{
@@ -39,9 +40,11 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{lss.weight}{If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).}
 
-\item{n.resampling}{If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.}
+\item{lss.errors}{is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.resampling>0}.}
 
-\item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.}
+\item{n.resampling}{If \code{n.resampling} is an integer larger than one, the best-fitting model is resampled \code{n.resampling} times to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.resampling = NULL}, no resampling is performed.}
+
+\item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.}
 
 \item{xmin, xmax, dx}{are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.}
 

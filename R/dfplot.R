@@ -27,6 +27,10 @@
 #' @param nbins Number of bins to be plotted; must be larger than 0. Choose \code{nbins=NULL} (default) to determine the number of bins automatically.
 #' @param bin.xmin Left edge of first bin
 #' @param bin.xmax Right edge of last bin
+#' @param clip.xmin Minimum x values to be plotted in models
+#' @param clip.xmax Maximum x values to be plotted in models
+#' @param clip.ymin Minimum y values to be plotted in models
+#' @param clip.ymax Maximum y values to be plotted in models
 #' @param col.fit Color of fit (see \code{\link{plot}})
 #' @param lwd.fit Line width of fit (see \code{\link{plot}})
 #' @param lty.fit Line type of fit (see \code{\link{plot}})
@@ -67,12 +71,16 @@ dfplot <- function(survey,
                    show.posterior.data = TRUE,
                    show.data.histogram = FALSE,
                    show.uncertainties = TRUE,
-                   uncertainty.type = NULL,
+                   uncertainty.type = 1,
                    show.bias.correction = FALSE,
                    add = FALSE,
                    nbins = NULL,
                    bin.xmin = NULL,
                    bin.xmax = NULL,
+                   clip.xmin = NULL,
+                   clip.xmax = NULL,
+                   clip.ymin = NULL,
+                   clip.ymax = NULL,
                    col.fit = 'blue',
                    lwd.fit = 2,
                    lty.fit = 1,
@@ -137,17 +145,18 @@ dfplot <- function(survey,
     }
   }
   
+  # clip plotting range
+  usr <- par("usr")
+  if (is.null(clip.xmin)) {x1=xlim[1]} else {x1=clip.xmin}
+  if (is.null(clip.xmax)) {x2=xlim[2]} else {x2=clip.xmax}
+  if (is.null(clip.ymin)) {y1=ylim[1]} else {y1=clip.ymin}
+  if (is.null(clip.ymax)) {y2=ylim[2]} else {y2=clip.ymax}
+  clip(x1,x2,y1,y2)
+  
   # plot uncertainty regions
   if (show.uncertainties & survey$fit$status$converged) {
     poly.x = c(survey$grid$x,rev(survey$grid$x))
     if (xpower10) poly.x = 10^poly.x
-    if (is.null(uncertainty.type)) {
-      if (length(survey$grid$gdf.quantile.16)>0) {
-        uncertainty.type = 2
-      } else {
-        uncertainty.type = 1
-      }
-    }
     if ((uncertainty.type>1) & (!length(survey$grid$gdf.quantile.16)>0)) stop('Quantiles not available. Use resampling in dffit.')
     if (uncertainty.type == 3) {
       poly.y.95 = pmax(ylim[1],c(survey$grid$gdf.quantile.02,rev(survey$grid$gdf.quantile.98)))
@@ -186,7 +195,10 @@ dfplot <- function(survey,
       lines(x,survey$model$gdf(x,p),col=col.ref,lwd=lwd.ref,lty=lty.ref)
     }
   }
-
+  
+  # unclip plotting range
+  clip(xlim[1],xlim[2],ylim[1],ylim[2])
+  
   # plot binned input data points
   bin = list()
   for (mode in seq(2)) {
@@ -376,6 +388,16 @@ dfplot <- function(survey,
   par(oma=c(0,0,0,0))
   par(omi=c(0,0,0,0))
   par(omd=c(0,1,0,1))
+}
+
+#' @export
+.hist = function(x,breaks) {
+  b = c(-1e99,breaks,1e99)
+  counts = hist(x,breaks=b,plot=F)$counts[2:(length(b)-2)]
+  center = (breaks[1:(length(breaks)-1)]+breaks[2:length(breaks)])/2
+  x = array(rbind(array(breaks),array(breaks)))
+  y = c(0,array(rbind(array(counts),array(counts))),0)
+  return(list(counts=counts,center=center,x=x,y=y))
 }
 
 #' @export

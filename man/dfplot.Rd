@@ -9,9 +9,10 @@ dfplot(survey, xlab = "Observable x",
   ylab.histogram = "Selection", xlim = NULL, ylim = NULL, log = "y",
   p = NULL, veff = NULL, xpower10 = FALSE, show.input.data = TRUE,
   show.posterior.data = TRUE, show.data.histogram = FALSE,
-  show.uncertainties = TRUE, uncertainty.type = NULL,
+  show.uncertainties = TRUE, uncertainty.type = 1,
   show.bias.correction = FALSE, add = FALSE, nbins = NULL,
-  bin.xmin = NULL, bin.xmax = NULL, col.fit = "blue", lwd.fit = 2,
+  bin.xmin = NULL, bin.xmax = NULL, clip.xmin = NULL, clip.xmax = NULL,
+  clip.ymin = NULL, clip.ymax = NULL, col.fit = "blue", lwd.fit = 2,
   lty.fit = 1, col.data.input = "purple", cex.data.input = 1,
   lwd.data.input = 1, col.data.posterior = "black",
   cex.data.posterior = 1, lwd.data.posterior = 1, col.hist = "grey",
@@ -58,6 +59,14 @@ dfplot(survey, xlab = "Observable x",
 \item{bin.xmin}{Left edge of first bin}
 
 \item{bin.xmax}{Right edge of last bin}
+
+\item{clip.xmin}{Minimum x values to be plotted in models}
+
+\item{clip.xmax}{Maximum x values to be plotted in models}
+
+\item{clip.ymin}{Minimum y values to be plotted in models}
+
+\item{clip.ymax}{Maximum y values to be plotted in models}
 
 \item{col.fit}{Color of fit (see \code{\link{plot}})}
 

@@ -25,8 +25,9 @@
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
-#' @param n.resampling If \code{n.resampling} is an integer larger than one, the data is resampled \code{n.resampling} times, removing exactly one data points from the set at each iteration. This reampling adds realistic parameter uncertainties with quantiles. If \code{n.resampling = NULL}, no resampling is performed.
-#' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to the number of data points.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
+#' @param lss.errors is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.resampling>0}.
+#' @param n.resampling If \code{n.resampling} is an integer larger than one, the best-fitting model is resampled \code{n.resampling} times to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.resampling = NULL}, no resampling is performed.
+#' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
@@ -140,6 +141,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   n.iterations = 100,
                   correct.lss.bias = FALSE,
                   lss.weight = NULL,
+                  lss.errors = TRUE,
                   n.resampling = NULL,
                   n.jackknife = NULL,
                   xmin = 5,
@@ -163,7 +165,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                                n.resampling = n.resampling, n.jackknife = n.jackknife,
                                keep.eddington.bias = keep.eddington.bias,
                                correct.lss.bias = correct.lss.bias,
-                               lss.weight = lss.weight),
+                               lss.weight = lss.weight, lss.errors = lss.errors),
                 tmp = list(selection = selection, gdf = gdf))
   
   # Check and pre-process input arguments
@@ -320,6 +322,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   veff.userfct = NULL
   veff.function = NULL
   f.function = NULL
+  dVdr = NULL
   rmin = NULL
   rmax = NULL
   
@@ -430,6 +433,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
         test = try(s[[1]](NA,NA)*s[[2]](NA),silent=TRUE)
         if (!is.double(test)) stop('In the argument selection = list(f, dVdr, rmin, rmax), the functions f(xval,r) and dVdr(r) must work if r is a vector.')
         f.function = s[[1]]
+        dVdr = s[[2]]
         veff.function.elemental = function(xval) {
           f = function(r) {s[[1]](xval,r)*s[[2]](r)}
           return(integrate(f,rmin,rmax,stop.on.error=FALSE)$value)
@@ -462,6 +466,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                           veff.input.values = veff.values,
                           veff.input.function = veff.userfct,
                           f = f.function,
+                          dVdr = dVdr,
                           rmin = rmin, rmax = rmax,
                           mode = mode)
   invisible(survey)
@@ -859,24 +864,36 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   x.err.mean = mean(b$data$x.err)
   
   # randomly resample and refit the DF
-  cum = cumsum(survey$grid$scd/sum(survey$grid$scd))
   p.new = array(NA,c(survey$options$n.resampling,np))
   for (iteration in seq(survey$options$n.resampling)) {
     cat(sprintf('\rResampling: %4.2f%%',100*iteration/survey$options$n.resampling))
     n.new = max(2,rpois(1,n.data))
-    x.obs = array(NA,n.new)
-    r = runif(n.new)
-    for (i in seq(n.new)) {
-      index = which.min(abs(cum-r[i]))
-      x.obs[i] = survey$grid$x[index]
+    if (survey$options$correct.lss.bias & survey$options$lss.errors) {
+      dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean, gdf = survey$model$gdf, p = survey$fit$p.best,
+                       f = survey$selection$f, dVdr = survey$selection$dVdr,
+                       rmin = survey$selection$rmin, rmax = survey$selection$rmax)
+      b$data$r = cbind(dat$r)
+      b$data$lss.weight = cbind(array(1,n.new))
+      b$selection$veff.no.lss = dat$veff
+      b$selection$veff = dat$veff
+    } else {
+      dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean, gdf = survey$model$gdf, p = survey$fit$p.best,
+                       veff = survey$selection$veff)
+      b$options$correct.lss.bias = FALSE
     }
-    x.obs = x.obs+rnorm(n.new)*x.err.mean
     b$data$n.data = n.new
-    b$data$x = cbind(x.obs)
-    b$data$x.err = cbind(rep(x.err.mean,n.new))
+    b$data$x = cbind(dat$x)
+    b$data$x.err = cbind(dat$x.err)
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
   }
   cat('\r')
+  
+  # adjust modes (approximated as means)
+  #if (survey$options$correct.lss.bias) {
+  #  for (i in seq(np)) {
+  #    #p.new[,i] = p.new[,i]-mean(p.new[,i],na.rm=TRUE)+survey$fit$p.best[i]
+  #  }
+  #}
   
   # compute covariance
   survey$fit$p.covariance.resample = array(NA,c(np,np))
