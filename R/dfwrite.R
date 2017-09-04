@@ -32,12 +32,12 @@ dfwrite <- function(survey) {
       sigma.84 = survey$fit$p.quantile.84-survey$fit$p.best
       sigma.16 = survey$fit$p.best-survey$fit$p.quantile.16
       for (i in seq(length(p))) {
-        cat(sprintf('p[%d] = %7.2f (+%3.2f -%3.2f)\n',i,p[i],sigma.84[i],sigma.16[i]))
+        cat(sprintf('p[%d] = %8.3f (+%4.3f -%4.3f)\n',i,p[i],sigma.84[i],sigma.16[i]))
       }
     } else {
       sigma = survey$fit$p.sigma
       for (i in seq(length(p))) {
-        cat(sprintf('p[%d] = %7.2f (+-%3.2f)\n',i,p[i],sigma[i]))
+        cat(sprintf('p[%d] = %8.3f (+-%4.3f)\n',i,p[i],sigma[i]))
       }
     }
   }
