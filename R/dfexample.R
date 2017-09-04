@@ -120,8 +120,8 @@ dfexample <- function(case = 1, seed = 1) {
   
   # plot MFs
   mfplot(survey1,xlim=c(1e8,2e12),ylim=c(1e-5,5),nbins=20,bin.xmin=8,bin.xmax=12,col.fit='orange',col.data.input='orange',show.data.histogram = TRUE)
-  mfplot(survey2,xlim=c(1e8,2e12),ylim=c(1e-5,5),nbins=20,bin.xmin=8,bin.xmax=12,col.fit='red',col.data.posterior='red',show.input.data=FALSE,add=TRUE,show.data.histogram = NA)
-  mfplot(survey3,xlim=c(1e8,2e12),ylim=c(1e-5,5),nbins=20,bin.xmin=8,bin.xmax=12,col.fit='blue',col.data.posterior='blue',show.input.data=FALSE,add=TRUE,show.data.histogram = NA)
+  mfplot(survey2,nbins=20,bin.xmin=8,bin.xmax=12,col.fit='red',col.data.posterior='red',show.input.data=FALSE,add=TRUE,show.data.histogram = NA)
+  mfplot(survey3,nbins=20,bin.xmin=8,bin.xmax=12,col.fit='blue',col.data.posterior='blue',show.input.data=FALSE,add=TRUE,show.data.histogram = NA)
   lines(10^x,survey1$model$gdf(x,p),lty=2)
   legend(1.5e8,3e-4,c('Uncorrected fit','Including mass errors',
                         'Including errors + LSS','Input model'),
@@ -171,9 +171,9 @@ dfexample <- function(case = 1, seed = 1) {
   # plot
   mfplot(surveyc,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,
          clip.xmin=10^min(xedges), clip.xmax=10^max(xedges),col.data.input='#00000030',show.data.histogram = TRUE)
-  mfplot(surveys,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,
+  mfplot(surveys,show.posterior.data=FALSE,
          clip.xmin=10^min(xedges), clip.xmax=10^max(xedges),show.input.data=FALSE,add=TRUE,show.data.histogram = NA,col.fit='red')
-  mfplot(surveyl,xlim=c(1e7,4e12),ylim=c(1e-3,3),show.posterior.data=FALSE,
+  mfplot(surveyl,show.posterior.data=FALSE,
          clip.xmin=10^min(xedges), clip.xmax=10^max(xedges),show.input.data=FALSE,add=TRUE,show.data.histogram = NA,col.fit='orange')
   x = seq(7,13,0.01)
   lines(10^x,gdf.analytic(x,p.true),lty=2)

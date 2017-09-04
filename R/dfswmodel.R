@@ -114,28 +114,3 @@ dfswmodel <- function(gdf = function(x) dfmodel(x, dfmodel(output = 'initial'), 
   }
   return(list(gdf = gdf, p.initial = ymid, xmid = xmid, xmin = xedges[1], xmax = xedges[nedges]))
 }
-
-# The follwoing is a step-by-step example.
-# First, define and visulize a smooth Schechter function (a special type of galaxy mass function)
-p.true = c(-2,11,-1.4) # Schechter function parameters
-gdf = function(x) dfmodel(x, p.true, type='Schechter') # Schechter function
-x = seq(5.8,12,0.01) # plotting range
-plot(10^x, gdf(x), type='l', log='xy', ylim=c(1e-5,2))
-
-# Define the edges of non-equal bins
-xbin = c(6,7,7.5,seq(8,9,0.2),seq(9.5,11,0.5),11.8) # edges of bins
-
-# Make and plot step-wise constant function
-swconstant = dfswmodel(gdf, xbin, 'constant') # step-wise constant function
-lines(10^x, swconstant$gdf(x, swconstant$p.initial), col='blue', lwd=3)
-
-# Make and plot step-wise linear function
-swlinear = dfswmodel(gdf, xbin, 'linear') # step-wise linear function
-lines(10^x, swlinear$gdf(x, swlinear$p.initial), col='orange', lwd=2)
-
-# Make and plot step-wise spline function
-swspline = dfswmodel(gdf, xbin, 'spline') # step-wise linear function
-lines(10^x, swspline$gdf(x, swspline$p.initial), col='red')
-
-# Plot mid-points of bins
-points(10^swconstant$xmid, 10^swconstant$p.initial, pch=20)

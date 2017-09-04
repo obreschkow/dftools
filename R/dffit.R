@@ -3,7 +3,7 @@
 #' This function finds the most likely P-dimensional model parameters of a D-dimensional distribution function (DF) generating an observed set of N objects with D-dimensional observables x, accounting for measurement uncertainties and a user-defined selection function. For instance, if the objects are galaxies, \code{dffit} can fit a mass function (D=1), a mass-size distribution (D=2) or the mass-spin-morphology distribution (D=3). A full description of the algorithm can be found in Obreschkow et al. (2017).
 #'
 #' @importFrom akima interp
-#' @importFrom stats optim rpois quantile approxfun cov
+#' @importFrom stats optim rpois quantile approxfun cov var
 #'
 #' @param x is an N-by-D matrix (or N-element vector if D=1) containing the observed quantities of N objects (e.g. galaxies).
 #' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
@@ -25,8 +25,8 @@
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
-#' @param lss.errors is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.resampling>0}.
-#' @param n.resampling If \code{n.resampling} is an integer larger than one, the best-fitting model is resampled \code{n.resampling} times to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.resampling = NULL}, no resampling is performed.
+#' @param lss.errors is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.bootstrap>0}.
+#' @param n.bootstrap If \code{n.bootstrap} is an integer larger than one, the data is resampled \code{n.bootstrap} times using a non-parametric bootstrapping method to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.bootstrap = NULL}, no resampling is performed.
 #' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
@@ -70,7 +70,7 @@
 #' \code{dx} is a D-vector specifying the steps between grid points.\cr\cr
 #' \code{dvolume} is a number specifying the D-dimensional volume associated with each grid point.\cr\cr
 #' \code{n.points} is the number M of grid points.\cr\cr
-#' \code{gdf} is an M-vector of values of the best-fitting generative DF at each grid point. The additional entries \code{gdf.error.neg} and \code{gdf.error.pos} define the 68\%-confidence range in the Hessian approximation of the parameter covariances. The optional entries \code{gdf.quantile.#} are different quantiles, generated if the input argument \code{n.resampling} is set.\cr\cr
+#' \code{gdf} is an M-vector of values of the best-fitting generative DF at each grid point. The additional entries \code{gdf.error.neg} and \code{gdf.error.pos} define the 68\%-confidence range in the Hessian approximation of the parameter covariances. The optional entries \code{gdf.quantile.#} are different quantiles, generated if the input argument \code{n.bootstrap} is set.\cr\cr
 #' \code{veff} is an M-vector of effective volumes at each grid point.\cr\cr
 #' \code{scd} is an M-vector of predicted source counts according to the best-fitting model.\cr\cr
 #' \code{scd.posterior} is an M-vector of observed source counts derived from the posterior PDFs of each object.\cr\cr
@@ -97,27 +97,28 @@
 #' plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
 #' 
 #' # fit a Schechter function to the mock sample without accounting for errors
-#' survey.noerrors = dffit(dat$x, dat$veff)
+#' survey1 = dffit(dat$x, dat$veff)
 #' 
 #' # plot fit and add a black dashed line showing the input MF
-#' mfplot(survey.noerrors, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
+#' mfplot(survey1, xlim=c(1e6,2e12), ylim=c(2e-4,2),
+#' show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
 #' 
 #' # now, do the same again, while accountting for measurement errors in the fit
 #' # this time, the posterior data, corrected for Eddington bias, is shown as black points
-#' survey.witherrors = dffit(dat$x, dat$veff, dat$x.err)
-#' mfplot(survey.witherrors, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = NA, p = p.true, add = TRUE)
+#' survey2 = dffit(dat$x, dat$veff, dat$x.err)
+#' mfplot(survey2, show.data.histogram = NA, add = TRUE)
 #'
 #' # show fitted parameter PDFs and covariances with true input parameters as black points
-#' dfplotcov(list(survey.witherrors,survey.noerrors,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
+#' dfplotcov(list(survey2,survey1,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
 #'
 #' # show effective volume function
-#' dfplotveff(survey.witherrors)
+#' dfplotveff(survey2)
 #'
 #' # now create a smaller survey of only 30 galaxies with 0.5dex mass errors
 #' dat = dfmockdata(n=30, p=p.true, sigma=0.5)
 #' 
-#' # fit a Schechter function and determine uncertainties by resampling the best fit
-#' survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
+#' # fit a Schechter function and determine uncertainties by resampling the data
+#' survey = dffit(dat$x, dat$veff, dat$x.err, n.bootstrap = 30)
 #' 
 #' # show best fit with 68% Gaussian uncertainties from Hessian and posterior data as black points
 #' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
@@ -142,7 +143,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                   correct.lss.bias = FALSE,
                   lss.weight = NULL,
                   lss.errors = TRUE,
-                  n.resampling = NULL,
+                  n.bootstrap = NULL,
                   n.jackknife = NULL,
                   xmin = 5,
                   xmax = 13,
@@ -162,7 +163,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
                 grid = list(xmin = xmin, xmax = xmax, dx = dx),
                 fit = list(),
                 options = list(p.initial = p.initial, n.iterations = n.iterations,
-                               n.resampling = n.resampling, n.jackknife = n.jackknife,
+                               n.bootstrap = n.bootstrap, n.jackknife = n.jackknife,
                                keep.eddington.bias = keep.eddington.bias,
                                correct.lss.bias = correct.lss.bias,
                                lss.weight = lss.weight, lss.errors = lss.errors),
@@ -191,7 +192,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   if (survey$fit$status$converged & add.gaussian.errors) survey = .add.Gaussian.errors(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
-  if (survey$fit$status$converged & !is.null(survey$options$n.resampling)) survey = .resample(survey)
+  if (survey$fit$status$converged & !is.null(survey$options$n.bootstrap)) survey = .resample(survey)
   
   # Resample to determine more accurate uncertainties with quantiles
   if (survey$fit$status$converged & !is.null(survey$options$n.jackknife)) survey = .jackknife(survey)
@@ -290,9 +291,9 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   if (is.null(survey$options$n.iterations)) stop('n.iterations must be a positive integer.')
   if (survey$options$n.iterations<1) stop('n.iterations must be a positive integer.')
   
-  # Handle n.resampling
-  if (!is.null(survey$options$n.resampling)) {
-    if (survey$options$n.resampling<2) stop('n.resampling must be 2 or larger.')
+  # Handle n.bootstrap
+  if (!is.null(survey$options$n.bootstrap)) {
+    if (survey$options$n.bootstrap<2) stop('n.bootstrap must be 2 or larger.')
   }
   
   # Handle n.jackknife
@@ -856,20 +857,21 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   n.data = survey$data$n.data
   np = survey$model$n.para
   if (n.data<2) stop('Jackknifing requires at least two objects.')
-  if (survey$options$n.resampling<2) stop('n.resampling must be at least 2.')
+  if (survey$options$n.bootstrap<2) stop('n.bootstrap must be at least 2.')
   
   # set up resample survey
   b = survey
-  b$options$p.initial = survey$fit$p.best
+  #b$options$p.initial = survey$fit$p.best # XXX
   x.err.mean = mean(b$data$x.err)
   
   # randomly resample and refit the DF
-  p.new = array(NA,c(survey$options$n.resampling,np))
-  for (iteration in seq(survey$options$n.resampling)) {
-    cat(sprintf('\rResampling: %4.2f%%',100*iteration/survey$options$n.resampling))
+  p.new = array(NA,c(survey$options$n.bootstrap,np))
+  for (iteration in seq(survey$options$n.bootstrap)) {
+    cat(sprintf('\rResampling: %4.2f%%',100*iteration/survey$options$n.bootstrap))
     n.new = max(2,rpois(1,n.data))
     if (survey$options$correct.lss.bias & survey$options$lss.errors) {
-      dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean, gdf = survey$model$gdf, p = survey$fit$p.best,
+      dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean,
+                       gdf = survey$model$gdf, p = survey$fit$p.best,
                        f = survey$selection$f, dVdr = survey$selection$dVdr,
                        rmin = survey$selection$rmin, rmax = survey$selection$rmax)
       b$data$r = cbind(dat$r)
@@ -877,14 +879,23 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       b$selection$veff.no.lss = dat$veff
       b$selection$veff = dat$veff
     } else {
-      dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean, gdf = survey$model$gdf, p = survey$fit$p.best,
-                       veff = survey$selection$veff)
+      #dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean,
+      #                 gdf = survey$model$gdf, p = survey$fit$p.best,
+      #                 veff = survey$selection$veff)
       b$options$correct.lss.bias = FALSE
     }
     b$data$n.data = n.new
     b$data$x = cbind(dat$x)
     b$data$x.err = cbind(dat$x.err)
+    
+    # bootstrapping
+    s = sample(seq(n.data),n.new,replace=TRUE)
+    b$data$x = cbind(survey$data$x[s,]) # XXX
+    b$data$x.err = cbind(survey$data$x.err[s,]) # XXX
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
+    #print(p.new[iteration,])
+    #print(survey$fit$p.best)
+    #stop()
   }
   cat('\r')
   
@@ -915,8 +926,8 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   survey$fit$p.quantile.98 = p.quant[4,]
 
   # make DF quantiles
-  s = array(NA,c(survey$options$n.resampling,survey$grid$n.points))
-  for (i in seq(survey$options$n.resampling)) {
+  s = array(NA,c(survey$options$n.bootstrap,survey$grid$n.points))
+  for (i in seq(survey$options$n.bootstrap)) {
     s[i,] = survey$model$gdf(survey$grid$x,p.new[i,])
   }
   y.quant = array(NA,c(4,survey$grid$n.points))

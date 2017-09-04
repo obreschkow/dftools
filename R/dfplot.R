@@ -3,7 +3,7 @@
 #' This function displays a one-dimensional generative distribution function fitted using \code{\link{dffit}}.
 #'
 #' @importFrom magicaxis magaxis magplot
-#' @importFrom graphics plot lines points polygon box
+#' @importFrom graphics plot lines points polygon box clip
 #' @importFrom grDevices col2rgb rgb
 #' @importFrom stats qpois
 #'
@@ -116,12 +116,27 @@ dfplot <- function(survey,
 
   # define plot limits
   if (is.null(xlim)) {
-    xlim = range(survey$data$x)
-    xlim = xlim+c(-0.1,0.1)*(xlim[2]-xlim[1])
+    if (add) {
+      xlim = par('usr')[1:2]
+    } else {
+      xlim = range(survey$data$x)
+      xlim = xlim+c(-0.1,0.1)*(xlim[2]-xlim[1])
+    }
     if (xpower10) xlim = 10^xlim
+  } else {
+    if (add) stop('dfplot: cannot specify xlim, if add = TRUE.')
   }
   if (is.null(ylim)) {
-    ylim = max(survey$fit$gdf(survey$data$x))*c(2e-4,2)
+    if (add) {
+      ylim = 10^par('usr')[3:4]
+      if (is.na(show.data.histogram) | show.data.histogram) {
+        ylim[1] = exp(log(ylim[1])+(log(ylim[2])-log(ylim[1]))*0.2)
+      }
+    } else {
+      ylim = max(survey$fit$gdf(survey$data$x))*c(2e-4,2)
+    }
+  } else {
+    if (add) stop('dfplot: cannot specify ylim, if add = TRUE.')
   }
   
   # bin data

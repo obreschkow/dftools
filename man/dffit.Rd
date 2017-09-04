@@ -6,7 +6,7 @@
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
   p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  lss.weight = NULL, lss.errors = TRUE, n.resampling = NULL,
+  lss.weight = NULL, lss.errors = TRUE, n.bootstrap = NULL,
   n.jackknife = NULL, xmin = 5, xmax = 13, dx = 0.01,
   keep.eddington.bias = FALSE, write.fit = FALSE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
@@ -40,9 +40,9 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{lss.weight}{If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).}
 
-\item{lss.errors}{is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.resampling>0}.}
+\item{lss.errors}{is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.bootstrap>0}.}
 
-\item{n.resampling}{If \code{n.resampling} is an integer larger than one, the best-fitting model is resampled \code{n.resampling} times to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.resampling = NULL}, no resampling is performed.}
+\item{n.bootstrap}{If \code{n.bootstrap} is an integer larger than one, the data is resampled \code{n.bootstrap} times using a non-parametric bootstrapping method to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.bootstrap = NULL}, no resampling is performed.}
 
 \item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.}
 
@@ -90,7 +90,7 @@ The routine \code{dffit} returns a structured list, which can be interpreted by 
 \code{dx} is a D-vector specifying the steps between grid points.\cr\cr
 \code{dvolume} is a number specifying the D-dimensional volume associated with each grid point.\cr\cr
 \code{n.points} is the number M of grid points.\cr\cr
-\code{gdf} is an M-vector of values of the best-fitting generative DF at each grid point. The additional entries \code{gdf.error.neg} and \code{gdf.error.pos} define the 68\%-confidence range in the Hessian approximation of the parameter covariances. The optional entries \code{gdf.quantile.#} are different quantiles, generated if the input argument \code{n.resampling} is set.\cr\cr
+\code{gdf} is an M-vector of values of the best-fitting generative DF at each grid point. The additional entries \code{gdf.error.neg} and \code{gdf.error.pos} define the 68\%-confidence range in the Hessian approximation of the parameter covariances. The optional entries \code{gdf.quantile.#} are different quantiles, generated if the input argument \code{n.bootstrap} is set.\cr\cr
 \code{veff} is an M-vector of effective volumes at each grid point.\cr\cr
 \code{scd} is an M-vector of predicted source counts according to the best-fitting model.\cr\cr
 \code{scd.posterior} is an M-vector of observed source counts derived from the posterior PDFs of each object.\cr\cr
@@ -119,27 +119,28 @@ dat = dfmockdata(n=1000, p=p.true, sigma=0.5)
 plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
 
 # fit a Schechter function to the mock sample without accounting for errors
-survey.noerrors = dffit(dat$x, dat$veff)
+survey1 = dffit(dat$x, dat$veff)
 
 # plot fit and add a black dashed line showing the input MF
-mfplot(survey.noerrors, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
+mfplot(survey1, xlim=c(1e6,2e12), ylim=c(2e-4,2),
+show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
 
 # now, do the same again, while accountting for measurement errors in the fit
 # this time, the posterior data, corrected for Eddington bias, is shown as black points
-survey.witherrors = dffit(dat$x, dat$veff, dat$x.err)
-mfplot(survey.witherrors, xlim=c(1e6,2e12), ylim=c(2e-4,2), show.data.histogram = NA, p = p.true, add = TRUE)
+survey2 = dffit(dat$x, dat$veff, dat$x.err)
+mfplot(survey2, show.data.histogram = NA, add = TRUE)
 
 # show fitted parameter PDFs and covariances with true input parameters as black points
-dfplotcov(list(survey.witherrors,survey.noerrors,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
+dfplotcov(list(survey2,survey1,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
 
 # show effective volume function
-dfplotveff(survey.witherrors)
+dfplotveff(survey2)
 
 # now create a smaller survey of only 30 galaxies with 0.5dex mass errors
 dat = dfmockdata(n=30, p=p.true, sigma=0.5)
 
-# fit a Schechter function and determine uncertainties by resampling the best fit
-survey = dffit(dat$x, dat$veff, dat$x.err, n.resampling = 30)
+# fit a Schechter function and determine uncertainties by resampling the data
+survey = dffit(dat$x, dat$veff, dat$x.err, n.bootstrap = 30)
 
 # show best fit with 68\% Gaussian uncertainties from Hessian and posterior data as black points
 mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
