@@ -878,7 +878,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       b$data$x.err = survey$data$x.err[s,,]
     }
     if (!is.null(survey$data$r)) b$data$r = survey$data$r[s]
-    if (!is.null(survey$data$lss.weight)) b$data$lss.weight = survey$data$lss.weight[s]
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
   }
   cat('\r')
