@@ -856,46 +856,30 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # input handling
   n.data = survey$data$n.data
   np = survey$model$n.para
-  if (n.data<2) stop('Jackknifing requires at least two objects.')
+  if (n.data<3) stop('Bootstrapping requires at least three objects.')
   if (survey$options$n.bootstrap<2) stop('n.bootstrap must be at least 2.')
   
   # set up resample survey
   b = survey
-  #b$options$p.initial = survey$fit$p.best # XXX
-  x.err.mean = mean(b$data$x.err)
+  b$options$p.initial = survey$fit$p.best
+  b$selection$veff = b$selection$veff.no.lss = survey$selection$veff
+  b$options$correct.lss.bias = survey$options$correct.lss.bias & survey$options$lss.errors
   
   # randomly resample and refit the DF
   p.new = array(NA,c(survey$options$n.bootstrap,np))
   for (iteration in seq(survey$options$n.bootstrap)) {
     cat(sprintf('\rResampling: %4.2f%%',100*iteration/survey$options$n.bootstrap))
-    n.new = max(2,rpois(1,n.data))
-    if (survey$options$correct.lss.bias & survey$options$lss.errors) {
-      dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean,
-                       gdf = survey$model$gdf, p = survey$fit$p.best,
-                       f = survey$selection$f, dVdr = survey$selection$dVdr,
-                       rmin = survey$selection$rmin, rmax = survey$selection$rmax)
-      b$data$r = cbind(dat$r)
-      b$data$lss.weight = cbind(array(1,n.new))
-      b$selection$veff.no.lss = dat$veff
-      b$selection$veff = dat$veff
+    b$data$n.data = max(2,rpois(1,n.data))
+    s = sample.int(n.data,b$data$n.data,replace=TRUE)
+    b$data$x = as.matrix(survey$data$x[s,])
+    if (length(dim(survey$data$x.err))==2) {
+      b$data$x.err = as.matrix(survey$data$x.err[s,])
     } else {
-      #dat = dfmockdata(seed = iteration, n = n.new, sigma = x.err.mean,
-      #                 gdf = survey$model$gdf, p = survey$fit$p.best,
-      #                 veff = survey$selection$veff)
-      b$options$correct.lss.bias = FALSE
+      b$data$x.err = survey$data$x.err[s,,]
     }
-    b$data$n.data = n.new
-    b$data$x = cbind(dat$x)
-    b$data$x.err = cbind(dat$x.err)
-    
-    # bootstrapping
-    s = sample(seq(n.data),n.new,replace=TRUE)
-    b$data$x = cbind(survey$data$x[s,]) # XXX
-    b$data$x.err = cbind(survey$data$x.err[s,]) # XXX
+    if (!is.null(survey$data$r)) b$data$r = survey$data$r[s]
+    if (!is.null(survey$data$lss.weight)) b$data$lss.weight = survey$data$lss.weight[s]
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
-    #print(p.new[iteration,])
-    #print(survey$fit$p.best)
-    #stop()
   }
   cat('\r')
   

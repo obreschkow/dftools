@@ -98,6 +98,7 @@ dfmockdata <- function(n = NULL,
   if (!is.finite(test)) {
     stop('gdf cannot be evaluated for parameter-vector p.\n')
   }
+  set.seed(seed)
   
   # evaluate effective volume and source count density without LSS
   if (is.null(veff)) {
@@ -165,7 +166,6 @@ dfmockdata <- function(n = NULL,
   }
   
   # sample masses (x)
-  set.seed(seed)
   dx = min(0.005,(xmax-xmin)/1000)
   xgrid = seq(xmin,xmax,dx)
   cdf = cumsum(scd.lss(xgrid)) # cumulative distribution function of source count density
