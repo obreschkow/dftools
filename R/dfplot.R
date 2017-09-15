@@ -24,6 +24,7 @@
 #' @param uncertainty.type \code{1}: plot Gaussian 1-sigma uncertanties propagated from the Hessian matrix of the likelihood. \code{2}: plot 68 percentile region (from 16 to 84 percent). \code{3} plot 68 (16 to 84) and 95 (2 to 98) percentile regions.
 #' @param show.bias.correction If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.
 #' @param add If \code{TRUE}, the lines are overplotted on the currently open plot.
+#' @param scd is an optional N-vector or scalar function specifying a source count density to be plotted over the histogram.
 #' @param nbins Number of bins to be plotted; must be larger than 0. Choose \code{nbins=NULL} (default) to determine the number of bins automatically.
 #' @param bin.xmin Left edge of first bin
 #' @param bin.xmax Right edge of last bin
@@ -47,6 +48,11 @@
 #' @param col.veff Color of reference function \code{veff}
 #' @param lwd.veff Line width of reference function \code{veff}
 #' @param lty.veff Line type of reference function \code{veff}
+#' @param col.scd Color of source count density function \code{scd}
+#' @param lwd.scd Line width of source count density function \code{scd}
+#' @param lty.scd Line type of source count density function \code{scd}
+#' @param div.line Logical flag specifying if the division line between upper and lower p
+#' @param axes Logical flag specifying whether to plot axes
 #' @param margins Margins (bottom,left,top,right)
 #' 
 #' @return Returns the input list \code{survey} with the additional sub-list \code{survey$bin} that contains the binned data.
@@ -60,7 +66,7 @@
 dfplot <- function(survey,
                    xlab = 'Observable x',
                    ylab = expression('Generative distribution function'~phi),
-                   ylab.histogram = 'Selection',
+                   ylab.histogram = 'Counts',
                    xlim = NULL,
                    ylim = NULL,
                    log = 'y',
@@ -74,6 +80,7 @@ dfplot <- function(survey,
                    uncertainty.type = 1,
                    show.bias.correction = FALSE,
                    add = FALSE,
+                   scd = NULL,
                    nbins = NULL,
                    bin.xmin = NULL,
                    bin.xmax = NULL,
@@ -84,10 +91,10 @@ dfplot <- function(survey,
                    col.fit = 'blue',
                    lwd.fit = 2,
                    lty.fit = 1,
-                   col.data.input = 'purple',
+                   col.data.input = 'grey',
                    cex.data.input = 1,
                    lwd.data.input = 1,
-                   col.data.posterior = 'black',
+                   col.data.posterior = 'blue',
                    cex.data.posterior = 1,
                    lwd.data.posterior = 1,
                    col.hist = 'grey',
@@ -96,7 +103,12 @@ dfplot <- function(survey,
                    lty.ref = 2,
                    col.veff = '#666666',
                    lwd.veff = 1.5,
-                   lty.veff = 5,
+                   lty.veff = 3,
+                   col.scd = 'black',
+                   lwd.scd = 1,
+                   lty.scd = 1,
+                   div.line = TRUE,
+                   axes = TRUE,
                    margins=c(5.1,4.1,4.1,2.1)) {
   
   r = col2rgb(col.fit)[1]/255
@@ -263,15 +275,37 @@ dfplot <- function(survey,
   }
   
   # axes
-  if (!add) {
+  if (!add & axes) {
     magicaxis::magaxis(side=2,ylab=ylab,lwd=NA,lwd.ticks=1)
     magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=1)
   }
   
   # plot binned data histogram
   if (!is.na(show.data.histogram) & show.data.histogram) {
+    
     .plotSub(0,1,0,0.2)
-    ymax = max(survey$bin$histogram)*1.2
+    
+    ymax.hist = 1.2
+    if (!is.null(scd)) {
+      if (is.function(scd)) {
+        if (xpower10) {
+          x.scd = seq(log10(xlim[1]),log10(xlim[2]),length=200)
+        } else {
+          x.scd = seq(xlim[1],xlim[2],length=200)
+        }
+        y.scd = scd(x.scd)*survey$bin$dx
+      } else {
+        breaks = survey$bin$xmin+seq(0,survey$bin$n)*survey$bin$dx
+        h = .hist(scd,breaks)
+        x.scd = h$x
+        y.scd = h$y
+      }
+      ymax = max(y.scd)*ymax.hist
+      if (xpower10) {x.scd = 10^x.scd}
+    } else {
+      ymax = max(survey$bin$histogram)*ymax.hist
+    }
+    
     if (length(grep('x',log))==1) {lg='x'} else {lg=''}
     plot(1,1,type='n',log=lg,xaxs='i',yaxs='i',xaxt='n',yaxt='n',
          xlim = xlim, ylim = c(0,ymax), xlab = '', ylab = '',bty='n')
@@ -280,6 +314,7 @@ dfplot <- function(survey,
     xhist = c(xlim[1],xbin,xlim[2])
     yhist = c(0,0,rep(survey$bin$histogram,each=2),0,0)
     polygon(xhist,yhist,col=col.hist,border = NA)
+    
     if (!is.null(veff)) {
       if (xpower10) {
         x = seq(log10(xlim[1]),log10(xlim[2]),length=200)
@@ -288,13 +323,22 @@ dfplot <- function(survey,
       }
       y = veff(x)
       if (xpower10) {x = 10^x}
-      lines(x,y/max(y)*ymax*0.85,col=col.veff,lwd=lwd.veff,lty=lty.veff)
+      lines(x,y/max(y)*ymax*0.88,col=col.veff,lwd=lwd.veff,lty=lty.veff)
     }
-    par(xpd=TRUE)
-    lines(xlim,rep(ymax,2))
-    par(xpd=FALSE)
-    magicaxis::magaxis(side=2,ylab=ylab.histogram,lwd=NA,labels=FALSE,lwd.ticks=NA)
-    magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=NA)
+    
+    if (!is.null(scd)) {
+      lines(x.scd,y.scd,col=col.scd,lwd=lwd.scd,lty=lty.scd)
+    }
+    
+    if (div.line) {
+      par(xpd=TRUE)
+      lines(xlim,rep(ymax,2))
+      par(xpd=FALSE)
+    }
+    if (axes) {
+      magicaxis::magaxis(side=2,ylab=ylab.histogram,lwd=NA,labels=FALSE,lwd.ticks=NA)
+      magicaxis::magaxis(side=4,labels=FALSE,lwd=NA,lwd.ticks=NA)
+    }
   }
   
   if (is.na(show.data.histogram) | show.data.histogram) {
@@ -302,7 +346,7 @@ dfplot <- function(survey,
   }
 
   # axes
-  if (!add) {
+  if (!add & axes) {
     magicaxis::magaxis(side=1,xlab=xlab,lwd=NA,lwd.ticks=1)
     magicaxis::magaxis(side=3,labels=FALSE,lwd=NA,lwd.ticks=1)
     box(which = "plot", lty = "solid", lwd = 1)

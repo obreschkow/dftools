@@ -26,7 +26,7 @@ dfmockdata(n = NULL, seed = 1, veff = NULL, f = NULL, dVdr = NULL,
 
 \item{g}{function of distance \code{r} descibing the number-density variation of galaxies due to cosmic large-scale structure (LSS). Explicitly, \code{g(r)>0} is the number-density at \code{r}, relative to the number-density without LSS. Values between 0 and 1 are underdense regions, values larger than 1 are overdense regions. In the absence of LSS, \code{g(r)=1}. Note that g is automatically rescaled, such that its average value in the survey volume is 1.}
 
-\item{sigma}{Gaussian observing errors in log-mass \code{x}, which are automatically added to the survey. \code{sigma} can either be a scalar or a vector of \code{n} elements.}
+\item{sigma}{Gaussian observing errors in log-mass \code{x}, which are automatically added to the survey. \code{sigma} can either be (1) a scalar, (2) a vector of \code{n} elements, or a function of the true log-mass \code{x}.}
 
 \item{rmin, rmax}{Minimum and maximum distance of the survey. Outside these limits the function \code{f(x,r)} will automatically be assumed to be 0.}
 
@@ -53,7 +53,7 @@ dfmockdata(n = NULL, seed = 1, veff = NULL, f = NULL, dVdr = NULL,
 \item{rescaling.factor}{Value of rescaling factor applied to the cosmic volume to match the requested number of galaxies \code{n}.}
 }
 \description{
-This function produces a mock survey with observed log-masses \code{x.obs} with Gaussian uncertainties \code{x.err} and distances \code{r}, using a custom mass function (MF) and selection function.
+This function produces a mock survey with observed log-masses \code{x.obs} with Gaussian uncertainties and distances \code{r}, using a custom mass function (MF) and selection function.
 }
 \examples{
 # draw 1000 galaxies with mass errors of 0.3 dex from a Schechter function

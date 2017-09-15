@@ -26,7 +26,15 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 (5) \code{selection} can be a list of two functions and one 2-element vector: \code{selection = list(f, dVdr, rmin, rmax)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The scalars \code{rmin} and \code{rmax} (can be \code{0} and \code{Inf}) are the minimum and maximum comoving distance limits of the survey. Outside these limits \code{V(xval)=0} will be assumed.\cr\cr}
 
-\item{x.err}{Optional \code{N-by-D} matrix or \code{N-by-D-by-D} array specifying the observational errors of \code{x}. If \code{x.err} is a \code{N-by-D} matrix, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the other case, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{D} observed values \code{x[i,]}.}
+\item{x.err}{specifies the observational uncertainties of the N data points. These uncertainties can be specified in four ways:\cr\cr
+
+(1) If \code{x.err = NULL}, the measurements \code{x} will be considered exact.\cr\cr
+
+(2) If \code{x.err} is a \code{N-by-D} matrix, the scalars \code{x.err[i,j]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,j]}.\cr\cr
+
+(3) If \code{x.err} is a \code{N-by-D-by-D}, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the D observed values \code{x[i,]}.\cr\cr
+
+(4) Finally, \code{x.err} can be of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr}
 
 \item{r}{Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.}
 

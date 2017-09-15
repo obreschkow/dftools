@@ -18,7 +18,16 @@
 #' 
 #' (5) \code{selection} can be a list of two functions and one 2-element vector: \code{selection = list(f, dVdr, rmin, rmax)}, where \code{f = function(xval,r)} is the isotropic selection function and \code{dVdr = function(r)} is the derivative of the total survey volume as a function of comoving distance \code{r}. The scalars \code{rmin} and \code{rmax} (can be \code{0} and \code{Inf}) are the minimum and maximum comoving distance limits of the survey. Outside these limits \code{V(xval)=0} will be assumed.\cr\cr
 #' 
-#' @param x.err Optional \code{N-by-D} matrix or \code{N-by-D-by-D} array specifying the observational errors of \code{x}. If \code{x.err} is a \code{N-by-D} matrix, the elements \code{x.err[i,]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,]}. In the other case, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the \code{D} observed values \code{x[i,]}.
+#' @param x.err specifies the observational uncertainties of the N data points. These uncertainties can be specified in four ways:\cr\cr
+#' 
+#' (1) If \code{x.err = NULL}, the measurements \code{x} will be considered exact.\cr\cr
+#' 
+#' (2) If \code{x.err} is a \code{N-by-D} matrix, the scalars \code{x.err[i,j]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,j]}.\cr\cr
+#' 
+#' (3) If \code{x.err} is a \code{N-by-D-by-D}, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the D observed values \code{x[i,]}.\cr\cr
+#' 
+#' (4) Finally, \code{x.err} can be of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr
+#' 
 #' @param r Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.
 #' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
 #' @param p.initial Initial model parameters for fitting the DF.
@@ -133,10 +142,10 @@
 #'
 #' @export
 
-dffit <- function(x, # normally log-mass, but can be multi-dimensional
+dffit <- function(x,
                   selection = NULL,
-                  x.err = NULL, # Gaussian standard deviations of x
-                  r = NULL, # Distance (or redshift)
+                  x.err = NULL,
+                  r = NULL,
                   gdf = 'Schechter',
                   p.initial = NULL,
                   n.iterations = 100,
@@ -173,7 +182,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   survey = .handle.input(survey)
   survey = .make.veff(survey)
   survey = .make.grid(survey)
-  survey[which(names(survey)=='tmp')] = NULL
+  survey$tmp$rho.observed = .make.prior.pdfs(survey)
   
   # Find most likely generative model
   fit = .corefit(survey)
@@ -205,6 +214,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
 
   # Finalize
   survey$fit$status$walltime = as.double(Sys.time())-as.double(tStart)
+  survey[which(names(survey)=='tmp')] = NULL
   invisible(survey)
 
 }
@@ -229,33 +239,37 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # Handle x.err
   if (!is.null(survey$data$x.err)) {
-    if (all(survey$data$x.err==0)) {
-      survey$data$x.err = NULL
+    if (is.function(survey$data$x.err)) {
+      # ok
     } else {
-      if (is.null(dim(survey$data$x.err))) {
-        survey$data$x.err = cbind(as.vector(survey$data$x.err)) # make col-vector
-      } else if (length(dim(survey$data$x.err))==1) {
-        survey$data$x.err = cbind(survey$data$x.err)
-      } else  if (length(dim(survey$data$x.err))==2) {
-        if (any(dim(survey$data$x)!=dim(survey$data$x.err))) stop('Size of x.err not compatible with size of x.')
-      } else if (length(dim(survey$data$x.err))==3) {
-        if (survey$data$n.dim==1) stop('For one-dimensional distribution function x.err cannot have 3 dimensions.')
-        if (!(dim(survey$data$x.err)[1]==survey$data$n.data & dim(survey$data$x.err)[2]==survey$data$n.dim & dim(survey$data$x.err)[3]==survey$data$n.dim)) {
-          stop('Size of x.err not compatible with size of x.')
-        }
+      if (all(survey$data$x.err==0)) {
+        survey$data$x.err = NULL
       } else {
-        stop('x.err cannot have more than three dimensions.')
-      }
-      if (min(survey$data$x.err)<=0) stop('All values of x.err must be positive.')
-      if (length(dim(survey$data$x.err))==2) {
-        for (i in seq(survey$data$n.dim)) {
-          if (any(survey$data$x[,i]-survey$data$x.err[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
-          if (any(survey$data$x[,i]+survey$data$x.err[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+        if (is.null(dim(survey$data$x.err))) {
+          survey$data$x.err = cbind(as.vector(survey$data$x.err)) # make col-vector
+        } else if (length(dim(survey$data$x.err))==1) {
+          survey$data$x.err = cbind(survey$data$x.err)
+        } else  if (length(dim(survey$data$x.err))==2) {
+          if (any(dim(survey$data$x)!=dim(survey$data$x.err))) stop('Size of x.err not compatible with size of x.')
+        } else if (length(dim(survey$data$x.err))==3) {
+          if (survey$data$n.dim==1) stop('For one-dimensional distribution function x.err cannot have 3 dimensions.')
+          if (!(dim(survey$data$x.err)[1]==survey$data$n.data & dim(survey$data$x.err)[2]==survey$data$n.dim & dim(survey$data$x.err)[3]==survey$data$n.dim)) {
+            stop('Size of x.err not compatible with size of x.')
+          }
+        } else {
+          stop('x.err cannot have more than three dimensions.')
         }
-      } else if (length(dim(survey$data$x.err))==3) {
-        for (i in seq(survey$data$n.dim)) {
-          if (any(survey$data$x[,i]-sqrt(survey$data$x.err[,i,i])<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
-          if (any(survey$data$x[,i]+sqrt(survey$data$x.err[,i,i])>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+        if (min(survey$data$x.err)<0) stop('All values of x.err must be positive.')
+        if (length(dim(survey$data$x.err))==2) {
+          for (i in seq(survey$data$n.dim)) {
+            if (any(survey$data$x[,i]-survey$data$x.err[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
+            if (any(survey$data$x[,i]+survey$data$x.err[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+          }
+        } else if (length(dim(survey$data$x.err))==3) {
+          for (i in seq(survey$data$n.dim)) {
+            if (any(survey$data$x[,i]-sqrt(survey$data$x.err[,i,i])<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
+            if (any(survey$data$x[,i]+sqrt(survey$data$x.err[,i,i])>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+          }
         }
       }
     }
@@ -566,12 +580,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # simplify input
   x = survey$data$x
-  x.err = survey$data$x.err
   gdf = survey$model$gdf
   p.initial = survey$options$p.initial
   x.mesh = survey$grid$x
   x.mesh.dv = survey$grid$dvolume
-  n.iterations = survey$options$n.iterations
   keep.eddington.bias = survey$options$keep.eddington.bias
   
   # get array sizes
@@ -581,47 +593,10 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
   # Input handling
   if (!survey$options$correct.lss.bias) veff.mesh = c(survey$grid$veff)
-  if (is.null(x.err) & !survey$options$correct.lss.bias) n.iterations = 1
-  
-  if (!is.null(x.err)) {
-    
-    # Make inverse covariances
-    invC = array(NA,c(n.data,n.dim,n.dim))
-    if (length(dim(x.err))==2) {
-      if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim)) {
-        stop('Unknown format for x.err in .corefit.')
-      }
-      if (n.dim==1) {
-        for (i in seq(n.data)) {
-          invC[i,,] = 1/x.err[i,]^2
-        }
-      } else {
-        for (i in seq(n.data)) {
-          invC[i,,] = diag(1/x.err[i,]^2)
-        }
-      }
-    } else if (length(dim(x.err))==3) {
-      if (n.dim==1) stop('Unknown format for x.err in .corefit.')
-      if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim & dim(x.err)[3]==n.dim)) {
-        stop('Unknown format for x.err in .corefit.')
-      }
-      for (i in seq(n.data)) {
-        invC[i,,] = solve(x.err[i,,])
-      }
-    } else {
-      stop('Unknown format for x.err in .corefit.')
-    }
-    
-    # make a priori observed PDFs
-    rho.observed = list()
-    for (i in seq(n.data)) {
-      d = x[i,]-t(x.mesh)
-      rho.observed[[i]] = exp(-colSums(d*(invC[i,,]%*%d))/2)
-      if (sum(rho.observed[[i]])<0.01) {
-        index = which.min(abs(colSums(d)))[1]
-        rho.observed[[i]][index] = 1
-      }
-    }
+  if (is.null(survey$data$x.err) & !survey$options$correct.lss.bias) {
+    n.iterations = 1
+  } else {
+    n.iterations = survey$options$n.iterations
   }
   
   # Iterative algorithm
@@ -633,23 +608,17 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # definie debiasing function
   debias = function(p) {
     rho.unbiased = array(0,n.mesh)
-    if (is.null(x.err)) {
+    if (is.null(survey$data$x.err) | keep.eddington.bias) {
       for (i in seq(n.data)) {
-        difference = colSums(abs(t(x.mesh)-x[i,]))
-        index = which.min(difference)[1]
-        rho.unbiased[index] = rho.unbiased[index]+1/x.mesh.dv
+        rho.unbiased = rho.unbiased+survey$tmp$rho.observed[[i]]
       }
     } else {
-      if (keep.eddington.bias) {
-        prior = array(1,n.mesh)
-      } else {
-        # predicted source counts (up to a factor x.mesh.dv)
-        prior = gdf(x.mesh,p)*veff.mesh
-        prior[!is.finite(prior)] = 0
-        prior = pmax(0,prior)
-      }
+      # predicted source counts (up to a factor x.mesh.dv)
+      prior = gdf(x.mesh,p)*veff.mesh
+      prior[!is.finite(prior)] = 0
+      prior = pmax(0,prior)
       for (i in seq(n.data)) {
-        rho.corrected = rho.observed[[i]]*prior
+        rho.corrected = survey$tmp$rho.observed[[i]]*prior
         rho.corrected = rho.corrected/(sum(rho.corrected)*x.mesh.dv)
         rho.unbiased = rho.unbiased+rho.corrected
       }
@@ -678,8 +647,6 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
       phi = pmax(.Machine$double.xmin,phi) # also vectorizes the array
       # end safety operations
       return(sum(phi*veff.mesh-log(phi)*rho.unbiased)*x.mesh.dv-offset)
-      #lambda = pmax(.Machine$double.xmin,phi*veff.mesh)
-      #return(sum(lambda-log(lambda)*rho.unbiased)*x.mesh.dv-offset)
     }
     
     # test
@@ -693,7 +660,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     chain[k,] = c(opt$par,opt$value)
     
     # assess convergence
-    if ((is.null(x.err) & !survey$options$correct.lss.bias) | keep.eddington.bias) { # exist without extra iterations
+    if ((is.null(survey$data$x.err) & !survey$options$correct.lss.bias) | keep.eddington.bias) { # exist without extra iterations
       converged = opt$convergence==0
       running = FALSE
     } else {
@@ -744,6 +711,85 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   
 }
 
+.make.prior.pdfs = function(survey) {
+  
+  # simplify input
+  x = survey$data$x
+  x.err = survey$data$x.err
+  x.mesh = survey$grid$x
+  x.mesh.dv = survey$grid$dvolume
+  
+  # get array sizes
+  n.data = dim(x)[1]
+  n.dim = dim(x)[2]
+  n.mesh = dim(x.mesh)[1]
+  
+  rho.observed = list()
+
+  if (is.null(x.err)) {
+  
+    for (i in seq(n.data)) {
+      difference = colSums(abs(t(x.mesh)-x[i,]))
+      index = which.min(difference)[1]
+      rho.observed[[i]] = array(0,n.mesh)
+      rho.observed[[i]][index] = rho.observed[[i]][index]+1/x.mesh.dv
+    }
+    
+  } else {
+    
+    if (is.function(x.err)) {
+      
+      for (i in seq(n.data)) {
+        rho.observed[[i]] = c(x.err(c(x.mesh),i))
+      }
+      
+    } else {
+    
+      # Make inverse covariances
+      invC = array(NA,c(n.data,n.dim,n.dim))
+      if (length(dim(x.err))==2) {
+        if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim)) {
+          stop('Unknown format for x.err in .corefit.')
+        }
+        if (n.dim==1) {
+          for (i in seq(n.data)) {
+            invC[i,,] = 1/max(survey$grid$dx/2.35,x.err[i,])^2
+          }
+        } else {
+          for (i in seq(n.data)) {
+            invC[i,,] = diag(1/max(survey$grid$dx/2.35,x.err[i,])^2)
+          }
+        }
+      } else if (length(dim(x.err))==3) {
+        if (n.dim==1) stop('Unknown format for x.err in .corefit.')
+        if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim & dim(x.err)[3]==n.dim)) {
+          stop('Unknown format for x.err in .corefit.')
+        }
+        for (i in seq(n.data)) {
+          invC[i,,] = solve(x.err[i,,])
+        }
+      } else {
+        stop('Unknown format for x.err in .corefit.')
+      }
+      
+      # make a priori observed PDFs
+      rho.observed = list()
+      for (i in seq(n.data)) {
+        d = x[i,]-t(x.mesh)
+        rho.observed[[i]] = exp(-colSums(d*(invC[i,,]%*%d))/2)
+      }
+    }
+    
+    # normalize all prior PDFs
+    for (i in seq(n.data)) {
+      rho.observed[[i]] = rho.observed[[i]]/sum(rho.observed[[i]])/x.mesh.dv
+    }
+  }
+  
+  return(rho.observed)
+  
+}
+
 .add.Gaussian.errors <- function(survey) {
 
   cov = survey$fit$p.covariance
@@ -786,7 +832,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # input handling
   n.data = survey$data$n.data
   np = survey$model$n.para
-  if (n.data<2) stop('Jackknifing requires at least two objects.')
+  if (n.data<=np) stop('Jackknifing requires more data points than model parameters.')
   n.jn = min(n.data,survey$options$n.jackknife)
   if (survey$options$n.jackknife<2) stop('n.jackknife must be at least 2.')
   
@@ -804,40 +850,11 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
     cat(sprintf('\rJackknifing %4.2f%%',100*i/n.jn))
     list = setdiff(seq(n.data),rejected[i])
     jn$data$x = as.matrix(survey$data$x[list,])
-    if (is.null(survey$data$x.err)) {
-      jn$data$x.err = NULL
-    } else if (length(dim(survey$data$x.err))==2) {
-      jn$data$x.err = as.matrix(survey$data$x.err[list,])
-    } else if (length(dim(survey$data$x.err))==3) {
-      jn$data$x.err = as.matrix(survey$data$x.err[list,,])
-    }
+    jn$tmp$rho.observed = survey$tmp$rho.observed
+    jn$tmp$rho.observed[[i]] = NULL
     p.new[i,] = .corefit(jn, supress.warning = TRUE)$p.best
   }
   cat('\r')
-  
-  # estimate covariance
-  ok = !is.na(rowSums(p.new))
-  cov.jn = cov(p.new[ok,])*(n.data-1)
-  
-  # compute poisson covariance
-  jn = survey
-  jn$options$p.initial = survey$fit$p.best
-  jn$options$n.iterations = 1
-  q = c(0.16,0.5,0.84)
-  p.pois = array(NA,c(3,np))
-  for (i in seq(3)) {
-    n.new = qpois(q[i],n.data) 
-    jn$grid$veff = survey$grid$veff*n.new/n.data
-    p.pois[i,] = .corefit(jn, supress.warning = TRUE)$p.best
-  }
-  cov.pois = cov(p.pois)
-  
-  # estimate combined covariance
-  if (is.na(cov.pois[1,1])) {
-    survey$fit$p.covariance.jackknife = cov.jn
-  } else {
-    survey$fit$p.covariance.jackknife = cov.jn+cov.pois
-  }
   
   # correct estimator bias
   p.reduced = apply(p.new, 2, mean, na.rm = T)
@@ -856,7 +873,7 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   # input handling
   n.data = survey$data$n.data
   np = survey$model$n.para
-  if (n.data<3) stop('Bootstrapping requires at least three objects.')
+  if (n.data<2*np) stop('Bootstrapping requires at least twice as many data points as model parameters.')
   if (survey$options$n.bootstrap<2) stop('n.bootstrap must be at least 2.')
   
   # set up resample survey
@@ -869,25 +886,17 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   p.new = array(NA,c(survey$options$n.bootstrap,np))
   for (iteration in seq(survey$options$n.bootstrap)) {
     cat(sprintf('\rResampling: %4.2f%%',100*iteration/survey$options$n.bootstrap))
-    b$data$n.data = max(2,rpois(1,n.data))
+    b$data$n.data = max(np,rpois(1,n.data))
     s = sample.int(n.data,b$data$n.data,replace=TRUE)
     b$data$x = as.matrix(survey$data$x[s,])
-    if (length(dim(survey$data$x.err))==2) {
-      b$data$x.err = as.matrix(survey$data$x.err[s,])
-    } else {
-      b$data$x.err = survey$data$x.err[s,,]
+    b$tmp$rho.observed = list()
+    for (i in seq(b$data$n.data)) {
+      b$tmp$rho.observed[[i]] = survey$tmp$rho.observed[[s[i]]]
     }
     if (!is.null(survey$data$r)) b$data$r = survey$data$r[s]
     p.new[iteration,] = .corefit(b, supress.warning = TRUE)$p.best
   }
   cat('\r')
-  
-  # adjust modes (approximated as means)
-  #if (survey$options$correct.lss.bias) {
-  #  for (i in seq(np)) {
-  #    #p.new[,i] = p.new[,i]-mean(p.new[,i],na.rm=TRUE)+survey$fit$p.best[i]
-  #  }
-  #}
   
   # compute covariance
   survey$fit$p.covariance.resample = array(NA,c(np,np))
@@ -938,50 +947,20 @@ dffit <- function(x, # normally log-mass, but can be multi-dimensional
   x.mesh.dv = survey$grid$dvolume
   n.data = dim(x)[1]
   n.dim = dim(x)[2]
+  n.mesh = dim(x.mesh)[1]
   
-  # Make prior
+  # Make priors
   prior = survey$grid$scd
   prior[!is.finite(prior)] = 0
   prior = pmax(0,prior)
-  
-  # Make inverse covariances
-  invC = array(NA,c(n.data,n.dim,n.dim))
-  if (length(dim(x.err))==2) {
-    if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim)) {
-      stop('Unknown format for x.err in .corefit.')
-    }
-    if (n.dim==1) {
-      for (i in seq(n.data)) {
-        invC[i,,] = 1/x.err[i,]^2
-      }
-    } else {
-      for (i in seq(n.data)) {
-        invC[i,,] = diag(1/x.err[i,]^2)
-      }
-    }
-  } else if (length(dim(x.err))==3) {
-    if (n.dim==1) stop('Unknown format for x.err in .corefit.')
-    if (!(dim(x.err)[1]==n.data & dim(x.err)[2]==n.dim & dim(x.err)[3]==n.dim)) {
-      stop('Unknown format for x.err in .corefit.')
-    }
-    for (i in seq(n.data)) {
-      invC[i,,] = solve(x.err[i,,])
-    }
-  } else {
-    stop('Unknown format for x.err in .corefit.')
-  }
   
   # produce posteriors
   m0 = m1 = md = array(NA,c(n.data,n.dim))
   rho.unbiased = rho.unbiased.sqr = array(0,dim(x.mesh)[1])
   for (i in seq(n.data)) {
     
-    # make prior PDF for data point i
-    d = x[i,]-t(x.mesh)
-    rho.observed = exp(-colSums(d*(invC[i,,]%*%d))/2)
-    
     # make posterior PDF for data point i
-    rho.corrected = rho.observed*prior
+    rho.corrected = survey$tmp$rho.observed[[i]]*prior
     s = sum(rho.corrected)
     rho.unbiased = rho.unbiased+rho.corrected/(s*x.mesh.dv)
     rho.unbiased.sqr = rho.unbiased.sqr+(rho.corrected/(s*x.mesh.dv))^2

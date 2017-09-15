@@ -6,18 +6,19 @@
 \usage{
 dfplot(survey, xlab = "Observable x",
   ylab = expression("Generative distribution function" ~ phi),
-  ylab.histogram = "Selection", xlim = NULL, ylim = NULL, log = "y",
+  ylab.histogram = "Counts", xlim = NULL, ylim = NULL, log = "y",
   p = NULL, veff = NULL, xpower10 = FALSE, show.input.data = TRUE,
   show.posterior.data = TRUE, show.data.histogram = FALSE,
   show.uncertainties = TRUE, uncertainty.type = 1,
-  show.bias.correction = FALSE, add = FALSE, nbins = NULL,
+  show.bias.correction = FALSE, add = FALSE, scd = NULL, nbins = NULL,
   bin.xmin = NULL, bin.xmax = NULL, clip.xmin = NULL, clip.xmax = NULL,
   clip.ymin = NULL, clip.ymax = NULL, col.fit = "blue", lwd.fit = 2,
-  lty.fit = 1, col.data.input = "purple", cex.data.input = 1,
-  lwd.data.input = 1, col.data.posterior = "black",
-  cex.data.posterior = 1, lwd.data.posterior = 1, col.hist = "grey",
-  col.ref = "black", lwd.ref = 1, lty.ref = 2, col.veff = "#666666",
-  lwd.veff = 1.5, lty.veff = 5, margins = c(5.1, 4.1, 4.1, 2.1))
+  lty.fit = 1, col.data.input = "grey", cex.data.input = 1,
+  lwd.data.input = 1, col.data.posterior = "blue", cex.data.posterior = 1,
+  lwd.data.posterior = 1, col.hist = "grey", col.ref = "black",
+  lwd.ref = 1, lty.ref = 2, col.veff = "#666666", lwd.veff = 1.5,
+  lty.veff = 3, col.scd = "black", lwd.scd = 1, lty.scd = 1,
+  div.line = TRUE, axes = TRUE, margins = c(5.1, 4.1, 4.1, 2.1))
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}
@@ -53,6 +54,8 @@ dfplot(survey, xlab = "Observable x",
 \item{show.bias.correction}{If \code{TRUE}, the bias corrected MLE is shown instead of the native ML parameters.}
 
 \item{add}{If \code{TRUE}, the lines are overplotted on the currently open plot.}
+
+\item{scd}{is an optional N-vector or scalar function specifying a source count density to be plotted over the histogram.}
 
 \item{nbins}{Number of bins to be plotted; must be larger than 0. Choose \code{nbins=NULL} (default) to determine the number of bins automatically.}
 
@@ -99,6 +102,16 @@ dfplot(survey, xlab = "Observable x",
 \item{lwd.veff}{Line width of reference function \code{veff}}
 
 \item{lty.veff}{Line type of reference function \code{veff}}
+
+\item{col.scd}{Color of source count density function \code{scd}}
+
+\item{lwd.scd}{Line width of source count density function \code{scd}}
+
+\item{lty.scd}{Line type of source count density function \code{scd}}
+
+\item{div.line}{Logical flag specifying if the division line between upper and lower p}
+
+\item{axes}{Logical flag specifying whether to plot axes}
 
 \item{margins}{Margins (bottom,left,top,right)}
 }
