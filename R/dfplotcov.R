@@ -1,6 +1,6 @@
 #' Plot parameter covariance matrix
 #'
-#' This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
+#' This function displays the parameter covariances of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
 #'
 #' @importFrom ellipse ellipse
 #' @importFrom mvtnorm rmvnorm
@@ -27,6 +27,8 @@
 #' @param show.ellipse.95 Logical vector specifying whether to draw 95\% confidence ellipses
 #' @param title Optional plot title
 #' @param nstd Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.
+#' @param pmin optional P-vector with lower parameter limits to be potted. If given, \code{pmax} must also be given and \code{nstd} is ignored.
+#' @param pmax optional P-vector with lower parameter limits to be potted. If given, \code{pmin} must also be given and \code{nstd} is ignored.
 #' @param nbins Optional integer specifying the number of bins used in histograms. If set to \code{NULL}, this number is determined automatically.
 #' @param lower Logical flag indicating whether the lower triangle is shown
 #' @param upper Logical flag indicating whether the lower triangle is shown
@@ -85,6 +87,8 @@ dfplotcov <- function(data,
                       show.ellipse.95 = TRUE,
                       title = '',
                       nstd = 10,
+                      pmin = NULL,
+                      pmax = NULL,
                       nbins = NULL,
                       lower = TRUE, upper = FALSE,
                       margins = c(4,4,0.5,0.5),
@@ -146,7 +150,8 @@ dfplotcov <- function(data,
           nbins = nbins[k]
         }
         h = my.hist(P[,i],seq(xmin[i],xmax[i],length=nbins+1))
-        f = area/sum(h$counts)*nbins
+        dx = h$center[2]-h$center[1]
+        f = area[i]/sum(h$counts)/dx
         xplot = rep(seq(0,1,length=nbins+1),each=2)+xoffset
         yplot = pmin(1,h$y*f)+yoffset
         polygon(xplot,yplot,col=hist.col,border=NA)
@@ -158,7 +163,7 @@ dfplotcov <- function(data,
           x = seq(xmin[i],xmax[i],length=200)
           dx = x[2]-x[1]
           y = exp(-(x-E[i])^2/2/C[i,i])
-          y = y/sum(y)*200*area
+          y = y/sum(y)/dx*area[i]
           x = (x-xmin[i])/(xmax[i]-xmin[i])+xoffset
           y = pmin(1,y)
           y[2:199] = y[1:198]*0.0005+y[2:199]*0.999000001+y[3:200]*0.0005
@@ -291,6 +296,8 @@ dfplotcov <- function(data,
     
     if (q == 0) {
       
+      if (is.null(C)) stop('dfplotcov: the master object cannot be an expectation only.')
+      
       # determin parameter names
       if (is.null(names)) {
         names = {}
@@ -306,15 +313,30 @@ dfplotcov <- function(data,
         }
       }
       
-      # determine graphical parameters
+      # determine boundaries
       nref = n
-      area = 0.9*sqrt(2*pi)/nstd*pracma::erf(nstd/2/sqrt(2))
-      xmin = xmax = xavg = array(NA,n)
+      if (is.null(pmin) & is.null(pmax)) {
+        xmin = xmax = xavg = array(NA,n)
+        for (i in seq(n)) {
+          xlength = sqrt(C[i,i])*nstd
+          xavg[i] = E[i]
+          xmin[i] = E[i]-xlength/2
+          xmax[i] = E[i]+xlength/2
+        }
+      } else {
+        if (length(pmin)==n & length(pmax)==n) {
+          xmin = pmin
+          xmax = pmax
+          xavg = (pmin+pmax)/2
+        } else {
+          stop('dfplotcov: pmin and pmax must both be P-element vectors.')
+        }
+      }
+      
+      # determine histogram normalizations
+      area = array(NA,n)
       for (i in seq(n)) {
-        xlength = sqrt(C[i,i])*nstd
-        xavg[i] = E[i]
-        xmin[i] = E[i]-xlength/2
-        xmax[i] = E[i]+xlength/2
+        area[i] = 0.9*sqrt(2*pi*C[i,i])
       }
       
       # start a new plot

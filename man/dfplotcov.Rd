@@ -9,11 +9,11 @@ dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
   cex = 1.2, pch = 20, cloud.alpha = 0.1, cloud.nmax = NULL,
   hist.alpha = 0.4, show.histogram = TRUE, show.cloud = TRUE,
   show.gaussian = TRUE, show.expectation = TRUE, show.ellipse.68 = TRUE,
-  show.ellipse.95 = TRUE, title = "", nstd = 10, nbins = NULL,
-  lower = TRUE, upper = FALSE, margins = c(4, 4, 0.5, 0.5),
-  text.size.labels = 1.1, text.size.numbers = 0.8,
-  text.offset.labels = c(0, 0), text.offset.numbers = c(0, 0),
-  text.format.numbers = "\%4.1f")
+  show.ellipse.95 = TRUE, title = "", nstd = 10, pmin = NULL,
+  pmax = NULL, nbins = NULL, lower = TRUE, upper = FALSE,
+  margins = c(4, 4, 0.5, 0.5), text.size.labels = 1.1,
+  text.size.numbers = 0.8, text.offset.labels = c(0, 0),
+  text.offset.numbers = c(0, 0), text.format.numbers = "\%4.1f")
 }
 \arguments{
 \item{data}{List of objects to be plotted. Each object in this list must be one of the following four: (1) a vector of parameters; (2) a list of two objects, a vector of parameters and an associated covariance matrix; (3) a matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud; (4) an output list produced by \code{\link{dffit}}. The plot will be centered on the parameters (or average parameters) of the first object in the data list, unless the argument \code{master} is set to a different index.}
@@ -56,6 +56,10 @@ dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
 
 \item{nstd}{Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.}
 
+\item{pmin}{optional P-vector with lower parameter limits to be potted. If given, \code{pmax} must also be given and \code{nstd} is ignored.}
+
+\item{pmax}{optional P-vector with lower parameter limits to be potted. If given, \code{pmin} must also be given and \code{nstd} is ignored.}
+
 \item{nbins}{Optional integer specifying the number of bins used in histograms. If set to \code{NULL}, this number is determined automatically.}
 
 \item{lower}{Logical flag indicating whether the lower triangle is shown}
@@ -75,7 +79,7 @@ dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
 \item{text.format.numbers}{String specifying the floating point format of the numbers. (see \code{\link{sprintf}})}
 }
 \description{
-This function displays the parameter covariances  of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
+This function displays the parameter covariances of the distribution function parameters (e.g. the mass function parameters) fitted using \code{\link{dffit}}.
 }
 \examples{
 # generate two random correlated vectors p[1,] and p[2,] of n elements
