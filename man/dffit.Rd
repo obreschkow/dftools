@@ -5,10 +5,10 @@
 \title{Fit a generative distribution function, such as a galaxy mass function}
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
-  p.initial = NULL, n.iterations = 100, correct.lss.bias = FALSE,
-  lss.weight = NULL, lss.errors = TRUE, n.bootstrap = NULL,
-  n.jackknife = NULL, xmin = 5, xmax = 13, dx = 0.01,
-  keep.eddington.bias = FALSE, write.fit = FALSE,
+  p.initial = NULL, prior = NULL, n.iterations = 100,
+  correct.lss.bias = FALSE, lss.weight = NULL, lss.errors = TRUE,
+  n.bootstrap = NULL, n.jackknife = NULL, xmin = 5, xmax = 13,
+  dx = 0.01, keep.eddington.bias = FALSE, write.fit = FALSE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
 \arguments{
@@ -40,7 +40,9 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{gdf}{Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.}
 
-\item{p.initial}{Initial model parameters for fitting the DF.}
+\item{p.initial}{is a P-vector specifying the initial model parameters for fitting the DF.}
+
+\item{prior}{is an optional function specifying the priors on the P model parameters. This function must take a P-dimensional vector \code{p} as input argument and return a scalar proportional to the natural logarithm of the prior probability of the P-dimensional model parameter \code{p}. In other words, \code{prior(p)} is an additative term for the log-likelihood. Note that \code{prior(p)} must be smooth and finite for the full parameter space. If \code{prior=NULL} (default), uniform priors are assumed.}
 
 \item{n.iterations}{Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.}
 
@@ -119,9 +121,8 @@ dfexample()
 
 # The following examples introduce the basics of dftools step-by step.
 # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors, drawn from
-# a Schechter function with parameters (-2,11,-1.3):
-p.true = c(-2,11,-1.3)
-dat = dfmockdata(n=1000, p=p.true, sigma=0.5)
+# a Schechter function with the default parameters (-2,11,-1.3):
+dat = dfmockdata(n=1000, sigma=0.5)
 
 # show the observed and true log-masses (x and x.true) as a function of true distance r
 plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
@@ -130,8 +131,9 @@ plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
 survey1 = dffit(dat$x, dat$veff)
 
 # plot fit and add a black dashed line showing the input MF
+ptrue = dfmodel(output='initial')
 mfplot(survey1, xlim=c(1e6,2e12), ylim=c(2e-4,2),
-show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
+show.data.histogram = TRUE, p = ptrue, col.fit = 'purple')
 
 # now, do the same again, while accountting for measurement errors in the fit
 # this time, the posterior data, corrected for Eddington bias, is shown as black points
@@ -139,13 +141,13 @@ survey2 = dffit(dat$x, dat$veff, dat$x.err)
 mfplot(survey2, show.data.histogram = NA, add = TRUE)
 
 # show fitted parameter PDFs and covariances with true input parameters as black points
-dfplotcov(list(survey2,survey1,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
+dfplotcov(list(survey2,survey1,ptrue),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
 
 # show effective volume function
 dfplotveff(survey2)
 
 # now create a smaller survey of only 30 galaxies with 0.5dex mass errors
-dat = dfmockdata(n=30, p=p.true, sigma=0.5)
+dat = dfmockdata(n=30, sigma=0.5)
 
 # fit a Schechter function and determine uncertainties by resampling the data
 survey = dffit(dat$x, dat$veff, dat$x.err, n.bootstrap = 30)
@@ -157,7 +159,7 @@ mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 1)
 mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 
 # add input model as dashed lines
-lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,p.true), lty=2)
+lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,ptrue), lty=2)
 
 }
 \author{

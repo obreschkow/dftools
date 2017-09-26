@@ -30,7 +30,8 @@
 #' 
 #' @param r Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.
 #' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
-#' @param p.initial Initial model parameters for fitting the DF.
+#' @param p.initial is a P-vector specifying the initial model parameters for fitting the DF.
+#' @param prior is an optional function specifying the priors on the P model parameters. This function must take a P-dimensional vector \code{p} as input argument and return a scalar proportional to the natural logarithm of the prior probability of the P-dimensional model parameter \code{p}. In other words, \code{prior(p)} is an additative term for the log-likelihood. Note that \code{prior(p)} must be smooth and finite for the full parameter space. If \code{prior=NULL} (default), uniform priors are assumed. 
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
@@ -98,9 +99,8 @@
 #' 
 #' # The following examples introduce the basics of dftools step-by step.
 #' # First, generate a mock sample of 1000 galaxies with 0.5dex mass errors, drawn from
-#' # a Schechter function with parameters (-2,11,-1.3):
-#' p.true = c(-2,11,-1.3)
-#' dat = dfmockdata(n=1000, p=p.true, sigma=0.5)
+#' # a Schechter function with the default parameters (-2,11,-1.3):
+#' dat = dfmockdata(n=1000, sigma=0.5)
 #' 
 #' # show the observed and true log-masses (x and x.true) as a function of true distance r
 #' plot(dat$r,dat$x,col='grey'); points(dat$r,dat$x.true,pch=20)
@@ -109,8 +109,9 @@
 #' survey1 = dffit(dat$x, dat$veff)
 #' 
 #' # plot fit and add a black dashed line showing the input MF
+#' ptrue = dfmodel(output='initial')
 #' mfplot(survey1, xlim=c(1e6,2e12), ylim=c(2e-4,2),
-#' show.data.histogram = TRUE, p = p.true, col.fit = 'purple')
+#' show.data.histogram = TRUE, p = ptrue, col.fit = 'purple')
 #' 
 #' # now, do the same again, while accountting for measurement errors in the fit
 #' # this time, the posterior data, corrected for Eddington bias, is shown as black points
@@ -118,13 +119,13 @@
 #' mfplot(survey2, show.data.histogram = NA, add = TRUE)
 #'
 #' # show fitted parameter PDFs and covariances with true input parameters as black points
-#' dfplotcov(list(survey2,survey1,p.true),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
+#' dfplotcov(list(survey2,survey1,ptrue),pch=c(20,20,3),col=c('blue','purple','black'),nstd=15)
 #'
 #' # show effective volume function
 #' dfplotveff(survey2)
 #'
 #' # now create a smaller survey of only 30 galaxies with 0.5dex mass errors
-#' dat = dfmockdata(n=30, p=p.true, sigma=0.5)
+#' dat = dfmockdata(n=30, sigma=0.5)
 #' 
 #' # fit a Schechter function and determine uncertainties by resampling the data
 #' survey = dffit(dat$x, dat$veff, dat$x.err, n.bootstrap = 30)
@@ -136,7 +137,7 @@
 #' mfplot(survey, show.data.histogram = TRUE, uncertainty.type = 3)
 #' 
 #' # add input model as dashed lines
-#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,p.true), lty=2)
+#' lines(10^survey$grid$x, survey$model$gdf(survey$grid$x,ptrue), lty=2)
 #'
 #' @author Danail Obreschkow
 #'
@@ -148,6 +149,7 @@ dffit <- function(x,
                   r = NULL,
                   gdf = 'Schechter',
                   p.initial = NULL,
+                  prior = NULL,
                   n.iterations = 100,
                   correct.lss.bias = FALSE,
                   lss.weight = NULL,
@@ -171,7 +173,8 @@ dffit <- function(x,
                 model = list(),
                 grid = list(xmin = xmin, xmax = xmax, dx = dx),
                 fit = list(),
-                options = list(p.initial = p.initial, n.iterations = n.iterations,
+                options = list(p.initial = p.initial, prior = prior,
+                               n.iterations = n.iterations,
                                n.bootstrap = n.bootstrap, n.jackknife = n.jackknife,
                                keep.eddington.bias = keep.eddington.bias,
                                correct.lss.bias = correct.lss.bias,
@@ -285,6 +288,11 @@ dffit <- function(x,
   # Handle correct.lss.bias
   if (survey$options$correct.lss.bias) {
     if (is.null(survey$data$r)) stop('Distances must be given of correct.lss.bias = TRUE.')
+  }
+  
+  # Handle priors
+  if (is.null(survey$options$prior)) {
+    survey$options$prior = function(p) 0
   }
   
   # Handle gdf
@@ -585,6 +593,7 @@ dffit <- function(x,
   x.mesh = survey$grid$x
   x.mesh.dv = survey$grid$dvolume
   keep.eddington.bias = survey$options$keep.eddington.bias
+  parameter.prior = survey$options$prior
   
   # get array sizes
   n.data = dim(x)[1]
@@ -646,7 +655,7 @@ dffit <- function(x,
       phi[!is.finite(phi)] = 0
       phi = pmax(.Machine$double.xmin,phi) # also vectorizes the array
       # end safety operations
-      return(sum(phi*veff.mesh-log(phi)*rho.unbiased)*x.mesh.dv-offset)
+      return(sum(phi*veff.mesh-log(phi)*rho.unbiased)*x.mesh.dv-offset-parameter.prior(p))
     }
     
     # test

@@ -10,8 +10,8 @@ dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
   hist.alpha = 0.4, show.histogram = TRUE, show.cloud = TRUE,
   show.gaussian = TRUE, show.expectation = TRUE, show.ellipse.68 = TRUE,
   show.ellipse.95 = TRUE, title = "", nstd = 10, pmin = NULL,
-  pmax = NULL, nbins = NULL, lower = TRUE, upper = FALSE,
-  margins = c(4, 4, 0.5, 0.5), text.size.labels = 1.1,
+  pmax = NULL, vert.stretch = 1, nbins = NULL, lower = TRUE,
+  upper = FALSE, margins = c(4, 4, 0.5, 0.5), text.size.labels = 1.1,
   text.size.numbers = 0.8, text.offset.labels = c(0, 0),
   text.offset.numbers = c(0, 0), text.format.numbers = "\%4.1f")
 }
@@ -60,6 +60,8 @@ dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
 
 \item{pmax}{optional P-vector with lower parameter limits to be potted. If given, \code{pmin} must also be given and \code{nstd} is ignored.}
 
+\item{vert.stretch}{P-vector specifying the vertical stretch of the diagonal panels.}
+
 \item{nbins}{Optional integer specifying the number of bins used in histograms. If set to \code{NULL}, this number is determined automatically.}
 
 \item{lower}{Logical flag indicating whether the lower triangle is shown}
@@ -98,10 +100,10 @@ dfplotcov(list(p,list(expected_mean,expected_covariance)), nbins=20, col=c('blac
 
 # Fit a Schechter function to a mock survey, plot the best-fitting parameters
 # with uncertainties in blue and add input parameters as black crosses
-p.true = c(-2,11,-1.3)
-dat = dfmockdata(n=1000,p=p.true,sigma=0.5)
+dat = dfmockdata(n=1000,sigma=0.5)
 survey = dffit(dat$x, dat$veff, dat$x.err)
-dfplotcov(list(survey,p.true), col=c('blue','black'), pch=c(20,3))
+ptrue = c(-2,11,-1.3)
+dfplotcov(list(survey,ptrue), col=c('blue','black'), pch=c(20,3))
 
 }
 \seealso{

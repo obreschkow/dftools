@@ -40,11 +40,11 @@ dfexample <- function(case = 1, seed = 1) {
   # use parameters
   n = 1e3
   sigma = 0.5
-  p.true = c(-2,11,-1.3)
+  p.true = dfmodel(output="initial")
   
   # make rescaled Veff(x)
   cat('Generate mock data with observing errors:\n')
-  dat = dfmockdata(n = n, seed = seed, sigma = sigma, p = p.true)
+  dat = dfmockdata(n = n, seed = seed, sigma = sigma)
   cat(sprintf('=> %d galaxies\n',dat$n))
   
   # fit
@@ -90,7 +90,7 @@ dfexample <- function(case = 1, seed = 1) {
   
   # survey model
   rmax = 100
-  p = c(-2,11,-1.3)
+  p = dfmodel(output="initial")
   dmax = function(x) 1e-3/sqrt(10)*sqrt(10^x)
   f = function(x,r) pracma::erf((dmax(x)-r)/dmax(x)*20)*0.5+0.5
   dVdr = function(r) 0.2*r^2
@@ -98,7 +98,7 @@ dfexample <- function(case = 1, seed = 1) {
   
   # make data
   cat('Generate mock data with observing errors and large-scale structure (LSS):\n')
-  dat = dfmockdata(seed = seed, sigma = sigma, p = p, f = f, g = g, dVdr = dVdr, rmax = rmax)
+  dat = dfmockdata(seed = seed, sigma = sigma, f = f, g = g, dVdr = dVdr, rmax = rmax)
   dat <<- dat
   cat(sprintf('=> %d galaxies\n',dat$n))
   
@@ -145,13 +145,13 @@ dfexample <- function(case = 1, seed = 1) {
     component2 = p[4]*exp(-(x-10.4)^2*2)
     return(component1+component2)
   }
+  p.true = c(-2,11,-1.3,1)
+  gdf = function(x) gdf.analytic(x, p.true)
   
   # draw random data
-  p.true = c(-2,11,-1.3,1)
-  dat = dfmockdata(n = n, seed = seed, sigma = sigma, gdf = gdf.analytic, p = p.true, xmax = 14, rmax = 25)
+  dat = dfmockdata(n = n, seed = seed, sigma = sigma, gdf = gdf, xmax = 14, rmax = 25)
   
   # make step-wise linear fitting function
-  gdf = function(x) gdf.analytic(x, p.true)
   xedges = c(7.5,seq(8,9.5,0.5),seq(10,11,0.25),11.5,12)
   ssc = dfswmodel(gdf, xedges, method='constant')
   ssl = dfswmodel(gdf, xedges, method='linear')

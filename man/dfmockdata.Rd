@@ -5,9 +5,9 @@
 \title{Generate mock data}
 \usage{
 dfmockdata(n = NULL, seed = 1, veff = NULL, f = NULL, dVdr = NULL,
-  gdf = function(x, p) dfmodel(x, p, type = "Schechter"), p = c(-2, 11,
-  -1.3), g = NULL, sigma = 0, rmin = 0, rmax = 20, xmin = 2,
-  xmax = 13, shot.noise = FALSE, verbose = FALSE)
+  gdf = function(x) dfmodel(x, c(-2, 11, -1.3), type = "Schechter"),
+  g = NULL, sigma = 0, rmin = 0, rmax = 20, xmin = 2, xmax = 13,
+  shot.noise = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}
@@ -20,9 +20,7 @@ dfmockdata(n = NULL, seed = 1, veff = NULL, f = NULL, dVdr = NULL,
 
 \item{dVdr}{is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default is \code{Omega=2.13966} [sterradians], chosen such that the expected number of galaxies is exactly 1000 when combined with the default selection function \code{f(x,r)}.}
 
-\item{gdf}{is the 'generative distribution function', i.e. the underlying mass function, from which the galaxies are drawn. This function is a function of log-mass \code{x} and model parameters \code{p}. It returns the expected number of galaxies per unit of cosmic volume \code{V} and log-mass \code{x}. The default is a Schechter function.}
-
-\item{p}{model parameters for the \code{gdf}.}
+\item{gdf}{is the 'generative distribution function', i.e. the underlying mass function, from which the galaxies are drawn. This function is a function of log-mass \code{x}. It returns the expected number of galaxies per unit of cosmic volume \code{V} and log-mass \code{x}. The default is a Schechter function.}
 
 \item{g}{function of distance \code{r} descibing the number-density variation of galaxies due to cosmic large-scale structure (LSS). Explicitly, \code{g(r)>0} is the number-density at \code{r}, relative to the number-density without LSS. Values between 0 and 1 are underdense regions, values larger than 1 are overdense regions. In the absence of LSS, \code{g(r)=1}. Note that g is automatically rescaled, such that its average value in the survey volume is 1.}
 

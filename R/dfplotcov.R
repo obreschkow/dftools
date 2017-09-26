@@ -29,6 +29,7 @@
 #' @param nstd Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.
 #' @param pmin optional P-vector with lower parameter limits to be potted. If given, \code{pmax} must also be given and \code{nstd} is ignored.
 #' @param pmax optional P-vector with lower parameter limits to be potted. If given, \code{pmin} must also be given and \code{nstd} is ignored.
+#' @param vert.stretch P-vector specifying the vertical stretch of the diagonal panels.
 #' @param nbins Optional integer specifying the number of bins used in histograms. If set to \code{NULL}, this number is determined automatically.
 #' @param lower Logical flag indicating whether the lower triangle is shown
 #' @param upper Logical flag indicating whether the lower triangle is shown
@@ -56,10 +57,10 @@
 #' 
 #' # Fit a Schechter function to a mock survey, plot the best-fitting parameters
 #' # with uncertainties in blue and add input parameters as black crosses
-#' p.true = c(-2,11,-1.3)
-#' dat = dfmockdata(n=1000,p=p.true,sigma=0.5)
+#' dat = dfmockdata(n=1000,sigma=0.5)
 #' survey = dffit(dat$x, dat$veff, dat$x.err)
-#' dfplotcov(list(survey,p.true), col=c('blue','black'), pch=c(20,3))
+#' ptrue = c(-2,11,-1.3)
+#' dfplotcov(list(survey,ptrue), col=c('blue','black'), pch=c(20,3))
 #'
 #' @seealso See examples in \code{\link{dffit}}.
 #'
@@ -89,6 +90,7 @@ dfplotcov <- function(data,
                       nstd = 10,
                       pmin = NULL,
                       pmax = NULL,
+                      vert.stretch = 1,
                       nbins = NULL,
                       lower = TRUE, upper = FALSE,
                       margins = c(4,4,0.5,0.5),
@@ -103,7 +105,8 @@ dfplotcov <- function(data,
   if (length(lty)==1) lty = rep(lty,m)
   if (length(cex)==1) cex = rep(cex,m)
   if (length(pch)==1) pch = rep(pch,m)
-  if (length(nbins)==1) pch = rep(nbins,m)
+  if (length(vert.stretch)==1) vert.stretch = rep(vert.stretch,m)
+  if (length(nbins)==1) nbins = rep(nbins,m)
   if (length(cloud.alpha)==1) cloud.alpha = rep(cloud.alpha,m)
   if (length(cloud.nmax)==1) cloud.nmax = rep(cloud.nmax,m)
   if (length(hist.alpha)==1) hist.alpha = rep(hist.alpha,m)
@@ -145,14 +148,14 @@ dfplotcov <- function(data,
       # histogram
       if (show.histogram[k] & !is.null(P)) {
         if (is.null(nbins)) {
-          nbins = min(100,max(10,round(sqrt(dim(P)[1]))*nstd*0.05))
+          nbins.plot = min(100,max(10,round(sqrt(dim(P)[1]))*nstd*0.05))
         } else {
-          nbins = nbins[k]
+          nbins.plot = nbins[k]
         }
-        h = my.hist(P[,i],seq(xmin[i],xmax[i],length=nbins+1))
+        h = my.hist(P[,i],seq(xmin[i],xmax[i],length=nbins.plot+1))
         dx = h$center[2]-h$center[1]
         f = area[i]/sum(h$counts)/dx
-        xplot = rep(seq(0,1,length=nbins+1),each=2)+xoffset
+        xplot = rep(seq(0,1,length=nbins.plot+1),each=2)+xoffset
         yplot = pmin(1,h$y*f)+yoffset
         polygon(xplot,yplot,col=hist.col,border=NA)
       }
@@ -336,7 +339,7 @@ dfplotcov <- function(data,
       # determine histogram normalizations
       area = array(NA,n)
       for (i in seq(n)) {
-        area[i] = 0.9*sqrt(2*pi*C[i,i])
+        area[i] = 0.9*vert.stretch[i]*sqrt(2*pi*C[i,i])
       }
       
       # start a new plot

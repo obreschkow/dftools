@@ -10,8 +10,7 @@
 #' @param veff is the effective volume function \code{veff(x)}, definied as the cosmic volume in which sources of log-mass \code{x} can be detected by the survey. If this function is specified, \code{f}, \code{dVdr} and \code{g} cannot be specified.
 #' @param f is the selection function \code{f(x,r)}, giving the ratio between the expected number of detected galaxies and true galaxies of log-mass \code{x} and comoving distance \code{r}. Normally this function is bound between 0 and 1. It takes the value 1 at distances, where objects of mass \code{x} are easily detected, and 0 at distances, where such objects are impossible to detect. A rapid, continuous drop from 1 to 0 normally occurs at the limting distance \code{rmax}, at which a galaxy of log-mass \code{x} can be picked up. \code{f(x,r)} can never by smaller than 0, but values larger than 1 are conceivable, if there is a large number of false positive detections in the survey. The default is \code{f = function(x,r) erf((1-1e3*r/sqrt(10^x))*20)*0.5+0.5}, which mimiks a sensitivity-limited survey with a fuzzy limit.
 #' @param dVdr is the function \code{dVdr(r)}, spedifying the derivative of the survey volume \code{V(r)} as a function of comoving distance \code{r}. This survey volume is simply the total observed volume, irrespective of the detection probability, which is already specified by the function \code{f}. Normally, the survey volume is given by \code{V(r)=Omega*r^3/3}, where \code{Omega} is the solid angle of the survey. Hence, the derivative is \code{dVdr(r)=Omega*r^2}. The default is \code{Omega=2.13966} [sterradians], chosen such that the expected number of galaxies is exactly 1000 when combined with the default selection function \code{f(x,r)}.
-#' @param gdf is the 'generative distribution function', i.e. the underlying mass function, from which the galaxies are drawn. This function is a function of log-mass \code{x} and model parameters \code{p}. It returns the expected number of galaxies per unit of cosmic volume \code{V} and log-mass \code{x}. The default is a Schechter function.
-#' @param p model parameters for the \code{gdf}.
+#' @param gdf is the 'generative distribution function', i.e. the underlying mass function, from which the galaxies are drawn. This function is a function of log-mass \code{x}. It returns the expected number of galaxies per unit of cosmic volume \code{V} and log-mass \code{x}. The default is a Schechter function.
 #' @param g function of distance \code{r} descibing the number-density variation of galaxies due to cosmic large-scale structure (LSS). Explicitly, \code{g(r)>0} is the number-density at \code{r}, relative to the number-density without LSS. Values between 0 and 1 are underdense regions, values larger than 1 are overdense regions. In the absence of LSS, \code{g(r)=1}. Note that g is automatically rescaled, such that its average value in the survey volume is 1.
 #' @param sigma Gaussian observing errors in log-mass \code{x}, which are automatically added to the survey. \code{sigma} can either be (1) a scalar, (2) a vector of \code{n} elements, or a function of the true log-mass \code{x}.
 #' @param rmin,rmax Minimum and maximum distance of the survey. Outside these limits the function \code{f(x,r)} will automatically be assumed to be 0.
@@ -75,8 +74,7 @@ dfmockdata <- function(n = NULL,
                        veff = NULL,
                        f = NULL,
                        dVdr = NULL,
-                       gdf = function(x,p) dfmodel(x,p,type='Schechter'),
-                       p = c(-2,11,-1.3),
+                       gdf = function(x) dfmodel(x,c(-2,11,-1.3),type='Schechter'),
                        g = NULL,
                        sigma = 0.0,
                        rmin = 0, rmax = 20,
@@ -94,7 +92,7 @@ dfmockdata <- function(n = NULL,
   }
   lss = !is.null(g)
   if (lss & is.null(f)) stop('If g(r) is given, the selection must be specified by f(x,r) and dVdr(r), not by veff(x).')
-  test = try(gdf(xmin,p),silent=TRUE)
+  test = try(gdf(xmin),silent=TRUE)
   if (!is.finite(test)) {
     stop('gdf cannot be evaluated for parameter-vector p.\n')
   }
@@ -110,7 +108,7 @@ dfmockdata <- function(n = NULL,
     veff.elemental = veff
   }
   veff = Vectorize(veff.elemental)
-  scd = function(x) veff(x)*gdf(x,p)
+  scd = function(x) veff(x)*gdf(x)
   
   if (lss) {
     
@@ -125,7 +123,7 @@ dfmockdata <- function(n = NULL,
       return(integrate(fct,rmin,rmax,stop.on.error=FALSE)$value)
     }
     veff.lss = Vectorize(veff.lss.elemental)
-    scd.lss = function(x) veff.lss(x)*gdf(x,p)
+    scd.lss = function(x) veff.lss(x)*gdf(x)
     
   } else {
     
@@ -261,7 +259,7 @@ dfmockdata <- function(n = NULL,
   return(list(x = x.obs, x.err = x.err, x.true = x, r = r,
               f = f, dVdr = dVdr, veff = veff, veff.lss = veff.lss,
               veff.values = veff.values, scd = scd,
-              gdf = gdf, p = p, g = g,
+              gdf = gdf, g = g,
               rmin = rmin, rmax = rmax,
               xmin = xmin, xmax = xmax,
               rescaling.factor = rescaling.factor,
