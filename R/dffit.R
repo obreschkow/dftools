@@ -807,10 +807,10 @@ dffit <- function(x,
   nx = survey$grid$n.points
   
   # sample surface of covariance ellipsoid
-  nsteps = 100
+  nsteps = 500
   y.new = array(NA,c(nx,nsteps+2*np))
   for (i in seq(nsteps+2*np)) {
-    if (i>nsteps) {
+    if (i<=nsteps) {
       e = rnorm(np)
       e = e/sqrt(sum(e^2))
     } else {
