@@ -18,7 +18,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 (1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
 
-(2) \code{selection} can be an N-element vector. The elements will be interpreted as the volumes of each galaxy. \code{V(xval)} is interpolated (linearly in \code{1/V}) for other values \code{xval}. \code{V(xval)=0} is assumed outside the observed domain.\cr\cr
+(2) \code{selection} can be an N-element vector. The elements will be interpreted as the volumes of each galaxy. \code{V(xval)} is interpolated (linearly in \code{1/V}) for other values \code{xval}. \code{V(xval)=0} is assumed outside the observed domain, except if D=1 (as in the case of fitting mass functions), where \code{V(xval)=0} is assumed only if \code{xval<min(x)}, whereas for \code{xval>max(x)}, \code{V(xval)} is set equal to the maximum effective volume, i.e. the maximum of \code{selection}. \cr\cr
 
 (3) \code{selection} can be a function of D variables, which directly specifies the effective volume for any \code{xval}, i.e. \code{Veff(xval)=selection(xval)}.\cr\cr
 
