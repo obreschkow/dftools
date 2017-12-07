@@ -24,9 +24,9 @@
 #' 
 #' (2) If \code{x.err} is a \code{N-by-D} matrix, the scalars \code{x.err[i,j]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,j]}.\cr\cr
 #' 
-#' (3) If \code{x.err} is a \code{N-by-D-by-D}, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the D observed values \code{x[i,]}.\cr\cr
+#' (3) If \code{x.err} is a \code{N-by-D-by-D} array, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the D observed values \code{x[i,]}.\cr\cr
 #' 
-#' (4) Finally, \code{x.err} can be of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr
+#' (4) \code{x.err} can also be a function of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr
 #' 
 #' @param r Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.
 #' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
