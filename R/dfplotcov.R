@@ -105,7 +105,6 @@ dfplotcov <- function(data,
   if (length(lty)==1) lty = rep(lty,m)
   if (length(cex)==1) cex = rep(cex,m)
   if (length(pch)==1) pch = rep(pch,m)
-  if (length(vert.stretch)==1) vert.stretch = rep(vert.stretch,m)
   if (length(nbins)==1) nbins = rep(nbins,m)
   if (length(cloud.alpha)==1) cloud.alpha = rep(cloud.alpha,m)
   if (length(cloud.nmax)==1) cloud.nmax = rep(cloud.nmax,m)
@@ -339,7 +338,7 @@ dfplotcov <- function(data,
       # determine histogram normalizations
       area = array(NA,n)
       for (i in seq(n)) {
-        area[i] = 0.9*vert.stretch[i]*sqrt(2*pi*C[i,i])
+        area[i] = 0.9*vert.stretch[min(i,length(vert.stretch))]*sqrt(2*pi*C[i,i])
       }
       
       # start a new plot
