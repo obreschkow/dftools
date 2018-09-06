@@ -5,8 +5,9 @@
 #' @importFrom akima interp
 #' @importFrom stats optim rpois quantile approxfun cov var
 #'
-#' @param x is an N-by-D matrix (or N-element vector if D=1) containing the observed quantities of N objects (e.g. galaxies).
-#' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property \emph{true} \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
+#' @param x is an N-by-D matrix (or N-element vector if D=1) containing the observed D-dimensional properties of N objects. For instance, x can be N-element vector containing the logarithmig masses of N galaxies, to which a mass function should be fitted.
+#' 
+#' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) true property (e.g. true log-mass) \code{xval} can be observed. This volume can account for complex selection criteria, as long as they can be expressed as a function of the \emph{true} properties, i.e. before measurement errors occur. This volume can be specified in five ways:\cr\cr
 #' 
 #' (1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
 #' 

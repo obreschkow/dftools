@@ -28,6 +28,6 @@ License: \tab GPL-3\cr
 Danail Obreschkow <danail.obreschkow@icrar.org>
 }
 \references{
-Obreschkow et al., Monthly Notices of the Royal Astronomical Society, Volume 474, Issue 4, p.5500-5522 (2018)
+\href{http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:1712.00149}{Obreschkow et al., MNRAS, Volume 474, Issue 4, p. 5500-5522 (2018)}
 }
 \keyword{ package }
