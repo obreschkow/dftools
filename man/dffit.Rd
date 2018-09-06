@@ -5,16 +5,17 @@
 \title{Fit a generative distribution function, such as a galaxy mass function}
 \usage{
 dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
-  p.initial = NULL, prior = NULL, n.iterations = 100,
-  correct.lss.bias = FALSE, lss.weight = NULL, lss.errors = TRUE,
-  n.bootstrap = NULL, n.jackknife = NULL, xmin = 5, xmax = 13,
-  dx = 0.01, keep.eddington.bias = FALSE, write.fit = FALSE,
+  p.initial = NULL, prior = NULL, obs.selection = NULL,
+  obs.sel.cov = NULL, n.iterations = 100, correct.lss.bias = FALSE,
+  lss.weight = NULL, lss.errors = TRUE, n.bootstrap = NULL,
+  n.jackknife = NULL, xmin = 5, xmax = 13, dx = 0.01,
+  keep.eddington.bias = FALSE, write.fit = FALSE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
 \arguments{
 \item{x}{is an N-by-D matrix (or N-element vector if D=1) containing the observed quantities of N objects (e.g. galaxies).}
 
-\item{selection}{Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
+\item{selection}{Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property *true* \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
 
 (1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
 
@@ -32,17 +33,21 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 (2) If \code{x.err} is a \code{N-by-D} matrix, the scalars \code{x.err[i,j]} are interpreted as the standard deviations of Gaussian uncertainties on \code{x[i,j]}.\cr\cr
 
-(3) If \code{x.err} is a \code{N-by-D-by-D}, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the D observed values \code{x[i,]}.\cr\cr
+(3) If \code{x.err} is a \code{N-by-D-by-D} array, the \code{D-by-D} matrices \code{x.err[i,,]} are interpreted as the covariance matrices of the D observed values \code{x[i,]}.\cr\cr
 
-(4) Finally, \code{x.err} can be of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr}
+(4) \code{x.err} can also be a function of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr}
 
 \item{r}{Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.}
 
-\item{gdf}{Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.}
+\item{gdf}{Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as the input argument \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.}
 
 \item{p.initial}{is a P-vector specifying the initial model parameters for fitting the DF.}
 
 \item{prior}{is an optional function specifying the priors on the P model parameters. This function must take a P-dimensional vector \code{p} as input argument and return a scalar proportional to the natural logarithm of the prior probability of the P-dimensional model parameter \code{p}. In other words, \code{prior(p)} is an additative term for the log-likelihood. Note that \code{prior(p)} must be smooth and finite for the full parameter space. If \code{prior=NULL} (default), uniform priors are assumed.}
+
+\item{obs.selection}{is an optional selection function of a D-vector \code{x}, which specifies the fraction (between 0 and 1) of data with *observed* values \code{x}, whose true value passes the selection function \code{selection} can be observed. Normally this fraction is assumed to be 1 and all the selections are assumed to be specified relative to the true value in \code{selection}. However, if the data were selected, for example, with a sharp cut in the observed values, this can be specified in \code{obs.selection}. IMPORTANT: The function \code{obs.selection(x)} must be fully vectorized, i.e. it must output a vector of \code{N} elements if \code{x} is an \code{N-by-D} matrix (such as the input argument \code{x}).}
+
+\item{obs.sel.cov}{is an optional \code{D-by-D} matrix, only used if \code{obs.selection} is set. It specifies the mean covariance matrix of the data to estimate how much data has been scattered outside the observing range. If \code{obs.selection} is set, but \code{obs.sel.cov} is not specified, the code estimates \code{obs.sel.cov} from the mean errors of the data (only works for 1D data).}
 
 \item{n.iterations}{Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.}
 
@@ -54,7 +59,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL, gdf = "Schechter",
 
 \item{n.bootstrap}{If \code{n.bootstrap} is an integer larger than one, the data is resampled \code{n.bootstrap} times using a non-parametric bootstrapping method to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.bootstrap = NULL}, no resampling is performed.}
 
-\item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.}
+\item{n.jackknife}{If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no such parameters are deterimed.}
 
 \item{xmin, xmax, dx}{are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.}
 

@@ -6,7 +6,7 @@
 #' @importFrom stats optim rpois quantile approxfun cov var
 #'
 #' @param x is an N-by-D matrix (or N-element vector if D=1) containing the observed quantities of N objects (e.g. galaxies).
-#' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
+#' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) property *true* \code{xval} can be observed. This volume can be specified in five ways:\cr\cr
 #' 
 #' (1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
 #' 
@@ -29,15 +29,17 @@
 #' (4) \code{x.err} can also be a function of a D-vector \code{x} and an integer \code{i}, such that \code{x.err(x,i)} is the prior probability distribution function of the data point \code{i} to have the true value \code{x}. This function must be vectorized in the first argument, such that calling \code{x.err(x,i)} with \code{x} being a N-by-D matrix returns an N-element vector.\cr\cr
 #' 
 #' @param r Optional N-element vector specifying the comoving distances of the N objects (e.g. galaxies). This vector is only needed if \code{correct.lss.bias = TRUE}.
-#' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
+#' @param gdf Either a string or a function specifying the DF to be fitted. A string is interpreted as the name of a predefined mass function (i.e. functions of one obervable, \code{D=1}). Available options are \code{'Schechter'} for Schechter function (3 parameters), \code{'PL'} for a power law (2 parameters), or \code{'MRP'} for an MRP function (4 parameters). Alternatively, \code{gdf = function(xval,p)} can be any function of the \code{P} observable(s) \code{xval} and a list of parameters \code{p}. IMPORTANT: The function \code{gdf(xval,p)} must be fully vectorized in \code{xval}, i.e. it must output a vector of \code{N} elements if \code{xval} is an \code{N-by-P} array (such as the input argument \code{x}). Note that if \code{gdf} is given as a function, the argument \code{p.initial} is mandatory.
 #' @param p.initial is a P-vector specifying the initial model parameters for fitting the DF.
-#' @param prior is an optional function specifying the priors on the P model parameters. This function must take a P-dimensional vector \code{p} as input argument and return a scalar proportional to the natural logarithm of the prior probability of the P-dimensional model parameter \code{p}. In other words, \code{prior(p)} is an additative term for the log-likelihood. Note that \code{prior(p)} must be smooth and finite for the full parameter space. If \code{prior=NULL} (default), uniform priors are assumed. 
+#' @param prior is an optional function specifying the priors on the P model parameters. This function must take a P-dimensional vector \code{p} as input argument and return a scalar proportional to the natural logarithm of the prior probability of the P-dimensional model parameter \code{p}. In other words, \code{prior(p)} is an additative term for the log-likelihood. Note that \code{prior(p)} must be smooth and finite for the full parameter space. If \code{prior=NULL} (default), uniform priors are assumed.
+#' @param obs.selection is an optional selection function of a D-vector \code{x}, which specifies the fraction (between 0 and 1) of data with *observed* values \code{x}, whose true value passes the selection function \code{selection} can be observed. Normally this fraction is assumed to be 1 and all the selections are assumed to be specified relative to the true value in \code{selection}. However, if the data were selected, for example, with a sharp cut in the observed values, this can be specified in \code{obs.selection}. IMPORTANT: The function \code{obs.selection(x)} must be fully vectorized, i.e. it must output a vector of \code{N} elements if \code{x} is an \code{N-by-D} matrix (such as the input argument \code{x}).
+#' @param obs.sel.cov is an optional \code{D-by-D} matrix, only used if \code{obs.selection} is set. It specifies the mean covariance matrix of the data to estimate how much data has been scattered outside the observing range. If \code{obs.selection} is set, but \code{obs.sel.cov} is not specified, the code estimates \code{obs.sel.cov} from the mean errors of the data (only works for 1D data).
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
 #' @param lss.errors is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.bootstrap>0}.
 #' @param n.bootstrap If \code{n.bootstrap} is an integer larger than one, the data is resampled \code{n.bootstrap} times using a non-parametric bootstrapping method to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.bootstrap = NULL}, no resampling is performed.
-#' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no sucm parameters are deterimed.
+#' @param n.jackknife If \code{n.jackknife} is an integer larger than one, the data is jackknife-resampled \code{n.jackknife} times, removing exactly one data point from the observed set at each iteration. This resampling adds model parameters, maximum likelihood estimator (MLE) bias corrected parameter estimates (corrected to order 1/N). If \code{n.jackknife} is larger than the number of data points N, it is automatically reduced to N.  If \code{n.jackknife = NULL}, no such parameters are deterimed.
 #' @param xmin,xmax,dx are \code{P}-element vectors (i.e. scalars for 1-dimensional DF) specifying the points (\code{seq(xmin[i],xmax[i],by=dx[i])}) used for some numerical integrations.
 #' @param keep.eddington.bias If \code{TRUE}, the data is not corrected for Eddington bias. In this case no fit-and-debias iterations are performed and the argument \code{n.iterations} will be ignored.
 #' @param write.fit If \code{TRUE}, the best-fitting parameters are displayed in the console.
@@ -150,6 +152,8 @@ dffit <- function(x,
                   gdf = 'Schechter',
                   p.initial = NULL,
                   prior = NULL,
+                  obs.selection = NULL,
+                  obs.sel.cov = NULL,
                   n.iterations = 100,
                   correct.lss.bias = FALSE,
                   lss.weight = NULL,
@@ -179,7 +183,7 @@ dffit <- function(x,
                                keep.eddington.bias = keep.eddington.bias,
                                correct.lss.bias = correct.lss.bias,
                                lss.weight = lss.weight, lss.errors = lss.errors),
-                tmp = list(selection = selection, gdf = gdf))
+                tmp = list(selection = selection, gdf = gdf, obs.selection = obs.selection, obs.sel.cov = obs.sel.cov))
   
   # Check and pre-process input arguments
   survey = .handle.input(survey)
@@ -293,6 +297,23 @@ dffit <- function(x,
   # Handle priors
   if (is.null(survey$options$prior)) {
     survey$options$prior = function(p) 0
+  }
+  
+  # Handle observational selection
+  survey$selection$obs.selection = survey$tmp$obs.selection
+  if (!is.null(survey$tmp$obs.selection)) {
+    if (!is.function(survey$tmp$obs.selection)) {
+      stop('obs.selection must be a function of a D-dimensional vector')
+    }
+  }
+  if (is.null(survey$selection$obs.selection)) {
+    survey$selection$obs.sel.cov = NULL
+  } else {
+    if (is.null(survey$tmp$obs.sel.cov)) {
+      survey$selection$obs.sel.cov = mean(survey$data$x.err^2)
+    } else {
+      survey$selection$obs.sel.cov = survey$tmp$obs.sel.cov
+    }
   }
   
   # Handle gdf
@@ -495,13 +516,16 @@ dffit <- function(x,
     }
   }
   
-  survey$selection = list(veff = veff.function, veff.no.lss = veff.function,
-                          veff.input.values = veff.values,
-                          veff.input.function = veff.userfct,
-                          f = f.function,
-                          dVdr = dVdr,
-                          rmin = rmin, rmax = rmax,
-                          mode = mode)
+  survey$selection$veff = veff.function
+  survey$selection$veff.no.lss = veff.function
+  survey$selection$veff.input.values = veff.values
+  survey$selection$veff.input.function = veff.userfct
+  survey$selection$f = f.function
+  survey$selection$dVdr = dVdr
+  survey$selection$rmin = rmin
+  survey$selection$rmax = rmax
+  survey$selection$mode = mode
+  
   invisible(survey)
 }
 
@@ -618,6 +642,26 @@ dffit <- function(x,
     n.iterations = survey$options$n.iterations
   }
   
+  # Make filter function that corrects the density of true x-values for the fact that a fraction of these values have been scattered outside the observed range of x
+  # (important, for example, if there is a sharp sample cut in the observed input values of x)
+  obs.filter = rep(1,n.mesh)
+  if (!is.null(survey$selection$obs.selection) & !is.null(survey$data$x.err)) {
+    obs.sel.error = mean(survey$data$x.err)
+    inv.covariance = solve(survey$selection$obs.sel.cov)
+    gauss = rep(NA,n.mesh)
+    for (i in seq(n.mesh)) {
+      mu = t(array(x.mesh[i,],c(n.dim,n.mesh)))
+      dx = x.mesh-mu
+      for (j in seq(n.mesh)) {
+        gauss[j] = exp(-dx[j,]%*%inv.covariance%*%dx[j,]/2)
+      }
+      obs.filter[i] = sum(gauss*survey$selection$obs.selection(x.mesh))/sum(gauss)
+    }
+  }
+  #x <<- x.mesh
+  #y <<- obs.filter
+  #stop()
+  
   # Iterative algorithm
   running = TRUE
   k = 0
@@ -660,7 +704,7 @@ dffit <- function(x,
     
     # make -ln(L)
     neglogL = function(p) {
-      phi = gdf(x.mesh,p)
+      phi = gdf(x.mesh,p)*obs.filter
       # safety operations (adding about 50% computation time)
       phi[!is.finite(phi)] = 0
       phi = pmax(.Machine$double.xmin,phi) # also vectorizes the array

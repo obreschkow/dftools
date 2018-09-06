@@ -19,7 +19,7 @@ The package can infer the most likely P parameters of a D-dimensional distributi
 \tabular{ll}{
 Package: \tab dftools\cr
 Type: \tab Package\cr
-Version: \tab 0.91\cr
+Version: \tab 0.92\cr
 Date: \tab 2017-07-12\cr
 License: \tab GPL-3\cr
 }
@@ -28,6 +28,6 @@ License: \tab GPL-3\cr
 Danail Obreschkow <danail.obreschkow@icrar.org>
 }
 \references{
-Obreschkow et al., 2017
+Obreschkow et al., Monthly Notices of the Royal Astronomical Society, Volume 474, Issue 4, p.5500-5522 (2018)
 }
 \keyword{ package }
