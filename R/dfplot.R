@@ -415,7 +415,7 @@ dfplot <- function(survey,
       list = floor((xg-bin$xmin)/wx*0.99999999*bin$n)+1==k
       bin$xmean.posterior[k] = sum(survey$grid$scd.posterior[list]*xg[list])/sum(survey$grid$scd.posterior[list])
       bin$count.posterior[k] = mean(survey$grid$effective.counts[list])
-      bin$gdf.posterior[k] = sum(survey$grid$scd.posterior[list]/survey$grid$veff[list])/sum(list)
+      bin$gdf.posterior[k] = sum(survey$grid$scd.posterior[list]/survey$grid$veff[list]/survey$grid$obs.filter[list])/sum(list)
     }
   }
   

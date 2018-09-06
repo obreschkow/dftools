@@ -189,6 +189,7 @@ dffit <- function(x,
   survey = .handle.input(survey)
   survey = .make.veff(survey)
   survey = .make.grid(survey)
+  survey = .make.obs.filter(survey)
   survey$tmp$rho.observed = .make.prior.pdfs(survey)
   
   # Find most likely generative model
@@ -297,23 +298,6 @@ dffit <- function(x,
   # Handle priors
   if (is.null(survey$options$prior)) {
     survey$options$prior = function(p) 0
-  }
-  
-  # Handle observational selection
-  survey$selection$obs.selection = survey$tmp$obs.selection
-  if (!is.null(survey$tmp$obs.selection)) {
-    if (!is.function(survey$tmp$obs.selection)) {
-      stop('obs.selection must be a function of a D-dimensional vector')
-    }
-  }
-  if (is.null(survey$selection$obs.selection)) {
-    survey$selection$obs.sel.cov = NULL
-  } else {
-    if (is.null(survey$tmp$obs.sel.cov)) {
-      survey$selection$obs.sel.cov = mean(survey$data$x.err^2)
-    } else {
-      survey$selection$obs.sel.cov = survey$tmp$obs.sel.cov
-    }
   }
   
   # Handle gdf
@@ -617,6 +601,49 @@ dffit <- function(x,
   invisible(survey)
 }
 
+.make.obs.filter = function(survey) {
+  
+  # Make filter function that corrects the density of true x-values for the fact that a fraction of these values have been scattered outside the observed range of x
+  # (important, for example, if there is a sharp sample cut in the observed input values of x)
+  
+  # Handle observational selection
+  survey$selection$obs.selection = survey$tmp$obs.selection
+  if (!is.null(survey$tmp$obs.selection)) {
+    if (!is.function(survey$tmp$obs.selection)) {
+      stop('obs.selection must be a function of a D-dimensional vector')
+    }
+  }
+  if (is.null(survey$selection$obs.selection)) {
+    survey$selection$obs.sel.cov = NULL
+  } else {
+    if (is.null(survey$tmp$obs.sel.cov)) {
+      survey$selection$obs.sel.cov = mean(survey$data$x.err^2)
+    } else {
+      survey$selection$obs.sel.cov = survey$tmp$obs.sel.cov
+    }
+  }
+  
+  # put filter on grid
+  n.mesh = dim(survey$grid$x)[1]
+  n.dim = dim(survey$data$x)[2]
+  survey$grid$obs.filter = rep(1,n.mesh)
+  if (!is.null(survey$selection$obs.selection)) {
+    inv.covariance = solve(survey$selection$obs.sel.cov)
+    gauss = rep(NA,n.mesh)
+    for (i in seq(n.mesh)) {
+      mu = t(array(survey$grid$x[i,],c(n.dim,n.mesh)))
+      dx = survey$grid$x-mu
+      for (j in seq(n.mesh)) {
+        gauss[j] = exp(-dx[j,]%*%inv.covariance%*%dx[j,]/2)
+      }
+      survey$grid$obs.filter[i] = sum(gauss*survey$selection$obs.selection(survey$grid$x))/sum(gauss)
+    }
+  }
+  
+  invisible(survey)
+  
+}
+
 #' @export
 .corefit <- function(survey, supress.warning = FALSE) {
   
@@ -628,6 +655,7 @@ dffit <- function(x,
   x.mesh.dv = survey$grid$dvolume
   keep.eddington.bias = survey$options$keep.eddington.bias
   parameter.prior = survey$options$prior
+  obs.filter = survey$grid$obs.filter
   
   # get array sizes
   n.data = dim(x)[1]
@@ -641,26 +669,6 @@ dffit <- function(x,
   } else {
     n.iterations = survey$options$n.iterations
   }
-  
-  # Make filter function that corrects the density of true x-values for the fact that a fraction of these values have been scattered outside the observed range of x
-  # (important, for example, if there is a sharp sample cut in the observed input values of x)
-  obs.filter = rep(1,n.mesh)
-  if (!is.null(survey$selection$obs.selection) & !is.null(survey$data$x.err)) {
-    obs.sel.error = mean(survey$data$x.err)
-    inv.covariance = solve(survey$selection$obs.sel.cov)
-    gauss = rep(NA,n.mesh)
-    for (i in seq(n.mesh)) {
-      mu = t(array(x.mesh[i,],c(n.dim,n.mesh)))
-      dx = x.mesh-mu
-      for (j in seq(n.mesh)) {
-        gauss[j] = exp(-dx[j,]%*%inv.covariance%*%dx[j,]/2)
-      }
-      obs.filter[i] = sum(gauss*survey$selection$obs.selection(x.mesh))/sum(gauss)
-    }
-  }
-  #x <<- x.mesh
-  #y <<- obs.filter
-  #stop()
   
   # Iterative algorithm
   running = TRUE
