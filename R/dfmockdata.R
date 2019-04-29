@@ -96,7 +96,7 @@ dfmockdata <- function(n = NULL,
   if (!is.finite(test)) {
     stop('gdf cannot be evaluated for parameter-vector p.\n')
   }
-  set.seed(seed)
+  set.seed(seed+1)
   
   # evaluate effective volume and source count density without LSS
   if (is.null(veff)) {
