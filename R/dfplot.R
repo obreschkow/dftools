@@ -234,7 +234,7 @@ dfplot <- function(survey,
       if (show) {
         bin$count = survey$bin$count.input
         bin$gdf = survey$bin$gdf.input
-        bin$xmean = survey$bin$xmean.input
+        bin$xmean = survey$bin$xcenter
         col.data = col.data.input
         cex.data = cex.data.input
         lwd.data = lwd.data.input
