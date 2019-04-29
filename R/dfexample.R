@@ -49,8 +49,7 @@ dfexample <- function(case = 1, seed = 1) {
   
   # fit
   cat('Fit a Schechter function to the mock data:\n')
-  survey = dffit(dat$x, dat$veff, dat$x.err, write.fit = T,
-                 xmin = dat$xmin, xmax = dat$xmax, p.initial = dat$p)
+  survey = dffit(dat$x, dat$veff, dat$x.err, write.fit = T, p.initial = dat$p)
   p.fit = survey$fit$parameters$p.optimal
   
   # plot covariances
