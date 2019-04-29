@@ -4,6 +4,7 @@
 #'
 #' @importFrom akima interp
 #' @importFrom stats optim rpois quantile approxfun cov var
+#' @importFrom pracma jacobian
 #'
 #' @param x is an N-by-D matrix (or N-element vector if D=1) containing the observed D-dimensional properties of N objects. For instance, x can be N-element vector containing the logarithmig masses of N galaxies, to which a mass function should be fitted.
 #' 
@@ -863,40 +864,15 @@ dffit <- function(x,
 }
 
 .add.Gaussian.errors <- function(survey) {
-
-  cov = survey$fit$p.covariance
-  eig = eigen(cov)
-  np = survey$model$n.para
-  nx = survey$grid$n.points
   
-  # sample surface of covariance ellipsoid
-  nsteps = 500
-  y.new = array(NA,c(nx,nsteps+2*np))
-  for (i in seq(nsteps+2*np)) {
-    if (i<=nsteps) {
-      e = rnorm(np)
-      e = e/sqrt(sum(e^2))
-    } else {
-      e = array(0,np)
-      if (i>nsteps+np) {
-        e[i-nsteps-np] = 1
-      } else {
-        e[i-nsteps] = -1
-      }
-    }
-    v = c(eig$vectors%*%(sqrt(eig$values)*e))
-    p.new = survey$fit$p.best+v
-    y.new[,i] = survey$model$gdf(survey$grid$x,p.new)
-  }
-
-  survey$grid$gdf.error.neg = array(NA,nx)
-  survey$grid$gdf.error.pos = array(NA,nx)
-  for (i in seq(nx)) {
-    survey$grid$gdf.error.neg[i] = survey$grid$gdf[i]-min(c(y.new[i,],Inf),na.rm=TRUE)
-    survey$grid$gdf.error.pos[i] = max(c(y.new[i,],-Inf),na.rm=TRUE)-survey$grid$gdf[i]
-  }
-
+  f = function(p) log(survey$model$gdf(survey$grid$x,p))
+  J = jacobian(f,survey$fit$p.best)
+  C.psi = J%*%survey$fit$p.covariance%*%t(J)
+  sd.psi = sqrt(diag(C.psi))
+  survey$grid$gdf.error.neg = (1-exp(-sd.psi))*survey$grid$gdf
+  survey$grid$gdf.error.pos = (exp(+sd.psi)-1)*survey$grid$gdf
   invisible(survey)
+  
 }
 
 .jackknife = function(survey) {

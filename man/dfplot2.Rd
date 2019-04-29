@@ -7,14 +7,15 @@
 dfplot2(survey, xlab = "Observable x1", ylab = "Observable x2",
   xlim = NULL, ylim = NULL, p.ref = NULL, xpower10 = TRUE,
   ypower10 = TRUE, show.data = TRUE, show.data.err = TRUE,
-  show.gdf = TRUE, show.gdf.contours = TRUE, show.scd.contours = TRUE,
-  contour.levels = c(0.5, 0.2, 0.1), col.data = "black", cex.data = 0.5,
-  pch.data = 20, col.data.err = "#00000030", lwd.data.err = 1,
-  lty.data.err = 1, col.gdf = "blue", col.gdf.contours = col.gdf,
-  lwd.gdf.contours = 1, lty.gdf.contours = 2, gamma.gdf = 0.2,
-  col.scd.contours = "purple", lwd.scd.contours = 1, lty.scd.contours = 1,
-  col.ref.contours = "red", lwd.ref.contours = 1, lty.ref.contours = 2,
-  margins = c(5.1, 4.1, 4.1, 2.1))
+  show.gdf = TRUE, show.gdf.contours = TRUE,
+  show.scd.contours = TRUE, contour.levels = c(0.5, 0.2, 0.1),
+  col.data = "black", cex.data = 0.5, pch.data = 20,
+  col.data.err = "#00000030", lwd.data.err = 1, lty.data.err = 1,
+  col.gdf = "blue", col.gdf.contours = col.gdf, lwd.gdf.contours = 1,
+  lty.gdf.contours = 2, gamma.gdf = 0.2, col.scd.contours = "purple",
+  lwd.scd.contours = 1, lty.scd.contours = 1,
+  col.ref.contours = "red", lwd.ref.contours = 1,
+  lty.ref.contours = 2, margins = c(5.1, 4.1, 4.1, 2.1))
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}
