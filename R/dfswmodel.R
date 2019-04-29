@@ -7,7 +7,7 @@
 #'
 #' @param gdf is the one-dimensional generative DF to be converted into a step-wise DF.
 #' @param xedges is a vector of observables x defining the edges of the bins for the step-wise DF.
-#' @param method	specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xedges}.
+#' @param method specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly extrapolated beyond the range of \code{xedges}.
 #' @param extrapolate is a logical flag. If \code{TRUE}, the step-wise DF is linearly extraplated outside the range of \code{xedges}. This extrapolation is useful when fitting the stepw-wise DF to data.
 #' 
 #' @return \code{dfswmodel} returns a list with two components \code{gdf} and {p.initial}. The first component is a function of log-masses \code{x} and a parameter vector \code{p}. The second component is the initial parameter-vector producing a step-wise mass function that closely matches the Schechter function specified by \code{p}.
