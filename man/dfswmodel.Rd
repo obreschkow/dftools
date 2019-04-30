@@ -13,7 +13,7 @@ dfswmodel(gdf = function(x) dfmodel(x, dfmodel(output = "initial"),
 
 \item{xedges}{is a vector of observables x defining the edges of the bins for the step-wise DF.}
 
-\item{method}{specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly interpolated beyond the range of \code{xedges}.}
+\item{method}{specifies the interpolation method to be used. Choices are "constant", "linear" and "spline". In the latter two cases the generative distribution function is linearly extrapolated beyond the range of \code{xedges}.}
 
 \item{extrapolate}{is a logical flag. If \code{TRUE}, the step-wise DF is linearly extraplated outside the range of \code{xedges}. This extrapolation is useful when fitting the stepw-wise DF to data.}
 }

@@ -220,7 +220,7 @@ dfexample <- function(case = 1, seed = 1) {
   
   # define 2D effective volume function
   veff = function(x) {
-    return(2e-12*10^(1.5*x[,1])*(pracma::erf((x[,2]-3)*1)+1))
+    return(2e-12*10^(1.5*x[,1])*(pracma::erf(x[,2]-3)+1))
   }
   
   # expected source count density function
