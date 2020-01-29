@@ -19,8 +19,8 @@ The package can infer the most likely P parameters of a D-dimensional distributi
 \tabular{ll}{
 Package: \tab dftools\cr
 Type: \tab Package\cr
-Version: \tab 0.93\cr
-Date: \tab 6 Sep 2018\cr
+Version: \tab 0.94\cr
+Date: \tab 29 Jan 2019\cr
 License: \tab GPL-3\cr
 }
 }

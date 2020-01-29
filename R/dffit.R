@@ -37,7 +37,7 @@
 #' @param obs.selection is an optional selection function of a D-vector \code{x}, which specifies the fraction (between 0 and 1) of data with \emph{observed} values \code{x}, whose true value passes the selection function \code{selection} can be observed. Normally this fraction is assumed to be 1 and all the selections are assumed to be specified relative to the true value in \code{selection}. However, if the data were selected, for example, with a sharp cut in the observed values, this can be specified in \code{obs.selection}. The function \code{obs.selection(x)} must be vectorized and return a vector of \code{N} elements, if \code{x} is an \code{N-by-D} matrix (such as the input argument \code{x}).
 #' @param obs.sel.cov is an optional \code{D-by-D} matrix, only used if \code{obs.selection} is set. It specifies the mean covariance matrix of the data to estimate how much data has been scattered outside the observing range. If \code{obs.selection} is set, but \code{obs.sel.cov} is not specified, the code estimates \code{obs.sel.cov} from the mean errors of the data (only works for 1D data).
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
-#' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
+#' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective volume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
 #' @param lss.errors is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.bootstrap>0}.
 #' @param n.bootstrap If \code{n.bootstrap} is an integer larger than one, the data is resampled \code{n.bootstrap} times using a non-parametric bootstrapping method to produce more accurate covariances. These covariances are given as matrix and as parameter quantiles in the output list. If \code{n.bootstrap = NULL}, no resampling is performed.
@@ -162,14 +162,13 @@ dffit <- function(x,
                   lss.errors = TRUE,
                   n.bootstrap = NULL,
                   n.jackknife = NULL,
-                  xmin = 5,
-                  xmax = 15,
+                  xmin = NULL,
+                  xmax = NULL,
                   dx = 0.01,
                   keep.eddington.bias = FALSE,
                   write.fit = FALSE,
                   add.gaussian.errors = TRUE,
                   make.posteriors = TRUE) {
-
   # Set timer
   tStart = Sys.time()
   
@@ -231,7 +230,7 @@ dffit <- function(x,
 
 .handle.input <- function(survey) {
   
-  # Handle x
+  # Handle x and gridding
   if (length(survey$data$x)<1) stop('Give at least one data point.')
   if (is.null(dim(survey$data$x))) {
     survey$data$x = cbind(as.vector(survey$data$x)) # make col-vector
@@ -242,9 +241,14 @@ dffit <- function(x,
   }
   survey$data$n.data = dim(survey$data$x)[1]
   survey$data$n.dim = dim(survey$data$x)[2]
+  if (length(survey$grid$dx)!=survey$data$n.dim) stop('dx must be a P-element vector, where P is the number of columns of x.')
+  
+  # initialize xmin xmax
+  xmin.auto = xmax.auto = rep(NA,survey$data$n.dim)
   for (i in seq(survey$data$n.dim)) {
-    if (any(survey$data$x[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x.')
-    if (any(survey$data$x[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x.')
+    dx = max(survey$data$x[,i])-min(survey$data$x[,i])
+    xmin.auto[i] = min(survey$data$x[,i])-dx
+    xmax.auto[i] = max(survey$data$x[,i])+dx
   }
   
   # Handle x.err
@@ -272,16 +276,36 @@ dffit <- function(x,
         if (min(survey$data$x.err)<0) stop('All values of x.err must be positive.')
         if (length(dim(survey$data$x.err))==2) {
           for (i in seq(survey$data$n.dim)) {
-            if (any(survey$data$x[,i]-survey$data$x.err[,i]<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
-            if (any(survey$data$x[,i]+survey$data$x.err[,i]>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+            derr = max(survey$data$x.err[,i])
+            xmin.auto[i] = xmin.auto[i]-derr
+            xmax.auto[i] = xmax.auto[i]+derr
           }
         } else if (length(dim(survey$data$x.err))==3) {
           for (i in seq(survey$data$n.dim)) {
-            if (any(survey$data$x[,i]-sqrt(survey$data$x.err[,i,i])<survey$grid$xmin[i])) stop('xmin cannot be larger than smallest observed value x-x.err.')
-            if (any(survey$data$x[,i]+sqrt(survey$data$x.err[,i,i])>survey$grid$xmax[i])) stop('xmax cannot be smaller than largest observed value x+x.err.')
+            derr = sqrt(max(survey$data$x.err[,i,i]))
+            xmin.auto[i] = xmin.auto[i]-derr
+            xmax.auto[i] = xmax.auto[i]+derr
           }
         }
       }
+    }
+  }
+  
+  # finalize xmin & xmax
+  if (is.null(survey$grid$xmin)) {
+    survey$grid$xmin = xmin.auto
+  } else {
+    if (length(survey$grid$xmin)!=survey$data$n.dim) stop('xmin must be a P-element vector, where P is the number of columns of x.')
+    for (i in seq(survey$data$n.dim)) {
+      if (min(survey$data$x[,i])<survey$grid$xmin[i]) stop('xmin cannot be larger than smallest observed value x.')
+    }
+  }
+  if (is.null(survey$grid$xmax)) {
+    survey$grid$xmax = xmax.auto
+  } else {
+    if (length(survey$grid$xmax)!=survey$data$n.dim) stop('xmax must be a P-element vector, where P is the number of columns of x.')
+    for (i in seq(survey$data$n.dim)) {
+      if (max(survey$data$x[,i])>survey$grid$xmax[i]) stop('xmax cannot be smaller than largest observed value x+x.err.')
     }
   }
   
@@ -378,10 +402,7 @@ dffit <- function(x,
       mode = 2
       veff.values = s
       if (n.dim==1) {
-        vapprox = function(xval) {
-          f = approxfun(x[,1],1/veff.values,rule=2)
-          return(1/f(xval))
-        }
+        fapprox = approxfun(x[,1],1/veff.values,rule=2)
         veff.max = max(veff.values)
         veff.function.elemental = function(xval) {
           if (xval<xmin) {
@@ -389,7 +410,8 @@ dffit <- function(x,
           } else if (xval>xmax) {
             return(veff.max)
           } else {
-            return(vapprox(xval))
+            z = 1/fapprox(xval)
+            if (is.na(z)) {return(0)} else {return(z)}
           }
         }
       } else if (n.dim==2) {
@@ -577,9 +599,6 @@ dffit <- function(x,
 .make.grid = function(survey) {
   
   n.dim = survey$data$n.dim
-  if (length(survey$grid$xmin)!=n.dim) stop('xmin must be a P-element vector, where P is the number of columns of x.')
-  if (length(survey$grid$xmax)!=n.dim) stop('xmax must be a P-element vector, where P is the number of columns of x.')
-  if (length(survey$grid$dx)!=n.dim) stop('dx must be a P-element vector, where P is the number of columns of x.')
   x.grid = list()
   nx = array(NA,n.dim)
   for (i in seq(n.dim)) {
@@ -619,7 +638,11 @@ dffit <- function(x,
     survey$selection$obs.sel.cov = NULL
   } else {
     if (is.null(survey$tmp$obs.sel.cov)) {
-      survey$selection$obs.sel.cov = mean(survey$data$x.err^2)
+      if (is.null(survey$data$x.err)) {
+        survey$selection$obs.sel.cov = 1e-10
+      } else {
+        survey$selection$obs.sel.cov = max(1e-10,mean(survey$data$x.err^2))
+      }
     } else {
       survey$selection$obs.sel.cov = survey$tmp$obs.sel.cov
     }

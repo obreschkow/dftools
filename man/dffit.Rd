@@ -8,7 +8,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL,
   gdf = "Schechter", p.initial = NULL, prior = NULL,
   obs.selection = NULL, obs.sel.cov = NULL, n.iterations = 100,
   correct.lss.bias = FALSE, lss.weight = NULL, lss.errors = TRUE,
-  n.bootstrap = NULL, n.jackknife = NULL, xmin = 5, xmax = 15,
+  n.bootstrap = NULL, n.jackknife = NULL, xmin = NULL, xmax = NULL,
   dx = 0.01, keep.eddington.bias = FALSE, write.fit = FALSE,
   add.gaussian.errors = TRUE, make.posteriors = TRUE)
 }
@@ -51,7 +51,7 @@ dffit(x, selection = NULL, x.err = NULL, r = NULL,
 
 \item{n.iterations}{Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.}
 
-\item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective folume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
+\item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective volume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
 
 \item{lss.weight}{If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).}
 
