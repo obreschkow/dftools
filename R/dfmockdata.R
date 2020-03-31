@@ -167,7 +167,12 @@ dfmockdata <- function(n = NULL,
   dx = min(0.005,(xmax-xmin)/1000)
   xgrid = seq(xmin,xmax,dx)
   cdf = cumsum(scd.lss(xgrid)) # cumulative distribution function of source count density
-  qnf = approxfun(cdf,xgrid) # quantile function of source count density
+  cdf.min = cdf[1]
+  cdf.max = cdf[length(cdf)]
+  i.min = max(which(cdf==cdf.min))
+  i.max = min(which(cdf==cdf.max))
+  nd = !duplicated(cdf[i.min:i.max])
+  qnf = approxfun((cdf[i.min:i.max])[nd],(xgrid[i.min:i.max])[nd]) # quantile function of source count density
   x = qnf(runif(n,cdf[1],cdf[length(cdf)]))
   
   # add mass observing errors (x.err)

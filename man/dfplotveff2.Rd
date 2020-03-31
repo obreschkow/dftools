@@ -4,8 +4,12 @@
 \alias{dfplotveff2}
 \title{Plot effective volume in 2D}
 \usage{
-dfplotveff2(survey, xlab = "Observable x1", ylab = "Observable x2",
-  zlab = "Veff")
+dfplotveff2(
+  survey,
+  xlab = "Observable x1",
+  ylab = "Observable x2",
+  zlab = "Veff"
+)
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}

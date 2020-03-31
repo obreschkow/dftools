@@ -644,7 +644,7 @@ dffit <- function(x,
         survey$selection$obs.sel.cov = max(1e-10,mean(survey$data$x.err^2))
       }
     } else {
-      survey$selection$obs.sel.cov = survey$tmp$obs.sel.cov
+      survey$selection$obs.sel.cov = max(1e-10,survey$tmp$obs.sel.cov)
     }
   }
   

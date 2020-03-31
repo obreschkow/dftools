@@ -4,10 +4,16 @@
 \alias{mfplot}
 \title{Display fitted galaxy mass function}
 \usage{
-mfplot(survey, xlab = expression("M [M"["sun"] * "]"),
-  ylab = expression(phi ~ "[Mpc"^-3 ~ "dex"^-1 ~ "]"), log = "xy",
-  veff = survey$selection$veff, xpower10 = TRUE,
-  show.data.histogram = TRUE, ...)
+mfplot(
+  survey,
+  xlab = expression("M [M"["sun"] * "]"),
+  ylab = expression(phi ~ "[Mpc"^-3 ~ "dex"^-1 ~ "]"),
+  log = "xy",
+  veff = survey$selection$veff,
+  xpower10 = TRUE,
+  show.data.histogram = TRUE,
+  ...
+)
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}

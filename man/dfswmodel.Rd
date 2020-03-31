@@ -4,9 +4,12 @@
 \alias{dfswmodel}
 \title{Make step-wise linear distribution function}
 \usage{
-dfswmodel(gdf = function(x) dfmodel(x, dfmodel(output = "initial"),
-  "density"), xedges = seq(6, 12, 0.5), method = "linear",
-  extrapolate = TRUE)
+dfswmodel(
+  gdf = function(x) dfmodel(x, dfmodel(output = "initial"), "density"),
+  xedges = seq(6, 12, 0.5),
+  method = "linear",
+  extrapolate = TRUE
+)
 }
 \arguments{
 \item{gdf}{is the one-dimensional generative DF to be converted into a step-wise DF.}

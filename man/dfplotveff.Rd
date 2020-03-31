@@ -4,9 +4,15 @@
 \alias{dfplotveff}
 \title{Plot effective volume}
 \usage{
-dfplotveff(survey, xlim = NULL, ylim = NULL, xlab = "Mass M",
-  ylab = expression("Effective volume"), legend = TRUE,
-  xpower10 = TRUE)
+dfplotveff(
+  survey,
+  xlim = NULL,
+  ylim = NULL,
+  xlab = "Mass M",
+  ylab = expression("Effective volume"),
+  legend = TRUE,
+  xpower10 = TRUE
+)
 }
 \arguments{
 \item{survey}{List produced by \code{\link{dffit}}}

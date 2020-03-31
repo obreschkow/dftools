@@ -4,17 +4,40 @@
 \alias{dfplotcov}
 \title{Plot parameter covariance matrix}
 \usage{
-dfplotcov(data, master = 1, order = seq(length(data)), names = NULL,
-  col = c("blue", "black", "red", "green", "orange"), lwd = 1,
-  lty = 1, cex = 1.2, pch = 20, cloud.alpha = 0.1,
-  cloud.nmax = NULL, hist.alpha = 0.4, show.histogram = TRUE,
-  show.cloud = TRUE, show.gaussian = TRUE, show.expectation = TRUE,
-  show.ellipse.68 = TRUE, show.ellipse.95 = TRUE, title = "",
-  nstd = 10, pmin = NULL, pmax = NULL, vert.stretch = 1,
-  nbins = NULL, lower = TRUE, upper = FALSE, margins = c(4, 4, 0.5,
-  0.5), text.size.labels = 1.1, text.size.numbers = 0.8,
-  text.offset.labels = c(0, 0), text.offset.numbers = c(0, 0),
-  text.format.numbers = "\%4.1f")
+dfplotcov(
+  data,
+  master = 1,
+  order = seq(length(data)),
+  names = NULL,
+  col = c("blue", "black", "red", "green", "orange"),
+  lwd = 1,
+  lty = 1,
+  cex = 1.2,
+  pch = 20,
+  cloud.alpha = 0.1,
+  cloud.nmax = NULL,
+  hist.alpha = 0.4,
+  show.histogram = TRUE,
+  show.cloud = TRUE,
+  show.gaussian = TRUE,
+  show.expectation = TRUE,
+  show.ellipse.68 = TRUE,
+  show.ellipse.95 = TRUE,
+  title = "",
+  nstd = 10,
+  pmin = NULL,
+  pmax = NULL,
+  vert.stretch = 1,
+  nbins = NULL,
+  lower = TRUE,
+  upper = FALSE,
+  margins = c(4, 4, 0.5, 0.5),
+  text.size.labels = 1.1,
+  text.size.numbers = 0.8,
+  text.offset.labels = c(0, 0),
+  text.offset.numbers = c(0, 0),
+  text.format.numbers = "\%4.1f"
+)
 }
 \arguments{
 \item{data}{List of objects to be plotted. Each object in this list must be one of the following four: (1) a vector of parameters; (2) a list of two objects, a vector of parameters and an associated covariance matrix; (3) a matrix, where each row represents a set of model parameters, to be displayed as a point of a cloud; (4) an output list produced by \code{\link{dffit}}. The plot will be centered on the parameters (or average parameters) of the first object in the data list, unless the argument \code{master} is set to a different index.}

@@ -4,10 +4,22 @@
 \alias{dfmockdata}
 \title{Generate mock data}
 \usage{
-dfmockdata(n = NULL, seed = 1, veff = NULL, f = NULL,
-  dVdr = NULL, gdf = function(x) dfmodel(x, c(-2, 11, -1.3), type =
-  "Schechter"), g = NULL, sigma = 0, rmin = 0, rmax = 20,
-  xmin = 2, xmax = 13, shot.noise = FALSE, verbose = FALSE)
+dfmockdata(
+  n = NULL,
+  seed = 1,
+  veff = NULL,
+  f = NULL,
+  dVdr = NULL,
+  gdf = function(x) dfmodel(x, c(-2, 11, -1.3), type = "Schechter"),
+  g = NULL,
+  sigma = 0,
+  rmin = 0,
+  rmax = 20,
+  xmin = 2,
+  xmax = 13,
+  shot.noise = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{n}{Number of objects (galaxies) to be generated. If \code{n=NULL}, the number is determined from the mass function (\code{gdf}) and the selection criteria (specified by \code{f} and \code{dVdr}). Otherwise, the survey volume (specified by the derivative \code{dVdr}) is automatically multiplied by the scaling factor required to obtain the requested number of objects \code{n}.}

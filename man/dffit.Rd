@@ -4,13 +4,30 @@
 \alias{dffit}
 \title{Fit a generative distribution function, such as a galaxy mass function}
 \usage{
-dffit(x, selection = NULL, x.err = NULL, r = NULL,
-  gdf = "Schechter", p.initial = NULL, prior = NULL,
-  obs.selection = NULL, obs.sel.cov = NULL, n.iterations = 100,
-  correct.lss.bias = FALSE, lss.weight = NULL, lss.errors = TRUE,
-  n.bootstrap = NULL, n.jackknife = NULL, xmin = NULL, xmax = NULL,
-  dx = 0.01, keep.eddington.bias = FALSE, write.fit = FALSE,
-  add.gaussian.errors = TRUE, make.posteriors = TRUE)
+dffit(
+  x,
+  selection = NULL,
+  x.err = NULL,
+  r = NULL,
+  gdf = "Schechter",
+  p.initial = NULL,
+  prior = NULL,
+  obs.selection = NULL,
+  obs.sel.cov = NULL,
+  n.iterations = 100,
+  correct.lss.bias = FALSE,
+  lss.weight = NULL,
+  lss.errors = TRUE,
+  n.bootstrap = NULL,
+  n.jackknife = NULL,
+  xmin = NULL,
+  xmax = NULL,
+  dx = 0.01,
+  keep.eddington.bias = FALSE,
+  write.fit = FALSE,
+  add.gaussian.errors = TRUE,
+  make.posteriors = TRUE
+)
 }
 \arguments{
 \item{x}{is an N-by-D matrix (or N-element vector if D=1) containing the observed D-dimensional properties of N objects. For instance, x can be N-element vector containing the logarithmig masses of N galaxies, to which a mass function should be fitted.}
