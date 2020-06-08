@@ -25,6 +25,8 @@
 #' @param show.expectation Logical vector specifying whether to mark the expected values (= averages if a parameter set is specified)
 #' @param show.ellipse.68 Logical vector specifying whether to draw 68\% confidence ellipses
 #' @param show.ellipse.95 Logical vector specifying whether to draw 95\% confidence ellipses
+#' @param show.xlab Logical flag indicating whether labels+numbers along x-axis are displayed
+#' @param show.ylab Logical flag indicating whether labels+numbers along y-axis are displayed
 #' @param title Optional plot title
 #' @param nstd Width of the plots in multiples of the standard deviations of the model, i.e. the square roots of the diagonal elements of \code{covariance}.
 #' @param pmin optional P-vector with lower parameter limits to be potted. If given, \code{pmax} must also be given and \code{nstd} is ignored.
@@ -86,6 +88,8 @@ dfplotcov <- function(data,
                       show.expectation = TRUE,
                       show.ellipse.68 = TRUE,
                       show.ellipse.95 = TRUE,
+                      show.xlab = TRUE,
+                      show.ylab = TRUE,
                       title = '',
                       nstd = 10,
                       pmin = NULL,
@@ -226,11 +230,11 @@ dfplotcov <- function(data,
     # add axes
     if (k == 1) {
       tickpos = c(0.2,0.5,0.8)
-      if (i==1 & j>1) {
+      if (i==1 & j>1 & show.ylab) {
         axis(2, at = yoffset+tickpos,labels=sprintf(text.format.numbers,E[j]+(xmax[j]-xmin[j])*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = 0.8+text.offset.numbers[1])
         axis(2, at = yoffset+0.5,pos=-0.1+text.offset.labels[1],labels=names[[j]],cex.axis=text.size.labels,tick=F)
       }
-      if (j==n) {
+      if (j==n & show.xlab) {
         axis(1, at = xoffset+tickpos,labels=sprintf(text.format.numbers,E[i]+(xmax[i]-xmin[i])*(tickpos-0.5)),tck=0.015,lwd=0,lwd.ticks=1,cex.axis=text.size.numbers,padj = -0.8+text.offset.numbers[2])
         axis(1, at = xoffset+0.5,pos=-0.1+text.offset.labels[2],labels=names[[i]],cex.axis=text.size.labels,tick=F)
       }

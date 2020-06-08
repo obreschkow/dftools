@@ -10,7 +10,7 @@
 #' 
 #' @param selection Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) true property (e.g. true log-mass) \code{xval} can be observed. This volume can account for complex selection criteria, as long as they can be expressed as a function of the \emph{true} properties, i.e. before measurement errors occur. This volume can be specified in five ways:\cr\cr
 #' 
-#' (1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
+#' (1) \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
 #' 
 #' (2) \code{selection} can be an N-element vector. The elements will be interpreted as the volumes of each galaxy. \code{V(xval)} is interpolated (linearly in \code{1/V}) for other values \code{xval}. \code{V(xval)=0} is assumed outside the observed domain, except if D=1 (as in the case of fitting mass functions), where \code{V(xval)=0} is assumed only if \code{xval<min(x)}, whereas for \code{xval>max(x)}, \code{V(xval)} is set equal to the maximum effective volume, i.e. the maximum of \code{selection}. \cr\cr
 #' 
@@ -241,7 +241,13 @@ dffit <- function(x,
   }
   survey$data$n.data = dim(survey$data$x)[1]
   survey$data$n.dim = dim(survey$data$x)[2]
-  if (length(survey$grid$dx)!=survey$data$n.dim) stop('dx must be a P-element vector, where P is the number of columns of x.')
+  if (length(survey$grid$dx)!=survey$data$n.dim) {
+    if (length(survey$grid$dx)==1) {
+      survey$grid$dx = rep(survey$grid$dx,survey$data$n.dim)
+    } else {
+      stop('dx must be a P-element vector, where P is the number of columns of x.')
+    }
+  }
   
   # initialize xmin xmax
   xmin.auto = xmax.auto = rep(NA,survey$data$n.dim)
