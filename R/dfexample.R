@@ -113,9 +113,9 @@ dfexample <- function(case = 1, seed = 1) {
   # plot effective volumes
   x = seq(7,12,0.01)
   dfplotveff(survey3,xlab='log10(M/Msun)',legend=FALSE)
-  lines(x,dat$veff.lss(x),type='l',ylim=c(0,6),col='black')
+  lines(10^x,dat$veff.lss(x),type='l',col='black')
   legend('bottomright',c('Recovered model from data used for fit','Input model with LSS used to generate the data','Input model without LSS'),
-         lwd=c(2,2,2),col=c('blue','black','red'),bty='n',cex=0.85)
+         lwd=c(2,2,2),col=c('blue','black','black'),lty=c(1,1,2),bty='n',cex=0.85)
   
   # plot MFs
   mfplot(survey1,xlim=c(1e8,2e12),ylim=c(1e-5,5),nbins=20,bin.xmin=8,bin.xmax=12,col.fit='orange',col.data.input='orange',show.data.histogram = TRUE)

@@ -419,7 +419,7 @@ dfplot <- function(survey,
     }
   }
   
-  # make historgram counts
+  # make histogram counts
   bin$histogram = array(0,bin$n)
   for (i in seq(n.data)) {
     k = floor((x[i]-bin$xmin)/wx*0.99999999*bin$n)+1

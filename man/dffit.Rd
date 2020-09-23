@@ -15,6 +15,8 @@ dffit(
   obs.selection = NULL,
   obs.sel.cov = NULL,
   n.iterations = 100,
+  method = "Nelder-Mead",
+  reltol = 1e-10,
   correct.lss.bias = FALSE,
   lss.weight = NULL,
   lss.errors = TRUE,
@@ -34,7 +36,7 @@ dffit(
 
 \item{selection}{Specifies the effective volume \code{V(xval)} in which an object of (D-dimensional) true property (e.g. true log-mass) \code{xval} can be observed. This volume can account for complex selection criteria, as long as they can be expressed as a function of the \emph{true} properties, i.e. before measurement errors occur. This volume can be specified in five ways:\cr\cr
 
-(1) If \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
+(1) \code{selection} can be a single positive number. This number will be interpreted as a constant volume, \code{V(xval)=selection}, in which all objects are fully observable. \code{V(xval)=0} is assumed outside the "observed domain". This domain is defined as \code{min(x)<=xval<=max(x)} for a scalar observable (D=1), or as \code{min(x[,j])<=xval[j]<=max(x[,j])} for all j=1,...,D if D>1. This mode can be used for volume-complete surveys or for simulated galaxies in a box.\cr\cr
 
 (2) \code{selection} can be an N-element vector. The elements will be interpreted as the volumes of each galaxy. \code{V(xval)} is interpolated (linearly in \code{1/V}) for other values \code{xval}. \code{V(xval)=0} is assumed outside the observed domain, except if D=1 (as in the case of fitting mass functions), where \code{V(xval)=0} is assumed only if \code{xval<min(x)}, whereas for \code{xval>max(x)}, \code{V(xval)} is set equal to the maximum effective volume, i.e. the maximum of \code{selection}. \cr\cr
 
@@ -67,6 +69,10 @@ dffit(
 \item{obs.sel.cov}{is an optional \code{D-by-D} matrix, only used if \code{obs.selection} is set. It specifies the mean covariance matrix of the data to estimate how much data has been scattered outside the observing range. If \code{obs.selection} is set, but \code{obs.sel.cov} is not specified, the code estimates \code{obs.sel.cov} from the mean errors of the data (only works for 1D data).}
 
 \item{n.iterations}{Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.}
+
+\item{method}{optimization method argument of \code{\link{optim}} routine}
+
+\item{reltol}{relative tolerance parameter of \code{\link{optim}} routine}
 
 \item{correct.lss.bias}{If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective volume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.}
 
@@ -117,7 +123,7 @@ The routine \code{dffit} returns a structured list, which can be interpreted by 
 \code{n.para} is an integer specifying the number P of model parameters.}
 
 \item{grid}{is a list of arrays with numerical evaluations of different functions on a grid in the D-dimensional observable space. This grid is used for numerical integrations and graphical representations. The most important list entries are:\cr\cr
-\code{x} is a M-by-D array of M points, defining a regular cartesian grid in the D-dimensional observable space.\cr\cr
+\code{x} is a M-by-D array of M points, defining a regular Cartesian grid in the D-dimensional observable space.\cr\cr
 \code{xmin} and \code{xmax} are D-vectors specifying the lower and upper boundary of the grid in the D-dimensional observable space.\cr\cr
 \code{dx} is a D-vector specifying the steps between grid points.\cr\cr
 \code{dvolume} is a number specifying the D-dimensional volume associated with each grid point.\cr\cr

@@ -37,6 +37,8 @@
 #' @param obs.selection is an optional selection function of a D-vector \code{x}, which specifies the fraction (between 0 and 1) of data with \emph{observed} values \code{x}, whose true value passes the selection function \code{selection} can be observed. Normally this fraction is assumed to be 1 and all the selections are assumed to be specified relative to the true value in \code{selection}. However, if the data were selected, for example, with a sharp cut in the observed values, this can be specified in \code{obs.selection}. The function \code{obs.selection(x)} must be vectorized and return a vector of \code{N} elements, if \code{x} is an \code{N-by-D} matrix (such as the input argument \code{x}).
 #' @param obs.sel.cov is an optional \code{D-by-D} matrix, only used if \code{obs.selection} is set. It specifies the mean covariance matrix of the data to estimate how much data has been scattered outside the observing range. If \code{obs.selection} is set, but \code{obs.sel.cov} is not specified, the code estimates \code{obs.sel.cov} from the mean errors of the data (only works for 1D data).
 #' @param n.iterations Maximum number of iterations in the repeated fit-and-debias algorithm to evaluate the maximum likelihood.
+#' @param method optimization method argument of \code{\link{optim}} routine
+#' @param reltol relative tolerance parameter of \code{\link{optim}} routine
 #' @param correct.lss.bias If \code{TRUE} the \code{distance} values are used to correct for the observational bias due to galaxy clustering (large-scale structure). The overall normalization of the effective volume is chosen such that the expected mass contained in the survey volume is the same as for the uncorrected effective volume.
 #' @param lss.weight If \code{correct.lss.bias==TRUE}, this optional function of a \code{P}-vector is the weight-function used for the mass normalization of the effective volume. For instance, to preserve the number of galaxies, choose \code{lss.weight = function(x) 1}, or to perserve the total mass, choose \code{lss.weight = function(x) 10^x} (if the data \code{x} are log10-masses).
 #' @param lss.errors is a logical flag specifying whether uncertainties computed via resampling should include errors due to the uncerainty of large-scale structure (LSS). If \code{TRUE} the parameter uncerainties are estimated by refitting the LSS correction at each resampling iteration. This argument is only considered if \code{correct.lss.bias=TRUE} and \code{n.bootstrap>0}.
@@ -79,7 +81,7 @@
 #' \code{n.para} is an integer specifying the number P of model parameters.}
 #' 
 #' \item{grid}{is a list of arrays with numerical evaluations of different functions on a grid in the D-dimensional observable space. This grid is used for numerical integrations and graphical representations. The most important list entries are:\cr\cr
-#' \code{x} is a M-by-D array of M points, defining a regular cartesian grid in the D-dimensional observable space.\cr\cr
+#' \code{x} is a M-by-D array of M points, defining a regular Cartesian grid in the D-dimensional observable space.\cr\cr
 #' \code{xmin} and \code{xmax} are D-vectors specifying the lower and upper boundary of the grid in the D-dimensional observable space.\cr\cr
 #' \code{dx} is a D-vector specifying the steps between grid points.\cr\cr
 #' \code{dvolume} is a number specifying the D-dimensional volume associated with each grid point.\cr\cr
@@ -157,6 +159,8 @@ dffit <- function(x,
                   obs.selection = NULL,
                   obs.sel.cov = NULL,
                   n.iterations = 100,
+                  method = 'Nelder-Mead',
+                  reltol = 1e-10,
                   correct.lss.bias = FALSE,
                   lss.weight = NULL,
                   lss.errors = TRUE,
@@ -183,7 +187,8 @@ dffit <- function(x,
                                n.bootstrap = n.bootstrap, n.jackknife = n.jackknife,
                                keep.eddington.bias = keep.eddington.bias,
                                correct.lss.bias = correct.lss.bias,
-                               lss.weight = lss.weight, lss.errors = lss.errors),
+                               lss.weight = lss.weight, lss.errors = lss.errors,
+                               method = method, reltol = reltol),
                 tmp = list(selection = selection, gdf = gdf, obs.selection = obs.selection, obs.sel.cov = obs.sel.cov))
   
   # Check and pre-process input arguments
@@ -757,7 +762,7 @@ dffit <- function(x,
     if (!is.finite(test)) stop('cannot evaluate likelihood at initial parameters provided')
     
     # maximize ln(L)
-    opt = optim(p.initial,neglogL,hessian=TRUE,control=list(maxit=1e5)) # reltol=1e-20,abstol=1e-20,
+    opt = optim(p.initial,neglogL,hessian=TRUE,method=survey$options$method,control=list(maxit=1e5,reltol=survey$options$reltol))
     offset = opt$value+offset
     chain[k,] = c(opt$par,opt$value)
     

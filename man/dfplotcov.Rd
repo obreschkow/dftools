@@ -23,6 +23,8 @@ dfplotcov(
   show.expectation = TRUE,
   show.ellipse.68 = TRUE,
   show.ellipse.95 = TRUE,
+  show.xlab = TRUE,
+  show.ylab = TRUE,
   title = "",
   nstd = 10,
   pmin = NULL,
@@ -75,6 +77,10 @@ dfplotcov(
 \item{show.ellipse.68}{Logical vector specifying whether to draw 68\% confidence ellipses}
 
 \item{show.ellipse.95}{Logical vector specifying whether to draw 95\% confidence ellipses}
+
+\item{show.xlab}{Logical flag indicating whether labels+numbers along x-axis are displayed}
+
+\item{show.ylab}{Logical flag indicating whether labels+numbers along y-axis are displayed}
 
 \item{title}{Optional plot title}
 
