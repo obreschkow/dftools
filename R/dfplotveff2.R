@@ -2,7 +2,6 @@
 #'
 #' This routine plots the effective survey volume function \code{Veff(x)} assumed when fitting a two-dimensional generative distribution function (GDF). Note that this function \code{Veff(x)} is stored as \code{survey$selection$veff} when fitting a GDF using \code{survey=dffit(...)}.
 #'
-#' @importFrom rgl open3d decorate3d surface3d
 #'
 #' @param survey List produced by \code{\link{dffit}}
 #' @param xlab Label on x-axis, associated with the first observable (\code{x[1,]}) in the 2D data (\code{survey$data$x}).
@@ -46,12 +45,17 @@ dfplotveff2 <- function(survey,
     z2[z2<(zmax-5)] = NA
   }
   
-  rgl::open3d()
-  rgl::decorate3d(xlim = range(x), ylim = range(y), zlim = c(-5,0)+zmax,
-                  xlab = xlab, ylab = ylab, zlab = zlab, aspect = TRUE)
-  rgl::surface3d(x,y,z,col='blue',alpha=0.3, forceClipregion= TRUE)
-  if (!is.null(survey$input$selection$veff.input.function)) {
-    rgl::surface3d(x,y,z2,col='black',alpha=0.3, forceClipregion= TRUE)
+  
+  if (requireNamespace("rgl", quietly=TRUE)) {
+    rgl::open3d()
+    rgl::decorate3d(xlim = range(x), ylim = range(y), zlim = c(-5,0)+zmax,
+                    xlab = xlab, ylab = ylab, zlab = zlab, aspect = TRUE)
+    rgl::surface3d(x,y,z,col='blue',alpha=0.3, forceClipregion= TRUE)
+    if (!is.null(survey$input$selection$veff.input.function)) {
+      rgl::surface3d(x,y,z2,col='black',alpha=0.3, forceClipregion= TRUE)
+    }
+  } else {
+    stop('RGL needed in dfplotveff2.')
   }
   
 }
